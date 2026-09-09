@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="24dp"
+    android:background="#F7FAFF">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Crear Cuenta"
+        android:textSize="32sp"
+        android:textStyle="bold"
+        android:textColor="#0A2E73"
+        android:layout_marginBottom="32dp"/>
+
+    <EditText
+        android:id="@+id/etNombreRegister"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:hint="Nombre y Apellido"
+        android:inputType="textPersonName"
+        android:padding="12dp"
+        android:background="#FFFFFF"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="16dp"/>
+
+    <EditText
+        android:id="@+id/etEmailRegister"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:hint="Correo electrónico"
+        android:inputType="textEmailAddress"
+        android:padding="12dp"
+        android:background="#FFFFFF"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="16dp"/>
+
+    <EditText
+        android:id="@+id/etPasswordRegister"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:hint="Contraseña"
+        android:inputType="textPassword"
+        android:padding="12dp"
+        android:background="#FFFFFF"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="24dp"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="¿Quién usará esta aplicación?"
+        android:textColor="#0A2E73"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:layout_marginBottom="12dp"/>
+
+    <RadioGroup
+        android:id="@+id/rgRol"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="start"
+        android:layout_marginBottom="24dp">
+        <RadioButton
+            android:id="@+id/rbCliente"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Soy el Adulto Mayor"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp"/>
+        <RadioButton
+            android:id="@+id/rbCuidador"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Soy el Familiar/Cuidador"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:checked="true"/>
+    </RadioGroup>
+
+    <Button
+        android:id="@+id/btnRegister"
+        android:layout_width="match_parent"
+        android:layout_height="65dp"
+        android:text="REGISTRARSE"
+        android:backgroundTint="#1457D9"
+        android:textColor="#FFFFFF"
+        android:textSize="20sp"
+        android:textStyle="bold"/>
+
+    <TextView
+        android:id="@+id/tvGoToLogin"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="¿Ya tenés cuenta? Inicia sesión"
+        android:textColor="#1457D9"
+        android:layout_marginTop="24dp"
+        android:textStyle="bold"
+        android:textSize="16sp"/>
+
+</LinearLayout>
