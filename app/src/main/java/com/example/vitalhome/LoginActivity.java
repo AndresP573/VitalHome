@@ -12,16 +12,10 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.biometric.BiometricPrompt;
 import androidx.core.content.ContextCompat;
 
+import java.util.Objects;
 import java.util.concurrent.Executor;
 
 public class LoginActivity extends AppCompatActivity {
-
-    private EditText etEmail, etPassword;
-    private Button btnLogin;
-    private TextView tvGoToRegister;
-    private Executor executor;
-    private BiometricPrompt biometricPrompt;
-    private BiometricPrompt.PromptInfo promptInfo;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,10 +36,10 @@ public class LoginActivity extends AppCompatActivity {
         setContentView(R.layout.activity_login);
 
         // Enlazamos las variables con los IDs del XML
-        etEmail = findViewById(R.id.etEmailLogin);
-        etPassword = findViewById(R.id.etPasswordLogin);
-        btnLogin = findViewById(R.id.btnLogin);
-        tvGoToRegister = findViewById(R.id.tvGoToRegister);
+        EditText etEmail = findViewById(R.id.etEmailLogin);
+        EditText etPassword = findViewById(R.id.etPasswordLogin);
+        Button btnLogin = findViewById(R.id.btnLogin);
+        TextView tvGoToRegister = findViewById(R.id.tvGoToRegister);
 
         // Pre-rellenar el email si existe
         String savedEmail = prefs.getString("email", "");
@@ -54,8 +48,8 @@ public class LoginActivity extends AppCompatActivity {
         }
 
         // Configuración de Biometría
-        executor = ContextCompat.getMainExecutor(this);
-        biometricPrompt = new BiometricPrompt(LoginActivity.this,
+        Executor executor = ContextCompat.getMainExecutor(this);
+        BiometricPrompt biometricPrompt = new BiometricPrompt(LoginActivity.this,
                 executor, new BiometricPrompt.AuthenticationCallback() {
             @Override
             public void onAuthenticationError(int errorCode,
@@ -89,7 +83,7 @@ public class LoginActivity extends AppCompatActivity {
             }
         });
 
-        promptInfo = new BiometricPrompt.PromptInfo.Builder()
+        BiometricPrompt.PromptInfo promptInfo = new BiometricPrompt.PromptInfo.Builder()
                 .setTitle("Acceso Biométrico")
                 .setSubtitle("Usa tu huella para entrar a VitalHome")
                 .setNegativeButtonText("Usar contraseña")
@@ -112,7 +106,7 @@ public class LoginActivity extends AppCompatActivity {
             // Validamos las credenciales
             if (emailInput.isEmpty() || passInput.isEmpty()) {
                 Toast.makeText(LoginActivity.this, "Ingresá tus datos", Toast.LENGTH_SHORT).show();
-            } else if (emailInput.equals(registeredEmail) && passInput.equals(savedPass)) {
+            } else if (Objects.equals(emailInput, registeredEmail) && Objects.equals(passInput, savedPass)) {
                 // Guardamos que el usuario ya inició sesión
                 SharedPreferences.Editor editor = prefs.edit();
                 editor.putBoolean("isLoggedIn", true);

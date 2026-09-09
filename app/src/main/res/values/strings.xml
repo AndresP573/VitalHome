@@ -1,3 +1,16 @@
 <resources>
     <string name="app_name">vitalhome</string>
+    <string name="vitalhome_title">VitalHome</string>
+    <string name="vitalhome_tagline">Protección Inteligente</string>
+    <string name="email_hint">Correo electrónico</string>
+    <string name="password_hint">Contraseña</string>
+    <string name="name_hint">Nombre y Apellido</string>
+    <string name="login_button">INICIAR SESIÓN</string>
+    <string name="register_prompt">¿No tenés cuenta? Regístrate aquí</string>
+    <string name="create_account">Crear Cuenta</string>
+    <string name="who_uses_app">¿Quién usará esta aplicación?</string>
+    <string name="role_adulto_mayor">Soy el Adulto Mayor</string>
+    <string name="role_cuidador">Soy el Familiar/Cuidador</string>
+    <string name="register_button">REGISTRARSE</string>
+    <string name="go_to_login">¿Ya tenés cuenta? Inicia sesión</string>
 </resources>
