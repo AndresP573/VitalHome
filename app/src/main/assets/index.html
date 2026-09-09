@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VitalHome Prototipo</title>
+    <style>
+        :root {
+            --primary: #1457D9; --primaryDark: #0A2E73; --primarySoft: #DCE8FF;
+            --primaryPale: #F1F6FF; --accent: #2F7CF6; --background: #F7FAFF;
+            --surface: #FFFFFF; --text: #102040; --muted: #62708A;
+            --border: #D8E3F5; --success: #10B981; --danger: #EF4444;
+        }
+        body { margin: 0; font-family: system-ui, sans-serif; background-color: var(--background); color: var(--text); padding-bottom: 70px; }
+        .header { padding: 36px 20px 12px 20px; display: flex; justify-content: space-between; align-items: center; background-color: var(--surface); border-bottom: 1px solid var(--border); }
+        .container { padding: 16px 20px; }
+        .card { background-color: var(--surface); border-radius: 16px; padding: 18px; margin-bottom: 16px; border: 1px solid var(--border); box-shadow: 0 4px 12px rgba(0,0,0,0.02); }
+        .card-row { display: flex; justify-content: space-between; align-items: center; }
+        .badge-conectado { background-color: var(--primaryPale); color: var(--accent); padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+        .badge-pendiente { background-color: #FEF3C7; color: #D97706; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+        .badge-tomado { background-color: #D1FAE5; color: #059669; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+        .btn { display: block; width: 100%; padding: 14px; background-color: var(--primary); color: var(--surface); border: none; border-radius: 14px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 12px; }
+        .btn-outline { background-color: transparent; border: 1px solid var(--border); color: var(--muted); }
+        .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; height: 65px; background-color: var(--surface); border-top: 1px solid var(--border); display: flex; justify-content: space-around; align-items: center; }
+        .nav-item { background: none; border: none; color: var(--muted); font-size: 12px; display: flex; flex-direction: column; align-items: center; cursor: pointer; }
+        .nav-item.active { color: var(--primary); font-weight: 600; }
+        .screen { display: none; } .screen.active { display: block; }
+        .input-group { margin-bottom: 15px; }
+        .btn-exit-small { background: none; border: none; color: var(--muted); font-size: 11px; text-decoration: underline; cursor: pointer; padding: 10px; }
+        .input-group label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 5px; }
+        .input-field { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border); box-sizing: border-box; font-size: 14px; }
+
+        /* Estilos para modo Cliente (Adulto Mayor) */
+        body.cliente-mode .nav-bar, body.cliente-mode .header { display: none !important; }
+        body.cliente-mode { padding-bottom: 0; }
+        body.cliente-mode .container { padding-top: 40px; }
+        .cliente-mode .card { padding: 25px; border-width: 2px; }
+        .cliente-mode h1 { font-size: 32px; font-weight: 800; }
+        .cliente-mode p { font-size: 20px; }
+        .cliente-mode .btn { padding: 25px; font-size: 24px; border-radius: 20px; font-weight: 800; }
+        .btn-sos-xl { background-color: var(--danger); font-size: 36px !important; padding: 50px 20px !important; border-radius: 40px !important; box-shadow: 0 10px 0 #b91c1c; margin-bottom: 40px; width: 100%; display: block; border: none; color: white; cursor: pointer; }
+        .btn-sos-xl:active { box-shadow: 0 2px 0 #b91c1c; transform: translateY(8px); }
+    </style>
+</head>
+<body class="cuidador-mode">
+<div class="header">
+    <div style="display: flex; align-items: center; gap: 12px;">
+        <svg width="38" height="38" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2L4 5V11C4 16.5 7.5 21.5 12 22.5C16.5 21.5 20 16.5 20 11V5L12 2Z" stroke="#1457D9" stroke-width="2" stroke-linecap="round" fill="#F1F6FF"/>
+            <path d="M3 12H7L9 8L12 16L15 10L17 12H21" stroke="#2F7CF6" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <div>
+            <h1 style="font-size: 18px; color: var(--primaryDark); margin: 0;">VitalHome</h1>
+            <span style="font-size: 10px; color: var(--muted);">Protección Inteligente</span>
+        </div>
+    </div>
+    <span style="font-size: 12px; color: var(--muted);"><span style="height: 8px; width: 8px; background-color: var(--success); border-radius: 50%; display: inline-block; margin-right: 4px;"></span>En línea</span>
+</div>
+
+<!-- 1. DASHBOARD CUIDADOR -->
+<div id="screen-dashboard-cuidador" class="screen">
+    <div style="padding: 20px 20px 0 20px;">
+        <h1 id="saludo-cuidador" style="font-size: 22px; margin: 0;">Hola, Cuidador</h1>
+        <p style="font-size: 14px; color: var(--muted); margin: 4px 0 0 0;">Monitoreo en tiempo real de tu familiar.</p>
+    </div>
+
+    <div class="container">
+        <!-- Tarjeta de Emergencia (Oculta por defecto) -->
+        <div id="emergency-card" class="card" style="display: none; background-color: #FEF2F2; border: 2px solid var(--danger);">
+            <div class="card-row">
+                <span style="font-weight: 700; color: var(--danger);">🚨 EMERGENCIA DETECTADA</span>
+                <span class="badge-pendiente" style="background-color: var(--danger); color: white;">AHORA</span>
+            </div>
+            <p style="font-size: 14px; margin-top: 8px;">Se ha detectado una <strong>caída</strong> en el domicilio.</p>
+            <p style="font-size: 13px; color: var(--muted); margin-top: 4px;">⏰ Registro: <span id="dash-emergency-time">--:--</span> | 📍 <span id="dash-emergency-loc">Desconocido</span></p>
+            <button class="btn" style="background-color: var(--danger); margin-top: 12px;" onclick="switchScreen('alerta-familiar')">Ver detalles y ubicación</button>
+        </div>
+
+        <div class="card" onclick="switchScreen('pulsera')" style="cursor: pointer;">
+            <div class="card-row">
+                <span style="font-weight: 600;">⌚ Estado de <span class="nombre-familiar">Usuario</span></span>
+                <span class="badge-conectado">● En línea</span>
+            </div>
+            <p style="font-size: 13px; color: var(--muted); margin-top: 10px;">🔋 Batería: 85% &nbsp;|&nbsp; 📍 En casa</p>
+            <p style="font-size: 12px; color: var(--accent); margin-top: 8px; font-weight: 600;">Ver signos vitales →</p>
+        </div>
+
+        <div class="card" onclick="switchScreen('medicamentos')" style="cursor: pointer;">
+            <div class="card-row">
+                <span style="font-weight: 600;">💊 Medicación Diaria</span>
+                <div id="med-summary-badge" class="badge-pendiente">Cargando...</div>
+            </div>
+            <p id="med-summary-text" style="font-size: 13px; color: var(--muted); margin-top: 10px;">Revisar estado de las tomas de hoy.</p>
+        </div>
+
+        <button class="btn" style="background-color: var(--primaryPale); color: var(--primary);" onclick="switchScreen('estado-hogar')">🏠 Actividad del Hogar</button>
+
+        <div class="card" style="margin-top: 60px; padding: 12px 20px; border-style: none; background-color: var(--primaryPale);">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <button class="btn-exit-small" onclick="switchUserRole()" style="color: var(--primary); text-decoration: none; font-weight: 600; padding: 5px;">Cambiar Vista</button>
+                <button class="btn-exit-small" onclick="AndroidApp.cerrarSesion()" style="color: var(--danger); text-decoration: none; font-weight: 600; padding: 5px;">Cerrar Sesión</button>
+                <button class="btn-exit-small" onclick="AndroidApp.cerrarApp()" style="color: var(--muted); text-decoration: none; font-weight: 600; padding: 5px;">Salir</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 1B. DASHBOARD CLIENTE (ADULTO MAYOR) -->
+<div id="screen-dashboard-cliente" class="screen cliente-mode">
+    <div style="padding: 30px 20px 10px 20px; text-align: center;">
+        <h1 id="saludo-cliente" style="margin: 0;">Hola, <span class="nombre-familiar">Usuario</span></h1>
+        <p style="font-size: 18px; color: var(--muted); margin-top: 10px;">¿Cómo te sientes hoy?</p>
+    </div>
+
+    <div class="container" style="text-align: center;">
+        <button class="btn btn-sos-xl" onclick="switchScreen('alerta-sos')">PEDIR AYUDA (SOS)</button>
+
+        <div class="card" style="text-align: left; border-color: var(--primary);">
+            <h2 style="margin: 0 0 15px 0;">💊 Mis Remedios</h2>
+        <div id="lista-remedios-cliente">
+            <!-- Se genera dinámicamente -->
+        </div>
+        </div>
+
+        <div class="card" style="margin-top: 40px; padding: 12px 20px; border-style: none; background-color: var(--primaryPale);">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <button class="btn-exit-small" onclick="switchUserRole()" style="color: var(--primary); text-decoration: none; font-weight: 600; padding: 5px;">Cambiar Vista</button>
+                <button class="btn-exit-small" onclick="AndroidApp.cerrarSesion()" style="color: var(--danger); text-decoration: none; font-weight: 600; padding: 5px;">Cerrar Sesión</button>
+                <button class="btn-exit-small" onclick="AndroidApp.cerrarApp()" style="color: var(--muted); text-decoration: none; font-weight: 600; padding: 5px;">Salir</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 2. SIMULAR EMERGENCIA (SOLO CUIDADOR) -->
+<button id="btn-emergency-test" style="position: fixed; bottom: 80px; right: 20px; width: 50px; height: 50px; border-radius: 25px; background: var(--danger); color: white; border: none; font-size: 20px; z-index: 100; display:none;" onclick="toggleEmergency()">🆘</button>
+
+<!-- 2B. HISTORIAL ALERTAS (MODO CUIDADOR) -->
+<div id="screen-historial-alertas" class="screen">
+    <div style="padding: 20px 20px 0 20px;">
+        <h1 style="font-size: 22px; margin: 0;">Historial de Alertas</h1>
+        <p style="font-size: 14px; color: var(--muted); margin: 4px 0 0 0;">Registro de emergencias detectadas.</p>
+    </div>
+    <div class="container">
+        <div id="lista-historial-alertas">
+            <!-- Las alertas se irán agregando aquí -->
+            <p id="sin-alertas" style="text-align: center; color: var(--muted); margin-top: 40px;">No hay alertas registradas recientemente.</p>
+        </div>
+        <button class="btn btn-outline" style="margin-top: 20px;" onclick="switchScreen('dashboard')">Volver al inicio</button>
+    </div>
+</div>
+
+<!-- 2C. PANTALLA SOS CLIENTE (USUARIO ADULTO) -->
+<div id="screen-alerta-sos" class="screen cliente-mode" style="background-color: var(--danger); min-height: 100vh; color: white;">
+    <div class="container" style="text-align: center; padding-top: 60px;">
+        <div style="font-size: 80px; margin-bottom: 20px;">🔔</div>
+        <h1 style="color: white; font-size: 42px; line-height: 1.2;">¡PIDIENDO AYUDA!</h1>
+        <p style="font-size: 24px; opacity: 0.9; margin-top: 20px;">Estamos avisando a tu familia ahora mismo.</p>
+
+        <div class="card" style="background: rgba(255,255,255,0.1); border: 2px solid white; margin-top: 40px;">
+            <p style="color: white; margin: 0;">Manten la calma. El auxilio está en camino.</p>
+        </div>
+
+        <button class="btn" style="background-color: white; color: var(--danger); margin-top: 60px; font-weight: 800;" onclick="switchScreen('dashboard')">CANCELAR / ESTOY BIEN</button>
+    </div>
+</div>
+
+<!-- 3. ALERTA SOS FAMILIAR -->
+<div id="screen-alerta-familiar" class="screen" style="background-color: var(--primary); min-height: 100vh; color: white;">
+    <div style="padding: 30px 20px;">
+        <h2 style="margin: 0;">🚨 Alerta SOS</h2>
+        <p style="font-size: 16px; margin-top: 8px;">Tu familiar <span class="nombre-familiar">Usuario</span> necesita ayuda.</p>
+    </div>
+    <div style="background: white; border-radius: 24px 24px 0 0; padding: 20px; color: var(--text); min-height: 70vh;">
+        <div class="card">
+            <strong>Detalles del Evento</strong>
+            <p style="font-size: 14px; margin: 10px 0;">Evento: <strong style="color: var(--danger);">Caída detectada</strong></p>
+            <p style="font-size: 14px; margin: 10px 0;">Hora: <strong id="alert-detail-time">--:--</strong></p>
+            <p style="font-size: 14px; margin: 10px 0;">Ubicación: <strong id="alert-detail-loc">Cocina</strong></p>
+        </div>
+        <div class="card" style="background-color: var(--primaryPale);">
+            <strong>Acciones rápidas</strong>
+            <button class="btn" style="background-color: var(--success); margin-top: 10px;">Llamar al domicilio</button>
+            <button class="btn" style="background-color: var(--danger); margin-top: 10px;">Llamar a Emergencias (911)</button>
+        </div>
+        <button class="btn btn-outline" onclick="discardEmergency()">Descartar Alerta</button>
+    </div>
+</div>
+
+<!-- 4. MONITOREO MEDICAMENTOS -->
+<div id="screen-medicamentos" class="screen">
+    <div style="padding: 20px 20px 0 20px;">
+        <h1 style="font-size: 22px; margin: 0;">Medicamentos</h1>
+        <p style="font-size: 14px; color: var(--muted); margin: 4px 0 0 0;">Control de tomas de <span class="nombre-familiar">Usuario</span>.</p>
+    </div>
+    <div class="container">
+        <!-- Formulario para agregar medicina (Solo Cuidador) -->
+        <div class="card" style="border-style: dashed; border-color: var(--primary); margin-bottom: 24px;">
+            <strong style="display: block; margin-bottom: 12px; color: var(--primary);">➕ Agregar Nueva Medicación</strong>
+            <div class="input-group">
+                <label>Nombre del Remedio</label>
+                <input type="text" id="new-med-name" class="input-field" placeholder="Ej: Losartan 50mg">
+            </div>
+            <div class="input-group">
+                <label>Horario</label>
+                <input type="text" id="new-med-time" class="input-field" placeholder="Ej: 09:00 AM">
+            </div>
+            <button class="btn" onclick="crearNuevaMedicina()">Guardar y Sincronizar</button>
+        </div>
+
+        <div id="lista-medicamentos">
+            <!-- Se genera dinámicamente -->
+        </div>
+
+        <button class="btn btn-outline" style="margin-top: 20px;" onclick="switchScreen('dashboard')">Volver al inicio</button>
+    </div>
+</div>
+
+<!-- 5. ESTADO DEL HOGAR -->
+<div id="screen-estado-hogar" class="screen">
+    <div style="padding: 20px 20px 0 20px;">
+        <h1 style="font-size: 22px; margin: 0;">Actividad del Hogar</h1>
+        <p style="font-size: 14px; color: var(--muted); margin: 4px 0 0 0;">Sensores en tiempo real.</p>
+    </div>
+    <div class="container">
+        <div class="card" style="border-left: 4px solid var(--success);">
+            <div class="card-row">
+                <span>🚪 Puerta Principal</span>
+                <span style="color: var(--danger); font-weight: bold;">Cerrada</span>
+            </div>
+        </div>
+        <div class="card" style="border-left: 4px solid var(--accent);">
+            <div class="card-row">
+                <span>🌡️ Temperatura</span>
+                <span style="font-weight: bold;">22°C</span>
+            </div>
+        </div>
+
+        <button class="btn btn-outline" style="margin-top: 30px;" onclick="switchScreen('dashboard')">Volver al inicio</button>
+    </div>
+</div>
+
+<!-- 6. SIGNOS VITALES (PULSERA) -->
+<div id="screen-pulsera" class="screen">
+    <div style="padding: 20px 20px 0 20px;">
+        <h1 style="font-size: 22px; margin: 0;">Mi Pulsera Vital</h1>
+        <p style="font-size: 14px; color: var(--muted); margin: 4px 0 0 0;">Signos vitales en tiempo real.</p>
+    </div>
+    <div class="container">
+        <div class="card">
+            <div class="card-row">
+                <span>❤️ Frecuencia Cardíaca</span>
+                <span style="font-weight: bold; color: var(--danger);">72 LPM</span>
+            </div>
+            <p style="font-size: 12px; color: var(--muted); margin-top: 5px;">Estado: Normal</p>
+        </div>
+        <div class="card">
+            <div class="card-row">
+                <span>🫁 Oxígeno en Sangre (SpO2)</span>
+                <span style="font-weight: bold; color: var(--accent);">98%</span>
+            </div>
+            <p style="font-size: 12px; color: var(--muted); margin-top: 5px;">Estado: Óptimo</p>
+        </div>
+        <div class="card">
+            <div class="card-row">
+                <span>🩸 Presión Arterial</span>
+                <span style="font-weight: bold;">120/80</span>
+            </div>
+            <p style="font-size: 12px; color: var(--muted); margin-top: 5px;">Última toma: hace 1 hora</p>
+        </div>
+        <div class="card">
+            <div class="card-row">
+                <span>🚶 Pasos Hoy</span>
+                <span style="font-weight: bold; color: var(--success);">4.520</span>
+            </div>
+            <div style="width: 100%; background: #EEE; height: 8px; border-radius: 4px; margin-top: 10px;">
+                <div style="width: 60%; background: var(--success); height: 8px; border-radius: 4px;"></div>
+            </div>
+        </div>
+
+        <div class="card" style="border-style: dashed; border-color: var(--danger); margin-top: 24px; padding: 20px; text-align: center;">
+            <strong style="display: block; margin-bottom: 12px; color: var(--danger);">Simular Medición Manual</strong>
+            <p style="font-size: 13px; color: var(--muted); margin-bottom: 15px;">Pulsa para simular que <span class="nombre-familiar">Usuario</span> se midió ahora.</p>
+            <button class="btn" style="background-color: var(--danger);" onclick="simularFrecuenciaCardiaca()">Medir Pulso Ahora</button>
+        </div>
+
+        <button class="btn btn-outline" style="margin-top: 30px;" onclick="switchScreen('dashboard')">Volver al inicio</button>
+    </div>
+</div>
+
+<!-- BARRA NAVEGACION -->
+<nav class="nav-bar">
+    <button class="nav-item active" id="nav-inicio" onclick="switchScreen('dashboard')"><span>🏠</span><span>Inicio</span></button>
+    <button class="nav-item" id="nav-alertas" onclick="switchScreen('historial-alertas')"><span>🔔</span><span>Alertas</span></button>
+</nav>
+
+<script>
+    let usuarioRol = 'cuidador';
+    let usuarioNombre = 'Usuario';
+    let medsData = [];
+
+    function actualizarUsuarioNativo(nombre, rol, nombrePulsera) {
+        usuarioRol = rol || 'cuidador';
+        usuarioNombre = nombre || 'Usuario';
+        document.querySelectorAll('.nombre-familiar').forEach(el => el.innerText = nombrePulsera);
+        const saludoCuidador = document.getElementById('saludo-cuidador');
+        if (saludoCuidador) saludoCuidador.innerText = `Hola, ${usuarioNombre}`;
+        document.body.classList.remove('cliente-mode', 'cuidador-mode');
+        if (usuarioRol === 'cliente') {
+            document.body.classList.add('cliente-mode');
+            document.getElementById('btn-emergency-test').style.display = 'none';
+        } else {
+            document.body.classList.add('cuidador-mode');
+            document.getElementById('btn-emergency-test').style.display = 'block';
+        }
+        inicializarMeds();
+        switchScreen('dashboard');
+    }
+
+    function inicializarMeds() {
+        if (typeof AndroidApp !== 'undefined' && AndroidApp.cargarMeds) {
+            const saved = AndroidApp.cargarMeds();
+            medsData = JSON.parse(saved);
+            if (medsData.length === 0) {
+                medsData = [
+                    { id: 'enalapril', nombre: 'Enalapril', hora: '08:00 AM' },
+                    { id: 'paracetamol', nombre: 'Paracetamol', hora: '12:00 PM' }
+                ];
+                AndroidApp.guardarMeds(JSON.stringify(medsData));
+            }
+        }
+        renderMedications();
+    }
+
+    function crearNuevaMedicina() {
+        const nombre = document.getElementById('new-med-name').value.trim();
+        const hora = document.getElementById('new-med-time').value.trim();
+        if (!nombre || !hora) {
+            alert('Por favor completa nombre y horario.');
+            return;
+        }
+        const nuevaMed = { id: 'med-' + Date.now(), nombre: nombre, hora: hora };
+        medsData.push(nuevaMed);
+        if (typeof AndroidApp !== 'undefined' && AndroidApp.guardarMeds) {
+            AndroidApp.guardarMeds(JSON.stringify(medsData));
+        }
+        document.getElementById('new-med-name').value = '';
+        document.getElementById('new-med-time').value = '';
+        renderMedications();
+        alert('Medicina agregada y enviada al dispositivo de tu familiar.');
+    }
+
+    function renderMedications() {
+        const listCliente = document.getElementById('lista-remedios-cliente');
+        const listCuidador = document.getElementById('lista-medicamentos');
+        if (listCliente) listCliente.innerHTML = '';
+        if (listCuidador) listCuidador.innerHTML = '';
+        medsData.forEach(med => {
+            let isTaken = false;
+            if (typeof AndroidApp !== 'undefined' && AndroidApp.getMedStatus) {
+                isTaken = AndroidApp.getMedStatus(med.id);
+            }
+            if (listCliente) {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.style.background = isTaken ? '#f3f4f6' : 'var(--primaryPale)';
+                card.style.opacity = isTaken ? '0.5' : '1';
+                card.style.border = 'none';
+                card.innerHTML = `<div class="card-row"><span style="font-size: 22px; font-weight: bold;">💊 ${med.nombre}</span><span class="${isTaken ? 'badge-tomado' : 'badge-pendiente'}" style="font-size: 16px;">${isTaken ? 'Tomado' : med.hora}</span></div>${isTaken ? '' : `<button class="btn" style="background-color: var(--success); margin-top: 15px; font-size: 20px;" onclick="marcarTomadoServidor('${med.id}')">YA LO TOMÉ</button>`}`;
+                listCliente.appendChild(card);
+            }
+            if (listCuidador) {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `<div class="card-row"><span style="font-weight: 600;">💊 ${med.nombre}</span><span class="${isTaken ? 'badge-tomado' : 'badge-pendiente'}">${isTaken ? 'Tomado' : 'Pendiente'}</span></div><p style="font-size: 13px; color: var(--muted); margin-top: 10px;">⏰ Programado: ${med.hora}</p>`;
+                listCuidador.appendChild(card);
+            }
+        });
+        updateMedSummary();
+
+        // Agregar logs de movimiento al historial si estamos en modo cuidador
+        if (usuarioRol === 'cuidador') {
+            const listaHistorial = document.getElementById('lista-historial-alertas');
+            if (listaHistorial && !document.querySelector('.movimiento-log')) {
+                const sinAlertas = document.getElementById('sin-alertas');
+                if (sinAlertas) sinAlertas.style.display = 'none';
+
+                const log1 = document.createElement('div');
+                log1.className = 'card movimiento-log';
+                log1.style.borderLeft = '4px solid var(--accent)';
+                log1.innerHTML = `<div class="card-row"><strong>🏃 Movimiento detectado</strong><span class="badge-conectado">11:20 AM</span></div><p style="font-size: 13px; color: var(--muted); margin-top: 8px;">📍 Ubicación: Sala de Estar</p>`;
+
+                const log2 = document.createElement('div');
+                log2.className = 'card movimiento-log';
+                log2.style.borderLeft = '4px solid var(--accent)';
+                log2.innerHTML = `<div class="card-row"><strong>🏃 Actividad registrada</strong><span class="badge-conectado">09:15 AM</span></div><p style="font-size: 13px; color: var(--muted); margin-top: 8px;">📍 Ubicación: Cocina</p>`;
+
+                listaHistorial.appendChild(log1);
+                listaHistorial.appendChild(log2);
+            }
+        }
+    }
+
+    function marcarTomadoServidor(medId) {
+        if (typeof AndroidApp !== 'undefined' && AndroidApp.setMedStatus) {
+            AndroidApp.setMedStatus(medId, true);
+        }
+        renderMedications();
+        alert("¡Muy bien! Registro sincronizado.");
+    }
+
+    function toggleEmergency() {
+        const card = document.getElementById('emergency-card');
+        card.style.display = 'block';
+        const now = new Date();
+        const timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+        const locations = ['Cocina', 'Habitación Principal', 'Sala de Estar', 'Baño'];
+        const randomLoc = locations[Math.floor(Math.random() * locations.length)];
+        document.getElementById('dash-emergency-time').innerText = timeStr;
+        document.getElementById('dash-emergency-loc').innerText = randomLoc;
+        document.getElementById('alert-detail-time').innerText = timeStr;
+        document.getElementById('alert-detail-loc').innerText = randomLoc;
+        const listaHistorial = document.getElementById('lista-historial-alertas');
+        const sinAlertas = document.getElementById('sin-alertas');
+        if (sinAlertas) sinAlertas.style.display = 'none';
+        const nuevaAlerta = document.createElement('div');
+        nuevaAlerta.className = 'card';
+        nuevaAlerta.style.borderColor = 'var(--danger)';
+        nuevaAlerta.innerHTML = `<div class="card-row"><strong style="color: var(--danger);">🆘 Caída detectada</strong><span class="badge-pendiente" style="background: var(--danger); color: white;">${timeStr}</span></div><p style="font-size: 13px; color: var(--muted); margin-top: 8px;">📍 Ubicación: ${randomLoc}</p>`;
+        listaHistorial.prepend(nuevaAlerta);
+        if (typeof AndroidApp !== 'undefined' && AndroidApp.dispararNotificacion) AndroidApp.dispararNotificacion(usuarioNombre);
+    }
+
+    function discardEmergency() {
+        document.getElementById('emergency-card').style.display = 'none';
+        switchScreen('dashboard');
+    }
+
+    function updateMedSummary() {
+        const badge = document.getElementById('med-summary-badge');
+        if (!badge) return;
+        const text = document.getElementById('med-summary-text');
+        let pendientes = 0;
+        medsData.forEach(med => {
+            let taken = false;
+            if (typeof AndroidApp !== 'undefined' && AndroidApp.getMedStatus) taken = AndroidApp.getMedStatus(med.id);
+            if (!taken) pendientes++;
+        });
+        if (pendientes === 0) {
+            badge.innerText = "¡Todo al día!";
+            badge.className = "badge-tomado";
+            text.innerText = "Tu familiar ha tomado todos sus medicamentos de hoy.";
+        } else {
+            badge.innerText = pendientes + (pendientes === 1 ? " Pendiente" : " Pendientes");
+            badge.className = "badge-pendiente";
+            text.innerText = "Revisar estado de las tomas de hoy.";
+        }
+    }
+
+    function switchUserRole() {
+        const nuevoRol = usuarioRol === 'cuidador' ? 'cliente' : 'cuidador';
+        if (typeof AndroidApp !== 'undefined' && AndroidApp.guardarRol) AndroidApp.guardarRol(nuevoRol);
+        actualizarUsuarioNativo(usuarioNombre, nuevoRol, document.querySelector('.nombre-familiar').innerText);
+    }
+
+    function simularFrecuenciaCardiaca() {
+        const nuevoPulso = Math.floor(Math.random() * (95 - 65 + 1)) + 65; // Entre 65 y 95
+        const now = new Date();
+        const timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+
+        // Actualizar valor en la pantalla de pulsera
+        document.querySelector('#screen-pulsera .card span[style*="color: var(--danger)"]').innerText = nuevoPulso + " LPM";
+
+        // Cargar en el historial de alertas
+        const listaHistorial = document.getElementById('lista-historial-alertas');
+        const sinAlertas = document.getElementById('sin-alertas');
+        if (sinAlertas) sinAlertas.style.display = 'none';
+
+        const nuevaMedicion = document.createElement('div');
+        nuevaMedicion.className = 'card';
+        nuevaMedicion.style.borderLeft = '4px solid var(--danger)';
+        nuevaMedicion.innerHTML = `
+            <div class="card-row">
+                <strong>❤️ Medición de Pulso</strong>
+                <span class="badge-conectado">${timeStr}</span>
+            </div>
+            <p style="font-size: 14px; margin-top: 8px;">Resultado: <strong style="color: var(--danger);">${nuevoPulso} LPM</strong></p>
+            <p style="font-size: 12px; color: var(--muted);">Estado: Normal y sincronizado.</p>
+        `;
+        listaHistorial.prepend(nuevaMedicion);
+
+        alert("¡Medición registrada! Se ha actualizado el pulso a " + nuevoPulso + " LPM y se guardó en el historial.");
+    }
+
+    function switchScreen(screenId) {
+        let targetId = screenId;
+        if (screenId === 'dashboard') targetId = 'dashboard-' + usuarioRol;
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        const target = document.getElementById('screen-' + targetId);
+        if (target) target.classList.add('active');
+        if (screenId === 'alerta-sos') {
+            if (typeof AndroidApp !== 'undefined' && AndroidApp.dispararNotificacion) AndroidApp.dispararNotificacion(usuarioNombre);
+        }
+        document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+        if(screenId === 'dashboard') {
+            const navInicio = document.getElementById('nav-inicio');
+            if (navInicio) navInicio.classList.add('active');
+        }
+        if(screenId === 'alerta-sos' || screenId === 'alerta-familiar' || screenId === 'historial-alertas') {
+            const navAlertas = document.getElementById('nav-alertas');
+            if (navAlertas) navAlertas.classList.add('active');
+        }
+        window.scrollTo(0, 0);
+    }
+</script>
+</body>
+</html>
