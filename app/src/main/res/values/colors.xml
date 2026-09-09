@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="background_gray">#F5F5F7</color>
+    <color name="card_white">#FFFFFF</color>
+    <color name="text_primary">#1C1C1E</color>
+    <color name="text_secondary">#8E8E93</color>
+    <color name="teal_primary">#2563EB</color>
+    <color name="teal_dark">#1E40AF</color>
+    <color name="teal_light">#DBEAFE</color>
+    <color name="green_success">#0284C7</color>
+    <color name="red_alert_bg">#FCEAEA</color>
+    <color name="red_alert_text">#E0524F</color>
+    <color name="medication_bg">#E0F2FE</color>
+    <color name="medication_text">#1E3A8A</color>
+</resources>
