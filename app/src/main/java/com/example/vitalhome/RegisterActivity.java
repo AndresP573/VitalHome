@@ -5,19 +5,12 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 public class RegisterActivity extends AppCompatActivity {
-
-    // Declaramos las variables para los elementos de la pantalla
-    private EditText etNombre, etEmail, etPassword;
-    private RadioGroup rgRol;
-    private Button btnRegister;
-    private TextView tvGoToLogin;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,12 +19,12 @@ public class RegisterActivity extends AppCompatActivity {
         setContentView(R.layout.activity_register);
 
         // Enlazamos las variables de Java con los IDs del XML
-        etNombre = findViewById(R.id.etNombreRegister);
-        etEmail = findViewById(R.id.etEmailRegister);
-        etPassword = findViewById(R.id.etPasswordRegister);
-        rgRol = findViewById(R.id.rgRol);
-        btnRegister = findViewById(R.id.btnRegister);
-        tvGoToLogin = findViewById(R.id.tvGoToLogin);
+        EditText etNombre = findViewById(R.id.etNombreRegister);
+        EditText etEmail = findViewById(R.id.etEmailRegister);
+        EditText etPassword = findViewById(R.id.etPasswordRegister);
+        RadioGroup rgRol = findViewById(R.id.rgRol);
+        Button btnRegister = findViewById(R.id.btnRegister);
+        TextView tvGoToLogin = findViewById(R.id.tvGoToLogin);
 
         // Acción para el botón "Registrarse"
         btnRegister.setOnClickListener(v -> {
@@ -40,9 +33,11 @@ public class RegisterActivity extends AppCompatActivity {
             String email = etEmail.getText().toString().trim();
             String password = etPassword.getText().toString().trim();
             
-            String rol = "cuidador";
+            String rol;
             if (rgRol.getCheckedRadioButtonId() == R.id.rbCliente) {
                 rol = "cliente";
+            } else {
+                rol = "cuidador";
             }
 
             // Validamos que no haya dejado campos vacíos
@@ -59,13 +54,17 @@ public class RegisterActivity extends AppCompatActivity {
                 editor.putBoolean("isLoggedIn", true); // Auto-login al registrarse
                 
                 // Algoritmo para guardar el nombre del Adulto Mayor en la Pulsera
-                if (rol.equals("cliente")) {
-                    editor.putString("nombreAdultoMayor", nombre);
-                } else {
-                    // Si es cuidador, podemos poner un nombre por defecto si no hay uno guardado
-                    if (!prefs.contains("nombreAdultoMayor")) {
-                        editor.putString("nombreAdultoMayor", "Mi Familiar");
-                    }
+                switch (rol) {
+                    case "cliente":
+                        editor.putString("nombreAdultoMayor", nombre);
+                        break;
+                    case "cuidador":
+                    default:
+                        // Si es cuidador, podemos poner un nombre por defecto si no hay uno guardado
+                        if (!prefs.contains("nombreAdultoMayor")) {
+                            editor.putString("nombreAdultoMayor", "Mi Familiar");
+                        }
+                        break;
                 }
                 
                 editor.apply();
