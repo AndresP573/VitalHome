@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/nav_dashboard">
+
+    <fragment
+        android:id="@+id/nav_dashboard"
+        android:name="com.example.vitalhome.DashboardCuidadorFragment"
+        android:label="Inicio"
+        tools:layout="@layout/fragment_dashboard_cuidador" />
+
+    <fragment
+        android:id="@+id/nav_dashboard_cliente"
+        android:name="com.example.vitalhome.DashboardClienteFragment"
+        android:label="Inicio Cliente"
+        tools:layout="@layout/fragment_dashboard_cliente" />
+
+    <fragment
+        android:id="@+id/nav_medicamentos"
+        android:name="com.example.vitalhome.MedicamentosFragment"
+        android:label="Medicinas"
+        tools:layout="@layout/fragment_medicamentos" />
+
+    <fragment
+        android:id="@+id/nav_alertas"
+        android:name="com.example.vitalhome.AlertasFragment"
+        android:label="Alertas"
+        tools:layout="@layout/fragment_alertas" />
+
+    <fragment
+        android:id="@+id/nav_pulsera"
+        android:name="com.example.vitalhome.PulseraFragment"
+        android:label="Pulsera"
+        tools:layout="@layout/fragment_pulsera" />
+
+    <fragment
+        android:id="@+id/nav_hogar"
+        android:name="com.example.vitalhome.HogarFragment"
+        android:label="Hogar"
+        tools:layout="@layout/fragment_hogar" />
+
+    <fragment
+        android:id="@+id/nav_sos"
+        android:name="com.example.vitalhome.SosFragment"
+        android:label="SOS"
+        tools:layout="@layout/fragment_sos" />
+
+    <fragment
+        android:id="@+id/nav_historial_medico"
+        android:name="com.example.vitalhome.HistorialMedicoFragment"
+        android:label="Historial Medico"
+        tools:layout="@layout/fragment_historial_medico" />
+
+</navigation>

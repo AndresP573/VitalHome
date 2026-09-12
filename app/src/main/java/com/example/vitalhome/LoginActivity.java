@@ -5,131 +5,64 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.biometric.BiometricPrompt;
-import androidx.core.content.ContextCompat;
-
-import java.util.Objects;
-import java.util.concurrent.Executor;
 
 public class LoginActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        // REVISAR SI YA INICIÓ SESIÓN ANTES
-        SharedPreferences prefs = getSharedPreferences("VitalHomePrefs", MODE_PRIVATE);
-        boolean isLoggedIn = prefs.getBoolean("isLoggedIn", false);
-
-        if (isLoggedIn) {
-            // Saltamos directamente al Dashboard
-            startActivity(new Intent(LoginActivity.this, MainActivity.class));
-            finish();
-            return;
-        }
-
-        // Le indicamos que use el diseño XML del login
         setContentView(R.layout.activity_login);
 
-        // Enlazamos las variables con los IDs del XML
-        EditText etEmail = findViewById(R.id.etEmailLogin);
-        EditText etPassword = findViewById(R.id.etPasswordLogin);
-        Button btnLogin = findViewById(R.id.btnLogin);
-        TextView tvGoToRegister = findViewById(R.id.tvGoToRegister);
+        SharedPreferences p = getSharedPreferences("VitalHomePrefs", MODE_PRIVATE);
+        EditText inMail = findViewById(R.id.etEmailLogin);
+        EditText inPass = findViewById(R.id.etPasswordLogin);
+        RadioGroup selPerfil = findViewById(R.id.rgLoginRole);
+        Button btnEntrar = findViewById(R.id.btnLogin);
+        TextView btnGoReg = findViewById(R.id.tvGoToRegister);
 
-        // Pre-rellenar el email si existe
-        String savedEmail = prefs.getString("email", "");
-        if (!savedEmail.isEmpty()) {
-            etEmail.setText(savedEmail);
-        }
-
-        // Configuración de Biometría
-        Executor executor = ContextCompat.getMainExecutor(this);
-        BiometricPrompt biometricPrompt = new BiometricPrompt(LoginActivity.this,
-                executor, new BiometricPrompt.AuthenticationCallback() {
-            @Override
-            public void onAuthenticationError(int errorCode,
-                                              @NonNull CharSequence errString) {
-                super.onAuthenticationError(errorCode, errString);
-                Toast.makeText(getApplicationContext(),
-                        "Error de autenticación: " + errString, Toast.LENGTH_SHORT)
-                        .show();
-            }
-
-            @Override
-            public void onAuthenticationSucceeded(
-                    @NonNull BiometricPrompt.AuthenticationResult result) {
-                super.onAuthenticationSucceeded(result);
-                // Si la huella es correcta, iniciamos sesión
-                SharedPreferences.Editor editor = prefs.edit();
-                editor.putBoolean("isLoggedIn", true);
-                editor.apply();
-
-                Toast.makeText(getApplicationContext(),
-                        "¡Acceso concedido!", Toast.LENGTH_SHORT).show();
-                startActivity(new Intent(LoginActivity.this, MainActivity.class));
-                finish();
-            }
-
-            @Override
-            public void onAuthenticationFailed() {
-                super.onAuthenticationFailed();
-                Toast.makeText(getApplicationContext(), "Huella no reconocida",
-                        Toast.LENGTH_SHORT).show();
-            }
+        // Listener para cambiar el mail apenas se toca un perfil
+        selPerfil.setOnCheckedChangeListener((group, id) -> {
+            String key = (id == R.id.rbLoginAdulto) ? "email_cliente" : "email_cuidador";
+            String m = p.getString(key, p.getString("email", ""));
+            inMail.setText(m);
         });
 
-        BiometricPrompt.PromptInfo promptInfo = new BiometricPrompt.PromptInfo.Builder()
-                .setTitle("Acceso Biométrico")
-                .setSubtitle("Usa tu huella para entrar a VitalHome")
-                .setNegativeButtonText("Usar contraseña")
-                .build();
+        // Carga inicial
+        int actualId = selPerfil.getCheckedRadioButtonId();
+        String k = (actualId == R.id.rbLoginAdulto) ? "email_cliente" : "email_cuidador";
+        inMail.setText(p.getString(k, p.getString("email", "")));
 
-        // Autenticación automática si ya está registrado
-        if (!savedEmail.isEmpty()) {
-            biometricPrompt.authenticate(promptInfo);
-        }
+        btnEntrar.setOnClickListener(v -> {
+            String mail = inMail.getText().toString().trim();
+            String pass = inPass.getText().toString().trim();
+            
+            String role = (selPerfil.getCheckedRadioButtonId() == R.id.rbLoginAdulto) ? "cliente" : "cuidador";
+            String passOk = p.getString("password", "");
 
-        // Acción para el botón de Iniciar Sesión
-        btnLogin.setOnClickListener(v -> {
-            String emailInput = etEmail.getText().toString().trim();
-            String passInput = etPassword.getText().toString().trim();
+            if (mail.isEmpty() || pass.isEmpty()) {
+                Toast.makeText(this, "Completá los datos che", Toast.LENGTH_SHORT).show();
+                return;
+            }
 
-            // Abrimos SharedPreferences para leer los datos que guardamos en el Registro
-            String savedPass = prefs.getString("password", "");
-            String registeredEmail = prefs.getString("email", "");
-
-            // Validamos las credenciales
-            if (emailInput.isEmpty() || passInput.isEmpty()) {
-                Toast.makeText(LoginActivity.this, "Ingresá tus datos", Toast.LENGTH_SHORT).show();
-            } else if (Objects.equals(emailInput, registeredEmail) && Objects.equals(passInput, savedPass)) {
-                // Guardamos que el usuario ya inició sesión
-                SharedPreferences.Editor editor = prefs.edit();
-                editor.putBoolean("isLoggedIn", true);
-                editor.apply();
-
-                Toast.makeText(LoginActivity.this, "¡Bienvenido de nuevo!", Toast.LENGTH_SHORT).show();
-
-                // Login exitoso: saltamos a la MainActivity (donde está tu WebView con el HTML)
-                Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-                startActivity(intent);
-
-                // Cerramos esta pantalla para que el usuario no vuelva al login si toca el botón de "Atrás"
+            if (pass.equals(passOk)) {
+                SharedPreferences.Editor edit = p.edit();
+                edit.putBoolean("isLoggedIn", true);
+                edit.putString("rol", role);
+                edit.putString("email", mail);
+                edit.putString(role.equals("cliente") ? "email_cliente" : "email_cuidador", mail);
+                edit.apply();
+                
+                startActivity(new Intent(this, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
                 finish();
             } else {
-                Toast.makeText(LoginActivity.this, "Correo o contraseña incorrectos", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Pass incorrecta", Toast.LENGTH_SHORT).show();
             }
         });
 
-        // Acción para el texto "¿No tenés cuenta?"
-        tvGoToRegister.setOnClickListener(v -> {
-            // Navegamos a la pantalla de Registro
-            Intent intent = new Intent(LoginActivity.this, RegisterActivity.class);
-            startActivity(intent);
-        });
+        btnGoReg.setOnClickListener(v -> startActivity(new Intent(this, RegisterActivity.class)));
     }
 }

@@ -15,73 +15,58 @@ public class RegisterActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // Le decimos a Java que use el diseño que creaste recién
         setContentView(R.layout.activity_register);
 
-        // Enlazamos las variables de Java con los IDs del XML
-        EditText etNombre = findViewById(R.id.etNombreRegister);
-        EditText etEmail = findViewById(R.id.etEmailRegister);
-        EditText etPassword = findViewById(R.id.etPasswordRegister);
-        RadioGroup rgRol = findViewById(R.id.rgRol);
-        Button btnRegister = findViewById(R.id.btnRegister);
-        TextView tvGoToLogin = findViewById(R.id.tvGoToLogin);
+        EditText inNombre = findViewById(R.id.etNombreRegister);
+        EditText inEmail = findViewById(R.id.etEmailRegister);
+        EditText inPass = findViewById(R.id.etPasswordRegister);
+        RadioGroup selRol = findViewById(R.id.rgRol);
+        Button btnOk = findViewById(R.id.btnRegister);
+        TextView btnLogin = findViewById(R.id.tvGoToLogin);
 
-        // Acción para el botón "Registrarse"
-        btnRegister.setOnClickListener(v -> {
-            // Obtenemos el texto que escribió el usuario
-            String nombre = etNombre.getText().toString().trim();
-            String email = etEmail.getText().toString().trim();
-            String password = etPassword.getText().toString().trim();
+        btnOk.setOnClickListener(v -> {
+            String n = inNombre.getText().toString().trim();
+            String e = inEmail.getText().toString().trim();
+            String p = inPass.getText().toString().trim();
             
-            String rol;
-            if (rgRol.getCheckedRadioButtonId() == R.id.rbCliente) {
-                rol = "cliente";
-            } else {
-                rol = "cuidador";
+            String role = (selRol.getCheckedRadioButtonId() == R.id.rbCliente) ? "cliente" : "cuidador";
+
+            if (n.isEmpty() || e.isEmpty() || p.isEmpty()) {
+                Toast.makeText(this, "Completá todo por favor", Toast.LENGTH_SHORT).show();
+                return;
             }
 
-            // Validamos que no haya dejado campos vacíos
-            if (nombre.isEmpty() || email.isEmpty() || password.isEmpty()) {
-                Toast.makeText(RegisterActivity.this, "Por favor completa todos los campos", Toast.LENGTH_SHORT).show();
+            SharedPreferences prefs = getSharedPreferences("VitalHomePrefs", MODE_PRIVATE);
+            SharedPreferences.Editor edit = prefs.edit();
+            
+            // Guardamos el mail para que el login lo recuerde
+            edit.putString("email", e);
+            if (role.equals("cliente")) {
+                edit.putString("email_cliente", e);
             } else {
-                // Usamos SharedPreferences para guardar los datos en el celular como si fuera una mini base de datos
-                SharedPreferences prefs = getSharedPreferences("VitalHomePrefs", MODE_PRIVATE);
-                SharedPreferences.Editor editor = prefs.edit();
-                editor.putString("nombre", nombre);
-                editor.putString("email", email);
-                editor.putString("password", password);
-                editor.putString("rol", rol);
-                editor.putBoolean("isLoggedIn", true); // Auto-login al registrarse
-                
-                // Algoritmo para guardar el nombre del Adulto Mayor en la Pulsera
-                switch (rol) {
-                    case "cliente":
-                        editor.putString("nombreAdultoMayor", nombre);
-                        break;
-                    case "cuidador":
-                    default:
-                        // Si es cuidador, podemos poner un nombre por defecto si no hay uno guardado
-                        if (!prefs.contains("nombreAdultoMayor")) {
-                            editor.putString("nombreAdultoMayor", "Mi Familiar");
-                        }
-                        break;
-                }
-                
-                editor.apply();
-
-                Toast.makeText(RegisterActivity.this, "¡Registro exitoso!", Toast.LENGTH_SHORT).show();
-
-                // Navegamos directamente al Dashboard (MainActivity)
-                Intent intent = new Intent(RegisterActivity.this, MainActivity.class);
-                startActivity(intent);
-                finish();
+                edit.putString("email_cuidador", e);
             }
+            
+            edit.putString("password", p);
+            edit.putString("rol", role);
+            edit.putBoolean("isLoggedIn", true); 
+            
+            if (role.equals("cliente")) {
+                edit.putString("nombreAdultoMayor", n);
+            } else if (!prefs.contains("nombreAdultoMayor")) {
+                edit.putString("nombreAdultoMayor", "Mi Familiar");
+            }
+            
+            edit.apply();
+            
+            Intent intent = new Intent(this, MainActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            finish();
         });
 
-        // Acción para el texto "¿Ya tenés cuenta?"
-        tvGoToLogin.setOnClickListener(v -> {
-            Intent intent = new Intent(RegisterActivity.this, LoginActivity.class);
-            startActivity(intent);
+        btnLogin.setOnClickListener(v -> {
+            startActivity(new Intent(this, LoginActivity.class));
             finish();
         });
     }
