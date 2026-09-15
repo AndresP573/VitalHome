@@ -1,7 +1,7 @@
-package com.example.vitalhome;
+package com.example.vitalhome.modelo;
 
 public class AlertEvent {
-    private String tipo; // SOS, SALUD, MOVIMIENTO, MEDICINA
+    private String tipo;
     private String data;
     private String loc;
     private String hora;

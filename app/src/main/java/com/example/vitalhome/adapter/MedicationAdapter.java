@@ -1,4 +1,4 @@
-package com.example.vitalhome;
+package com.example.vitalhome.adapter;
 
 import android.graphics.Color;
 import android.view.LayoutInflater;
@@ -9,21 +9,23 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
+import com.example.vitalhome.R;
+import com.example.vitalhome.modelo.Medication;
 import java.util.List;
 
 public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.MedViewHolder> {
 
-    private List<Medication> list;
-    private boolean isClient;
-    private OnMedClickListener listener;
+    private List<Medication> plan;
+    private boolean esAbuelo;
+    private AccionesMed listener;
 
-    public interface OnMedClickListener {
-        void onTakeClick(Medication m);
+    public interface AccionesMed {
+        void tomar(Medication m);
     }
 
-    public MedicationAdapter(List<Medication> list, boolean isClient, OnMedClickListener listener) {
-        this.list = list;
-        this.isClient = isClient;
+    public MedicationAdapter(List<Medication> plan, boolean esAbuelo, AccionesMed listener) {
+        this.plan = plan;
+        this.esAbuelo = esAbuelo;
         this.listener = listener;
     }
 
@@ -35,10 +37,10 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
     }
 
     @Override
-    public void onBindViewHolder(@NonNull MedViewHolder holder, int position) {
-        Medication m = list.get(position);
-        holder.name.setText(m.getNombre());
-        holder.name.setTextColor(ContextCompat.getColor(holder.itemView.getContext(), R.color.primaryDark));
+    public void onBindViewHolder(@NonNull MedViewHolder holder, int pos) {
+        Medication m = plan.get(pos);
+        holder.txt.setText(m.getNombre());
+        holder.txt.setTextColor(ContextCompat.getColor(holder.itemView.getContext(), R.color.primaryDark));
         
         if (m.isTaken()) {
             holder.badge.setText("Tomado");
@@ -50,10 +52,10 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
             holder.badge.setBackgroundColor(Color.parseColor("#FFF9E6"));
             holder.badge.setTextColor(Color.parseColor("#D97706"));
             
-            if (isClient) {
+            if (esAbuelo) {
                 holder.btn.setVisibility(View.VISIBLE);
                 holder.btn.setOnClickListener(v -> {
-                    if (listener != null) listener.onTakeClick(m);
+                    if (listener != null) listener.tomar(m);
                 });
             } else {
                 holder.btn.setVisibility(View.GONE);
@@ -62,14 +64,14 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
     }
 
     @Override
-    public int getItemCount() { return list.size(); }
+    public int getItemCount() { return plan.size(); }
 
     static class MedViewHolder extends RecyclerView.ViewHolder {
-        TextView name, badge;
+        TextView txt, badge;
         Button btn;
         public MedViewHolder(@NonNull View itemView) {
             super(itemView);
-            name = itemView.findViewById(R.id.tvMedName);
+            txt = itemView.findViewById(R.id.tvMedName);
             badge = itemView.findViewById(R.id.tvMedBadge);
             btn = itemView.findViewById(R.id.btnTakeMed);
         }

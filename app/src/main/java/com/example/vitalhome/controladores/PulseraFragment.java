@@ -1,4 +1,4 @@
-package com.example.vitalhome;
+package com.example.vitalhome.controladores;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -11,6 +11,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
+import com.example.vitalhome.R;
 import org.json.JSONObject;
 
 public class PulseraFragment extends Fragment {

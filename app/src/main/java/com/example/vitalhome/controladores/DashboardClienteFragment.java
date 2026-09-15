@@ -1,4 +1,4 @@
-package com.example.vitalhome;
+package com.example.vitalhome.controladores;
 
 import android.app.AlertDialog;
 import android.content.Context;
@@ -15,13 +15,17 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
+import com.example.vitalhome.R;
+import com.example.vitalhome.adapter.MedicationAdapter;
+import com.example.vitalhome.modelo.AlertEvent;
+import com.example.vitalhome.modelo.Medication;
 import org.json.JSONObject;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-public class DashboardClienteFragment extends Fragment {
+public class DashboardClienteFragment extends Fragment implements MedicationAdapter.AccionesMed {
 
     private AppRepo repo;
     private TextView lblPulso, lblOxigeno;
@@ -41,17 +45,24 @@ public class DashboardClienteFragment extends Fragment {
         lblOxigeno = v.findViewById(R.id.tvOxigenoCliente);
         listadoMeds = v.findViewById(R.id.containerRemedios);
 
-        refrescarSignos();
-        armarListaMeds();
-        setOnClickListeners(v, name);
-
         return v;
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        refrescarSignos();
+        armarListaMeds();
+        if (getView() != null) {
+            SharedPreferences p = requireContext().getSharedPreferences("VitalHomePrefs", Context.MODE_PRIVATE);
+            setOnClickListeners(getView(), p.getString("nombreAdultoMayor", "Usuario"));
+        }
+    }
+
     private void armarListaMeds() {
+        if (listadoMeds == null) return;
         listadoMeds.removeAllViews();
-        List<Medication> items = repo.cargarPlanMedico();
-        
+        List<Medication> items = repo.getMeds();
         items.sort((m1, m2) -> Boolean.compare(m2.isTaken(), m1.isTaken()));
         
         for (Medication m : items) {
@@ -66,16 +77,25 @@ public class DashboardClienteFragment extends Fragment {
                 btn.setVisibility(View.GONE);
             } else {
                 badge.setText(m.getHora());
-                btn.setOnClickListener(click -> {
-                    m.setTaken(true);
-                    repo.guardarPlanMedico(items);
-                    repo.registrarNuevoEvento(new AlertEvent("MEDICINA", "Tomó " + m.getNombre(), "Casa", getTime()));
-                    armarListaMeds();
-                    Toast.makeText(requireContext(), "¡Bien hecho!", Toast.LENGTH_SHORT).show();
-                });
+                btn.setOnClickListener(click -> tomar(m));
             }
             listadoMeds.addView(row);
         }
+    }
+
+    @Override
+    public void tomar(Medication m) {
+        List<Medication> items = repo.getMeds();
+        for (Medication item : items) {
+            if (item.getId().equals(m.getId())) {
+                item.setTaken(true);
+                break;
+            }
+        }
+        repo.saveMeds(items);
+        repo.addEvent(new AlertEvent("MEDICINA", "Tomó " + m.getNombre(), "Casa", getTime()));
+        armarListaMeds();
+        Toast.makeText(requireContext(), "Listo!", Toast.LENGTH_SHORT).show();
     }
 
     private void refrescarSignos() {
@@ -90,8 +110,8 @@ public class DashboardClienteFragment extends Fragment {
 
     private void setOnClickListeners(View v, String abuelo) {
         v.findViewById(R.id.btnSOS).setOnClickListener(view -> {
-            NotificationHelper.enviarAlertaSOS(requireContext(), abuelo);
-            repo.registrarNuevoEvento(new AlertEvent("SOS", "Ayuda urgente", "Habitación", getTime()));
+            NotificationHelper.sendSOS(requireContext(), abuelo);
+            repo.addEvent(new AlertEvent("SOS", "Ayuda urgente", "Habitación", getTime()));
             Navigation.findNavController(view).navigate(R.id.nav_sos);
         });
 
@@ -100,7 +120,7 @@ public class DashboardClienteFragment extends Fragment {
             int o = (int) (Math.random() * 5 + 95);
             String pres = (int)(Math.random()*25+110) + "/" + (int)(Math.random()*15+70);
             
-            repo.registrarNuevoEvento(new AlertEvent("SALUD", "Control: " + p + " LPM", "Casa", getTime()));
+            repo.addEvent(new AlertEvent("SALUD", "Control: " + p + " LPM", "Casa", getTime()));
             
             requireContext().getSharedPreferences("VitalHomePrefs", Context.MODE_PRIVATE).edit()
                 .putString("ultimos_vitals", "{\"pulso\":" + p + ",\"oxig\":" + o + ",\"pres\":\"" + pres + "\"}").apply();

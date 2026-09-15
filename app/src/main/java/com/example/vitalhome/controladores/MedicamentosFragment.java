@@ -1,6 +1,8 @@
-package com.example.vitalhome;
+package com.example.vitalhome.controladores;
 
 import android.app.TimePickerDialog;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,11 +16,17 @@ import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import com.example.vitalhome.R;
+import com.example.vitalhome.adapter.MedicationAdapter;
+import com.example.vitalhome.modelo.AlertEvent;
+import com.example.vitalhome.modelo.Medication;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-public class MedicamentosFragment extends Fragment {
+public class MedicamentosFragment extends Fragment implements MedicationAdapter.AccionesMed {
 
     private AppRepo repo;
     private MedicationAdapter adapter;
@@ -50,12 +58,14 @@ public class MedicamentosFragment extends Fragment {
     private void initList(View v) {
         RecyclerView rv = v.findViewById(R.id.rvMedicamentos);
         rv.setLayoutManager(new LinearLayoutManager(requireContext()));
-        plan = repo.cargarPlanMedico();
+        plan = repo.getMeds();
         
-        // Pila: tomados arriba
         plan.sort((m1, m2) -> Boolean.compare(m2.isTaken(), m1.isTaken()));
         
-        adapter = new MedicationAdapter(plan, false, null);
+        SharedPreferences p = requireContext().getSharedPreferences("VitalHomePrefs", Context.MODE_PRIVATE);
+        boolean isAbuelo = "cliente".equals(p.getString("rol", "cuidador"));
+
+        adapter = new MedicationAdapter(plan, isAbuelo, this);
         rv.setAdapter(adapter);
     }
 
@@ -77,14 +87,27 @@ public class MedicamentosFragment extends Fragment {
 
         Medication nuevo = new Medication("" + System.currentTimeMillis(), n, h);
         plan.add(0, nuevo);
-        
         plan.sort((m1, m2) -> Boolean.compare(m2.isTaken(), m1.isTaken()));
         
-        repo.guardarPlanMedico(plan);
+        repo.saveMeds(plan);
         adapter.notifyDataSetChanged();
         
         txtNombre.setText("");
         txtHora.setText("");
         Toast.makeText(requireContext(), "Guardado", Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void tomar(Medication m) {
+        m.setTaken(true);
+        repo.saveMeds(plan);
+        repo.addEvent(new AlertEvent("MEDICINA", "Tomó " + m.getNombre(), "Casa", getTime()));
+        plan.sort((m1, m2) -> Boolean.compare(m2.isTaken(), m1.isTaken()));
+        adapter.notifyDataSetChanged();
+        Toast.makeText(requireContext(), "Registrado", Toast.LENGTH_SHORT).show();
+    }
+
+    private String getTime() {
+        return new SimpleDateFormat("HH:mm", Locale.getDefault()).format(new Date());
     }
 }

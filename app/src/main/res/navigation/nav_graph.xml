@@ -7,49 +7,49 @@
 
     <fragment
         android:id="@+id/nav_dashboard"
-        android:name="com.example.vitalhome.DashboardCuidadorFragment"
+        android:name="com.example.vitalhome.controladores.DashboardCuidadorFragment"
         android:label="Inicio"
         tools:layout="@layout/fragment_dashboard_cuidador" />
 
     <fragment
         android:id="@+id/nav_dashboard_cliente"
-        android:name="com.example.vitalhome.DashboardClienteFragment"
+        android:name="com.example.vitalhome.controladores.DashboardClienteFragment"
         android:label="Inicio Cliente"
         tools:layout="@layout/fragment_dashboard_cliente" />
 
     <fragment
         android:id="@+id/nav_medicamentos"
-        android:name="com.example.vitalhome.MedicamentosFragment"
+        android:name="com.example.vitalhome.controladores.MedicamentosFragment"
         android:label="Medicinas"
         tools:layout="@layout/fragment_medicamentos" />
 
     <fragment
         android:id="@+id/nav_alertas"
-        android:name="com.example.vitalhome.AlertasFragment"
+        android:name="com.example.vitalhome.controladores.AlertasFragment"
         android:label="Alertas"
         tools:layout="@layout/fragment_alertas" />
 
     <fragment
         android:id="@+id/nav_pulsera"
-        android:name="com.example.vitalhome.PulseraFragment"
+        android:name="com.example.vitalhome.controladores.PulseraFragment"
         android:label="Pulsera"
         tools:layout="@layout/fragment_pulsera" />
 
     <fragment
         android:id="@+id/nav_hogar"
-        android:name="com.example.vitalhome.HogarFragment"
+        android:name="com.example.vitalhome.controladores.HogarFragment"
         android:label="Hogar"
         tools:layout="@layout/fragment_hogar" />
 
     <fragment
         android:id="@+id/nav_sos"
-        android:name="com.example.vitalhome.SosFragment"
+        android:name="com.example.vitalhome.controladores.SosFragment"
         android:label="SOS"
         tools:layout="@layout/fragment_sos" />
 
     <fragment
         android:id="@+id/nav_historial_medico"
-        android:name="com.example.vitalhome.HistorialMedicoFragment"
+        android:name="com.example.vitalhome.controladores.HistorialMedicoFragment"
         android:label="Historial Medico"
         tools:layout="@layout/fragment_historial_medico" />
 

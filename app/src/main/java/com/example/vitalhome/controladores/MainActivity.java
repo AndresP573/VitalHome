@@ -1,13 +1,13 @@
-package com.example.vitalhome;
+package com.example.vitalhome.controladores;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.ImageButton;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
+import com.example.vitalhome.R;
 
 public class MainActivity extends AppCompatActivity {
 

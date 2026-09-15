@@ -1,4 +1,4 @@
-package com.example.vitalhome;
+package com.example.vitalhome.controladores;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -10,6 +10,9 @@ import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import com.example.vitalhome.R;
+import com.example.vitalhome.adapter.MedicalRecordAdapter;
+import com.example.vitalhome.modelo.MedicalRecord;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,9 +21,9 @@ public class HistorialMedicoFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_historial_medico, container, false);
+        View v = inflater.inflate(R.layout.fragment_historial_medico, container, false);
 
-        RecyclerView rv = view.findViewById(R.id.rvHistorialMedico);
+        RecyclerView rv = v.findViewById(R.id.rvHistorialMedico);
         rv.setLayoutManager(new LinearLayoutManager(requireContext()));
         
         List<MedicalRecord> data = new ArrayList<>();
@@ -31,10 +34,10 @@ public class HistorialMedicoFragment extends Fragment {
 
         rv.setAdapter(new MedicalRecordAdapter(data));
 
-        view.findViewById(R.id.btnVolverHistorial).setOnClickListener(v -> 
-            Navigation.findNavController(v).navigate(R.id.nav_dashboard)
+        v.findViewById(R.id.btnVolverHistorial).setOnClickListener(view -> 
+            Navigation.findNavController(view).navigate(R.id.nav_dashboard)
         );
 
-        return view;
+        return v;
     }
 }

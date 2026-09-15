@@ -1,4 +1,4 @@
-package com.example.vitalhome;
+package com.example.vitalhome.modelo;
 
 public class Medication {
     private String id;

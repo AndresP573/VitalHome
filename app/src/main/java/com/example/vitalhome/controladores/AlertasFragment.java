@@ -1,4 +1,4 @@
-package com.example.vitalhome;
+package com.example.vitalhome.controladores;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -11,6 +11,9 @@ import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import com.example.vitalhome.R;
+import com.example.vitalhome.adapter.AlertAdapter;
+import com.example.vitalhome.modelo.AlertEvent;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,7 +28,7 @@ public class AlertasFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.fragment_alertas, container, false);
         repo = new AppRepo(requireContext());
-        lista = repo.cargarHistorial();
+        lista = repo.getEvents();
 
         RecyclerView rv = v.findViewById(R.id.rvAlertas);
         rv.setLayoutManager(new LinearLayoutManager(requireContext()));
@@ -34,9 +37,9 @@ public class AlertasFragment extends Fragment {
 
         v.findViewById(R.id.btnBorrarTodo).setOnClickListener(x -> {
             lista.clear();
-            repo.guardarHistorial(new ArrayList<>());
+            repo.saveEvents(new ArrayList<>());
             adapter.notifyDataSetChanged();
-            Toast.makeText(requireContext(), "Historial limpio", Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), "Limpio", Toast.LENGTH_SHORT).show();
         });
 
         v.findViewById(R.id.btnVolverAlertas).setOnClickListener(x -> 

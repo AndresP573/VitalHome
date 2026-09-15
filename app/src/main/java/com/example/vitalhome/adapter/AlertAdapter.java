@@ -1,4 +1,4 @@
-package com.example.vitalhome;
+package com.example.vitalhome.adapter;
 
 import android.graphics.Color;
 import android.view.LayoutInflater;
@@ -8,15 +8,17 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
+import com.example.vitalhome.R;
+import com.example.vitalhome.modelo.AlertEvent;
 import com.google.android.material.card.MaterialCardView;
 import java.util.List;
 
 public class AlertAdapter extends RecyclerView.Adapter<AlertAdapter.AlertViewHolder> {
 
-    private List<AlertEvent> list;
+    private List<AlertEvent> lista;
 
-    public AlertAdapter(List<AlertEvent> list) {
-        this.list = list;
+    public AlertAdapter(List<AlertEvent> lista) {
+        this.lista = lista;
     }
 
     @NonNull
@@ -27,8 +29,8 @@ public class AlertAdapter extends RecyclerView.Adapter<AlertAdapter.AlertViewHol
     }
 
     @Override
-    public void onBindViewHolder(@NonNull AlertViewHolder holder, int position) {
-        AlertEvent ev = list.get(position);
+    public void onBindViewHolder(@NonNull AlertViewHolder holder, int pos) {
+        AlertEvent ev = lista.get(pos);
         
         holder.title.setText(ev.getTipo());
         holder.title.setTextColor(ContextCompat.getColor(holder.itemView.getContext(), R.color.primaryDark));
@@ -36,29 +38,29 @@ public class AlertAdapter extends RecyclerView.Adapter<AlertAdapter.AlertViewHol
         holder.time.setText(ev.getHora());
         holder.time.setTextColor(ContextCompat.getColor(holder.itemView.getContext(), R.color.text_muted));
         
-        String body = (ev.getData() != null ? ev.getData() : "") + 
+        String txt = (ev.getData() != null ? ev.getData() : "") + 
                      (ev.getLoc() != null ? " 📍 " + ev.getLoc() : "");
-        holder.body.setText(body);
+        holder.body.setText(txt);
         holder.body.setTextColor(ContextCompat.getColor(holder.itemView.getContext(), R.color.text_main));
 
-        int color;
+        int col;
         if ("SOS".equals(ev.getTipo())) {
-            color = Color.RED;
+            col = Color.RED;
         } else if ("SALUD".equals(ev.getTipo())) {
-            color = Color.parseColor("#EF4444");
+            col = Color.parseColor("#EF4444");
         } else if ("MEDICINA".equals(ev.getTipo())) {
-            color = Color.parseColor("#10B981");
+            col = Color.parseColor("#10B981");
         } else {
-            color = Color.parseColor("#2F7CF6");
+            col = Color.parseColor("#2F7CF6");
         }
         
         holder.card.setStrokeWidth(4);
-        holder.card.setStrokeColor(color);
+        holder.card.setStrokeColor(col);
         holder.card.setCardBackgroundColor(Color.WHITE);
     }
 
     @Override
-    public int getItemCount() { return list.size(); }
+    public int getItemCount() { return lista.size(); }
 
     static class AlertViewHolder extends RecyclerView.ViewHolder {
         TextView title, body, time;

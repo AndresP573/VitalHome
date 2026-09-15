@@ -1,4 +1,4 @@
-package com.example.vitalhome;
+package com.example.vitalhome.controladores;
 
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -12,8 +12,12 @@ import androidx.core.app.NotificationManagerCompat;
 public class NotificationHelper {
     private static final String CANAL_SOS = "SOS_CHANNEL";
 
-    public static void enviarAlertaSOS(Context ctx, String quien) {
-        crearCanalSiFalta(ctx);
+    public static void sendSOS(Context ctx, String quien) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel c = new NotificationChannel(CANAL_SOS, "Alertas SOS", NotificationManager.IMPORTANCE_HIGH);
+            NotificationManager m = (NotificationManager) ctx.getSystemService(Context.NOTIFICATION_SERVICE);
+            if (m != null) m.createNotificationChannel(c);
+        }
         
         Intent i = new Intent(ctx, MainActivity.class);
         i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
@@ -31,13 +35,5 @@ public class NotificationHelper {
         try {
             NotificationManagerCompat.from(ctx).notify(1, n.build());
         } catch (SecurityException ignored) {}
-    }
-
-    private static void crearCanalSiFalta(Context ctx) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel c = new NotificationChannel(CANAL_SOS, "Alertas SOS", NotificationManager.IMPORTANCE_HIGH);
-            NotificationManager m = ctx.getSystemService(NotificationManager.class);
-            if (m != null) m.createNotificationChannel(c);
-        }
     }
 }
