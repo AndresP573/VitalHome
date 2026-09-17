@@ -53,4 +53,16 @@
         android:label="Historial Medico"
         tools:layout="@layout/fragment_historial_medico" />
 
+    <fragment
+        android:id="@+id/nav_sos_countdown"
+        android:name="com.example.vitalhome.controladores.SosCountdownFragment"
+        android:label="SOS Cuenta Regresiva"
+        tools:layout="@layout/fragment_sos_countdown" />
+
+    <fragment
+        android:id="@+id/nav_profile_medico"
+        android:name="com.example.vitalhome.controladores.ProfileMedicoFragment"
+        android:label="Perfil Medico"
+        tools:layout="@layout/fragment_profile_medico" />
+
 </navigation>

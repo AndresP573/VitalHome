@@ -49,12 +49,13 @@ public class MainActivity extends AppCompatActivity {
 
         findViewById(R.id.btnNavSalir).setOnClickListener(v -> {
             p.edit().putBoolean("isLoggedIn", false).apply();
-            finish();
+            finishAffinity();
+            System.exit(0);
         });
     }
 
     private void recargar() {
-        startActivity(new Intent(this, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
+        startActivity(new Intent(this, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK));
         finish();
     }
 }

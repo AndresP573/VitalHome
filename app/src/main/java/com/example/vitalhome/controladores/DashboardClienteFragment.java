@@ -45,6 +45,15 @@ public class DashboardClienteFragment extends Fragment implements MedicationAdap
         lblOxigeno = v.findViewById(R.id.tvOxigenoCliente);
         listadoMeds = v.findViewById(R.id.containerRemedios);
 
+        // Listeners de los nuevos sensores
+        v.findViewById(R.id.cardSensorFall).setOnClickListener(view -> 
+            Navigation.findNavController(view).navigate(R.id.nav_alertas)
+        );
+        
+        v.findViewById(R.id.cardSensorWater).setOnClickListener(view -> 
+            Navigation.findNavController(view).navigate(R.id.nav_alertas)
+        );
+
         return v;
     }
 
@@ -95,7 +104,7 @@ public class DashboardClienteFragment extends Fragment implements MedicationAdap
         repo.saveMeds(items);
         repo.addEvent(new AlertEvent("MEDICINA", "Tomó " + m.getNombre(), "Casa", getTime()));
         armarListaMeds();
-        Toast.makeText(requireContext(), "Listo!", Toast.LENGTH_SHORT).show();
+        Toast.makeText(requireContext(), "¡Registrado!", Toast.LENGTH_SHORT).show();
     }
 
     private void refrescarSignos() {
@@ -109,10 +118,9 @@ public class DashboardClienteFragment extends Fragment implements MedicationAdap
     }
 
     private void setOnClickListeners(View v, String abuelo) {
+        // Ahora el SOS lleva a la cuenta regresiva (de la rama BotonSOS)
         v.findViewById(R.id.btnSOS).setOnClickListener(view -> {
-            NotificationHelper.sendSOS(requireContext(), abuelo);
-            repo.addEvent(new AlertEvent("SOS", "Ayuda urgente", "Habitación", getTime()));
-            Navigation.findNavController(view).navigate(R.id.nav_sos);
+            Navigation.findNavController(view).navigate(R.id.nav_sos_countdown);
         });
 
         v.findViewById(R.id.btnMedirAhoraCliente).setOnClickListener(view -> {
@@ -139,6 +147,11 @@ public class DashboardClienteFragment extends Fragment implements MedicationAdap
             requireContext().getSharedPreferences("VitalHomePrefs", Context.MODE_PRIVATE).edit()
                 .putBoolean("isLoggedIn", false).apply();
             requireActivity().finish();
+        });
+
+        v.findViewById(R.id.btnCallCaregiver).setOnClickListener(view -> {
+            Toast.makeText(requireContext(), "Llamando a tu cuidador...", Toast.LENGTH_LONG).show();
+            // Aquí iría la lógica de Intent.ACTION_CALL si tuviéramos permisos
         });
     }
 
