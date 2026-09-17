@@ -39,7 +39,6 @@ public class RegisterActivity extends AppCompatActivity {
 
             SharedPreferences prefs = getSharedPreferences("VitalHomePrefs", MODE_PRIVATE);
             SharedPreferences.Editor edit = prefs.edit();
-            edit.putString("nombre", n);
             edit.putString("email", e);
             edit.putString(role.equals("cliente") ? "email_cliente" : "email_cuidador", e);
             edit.putString("password", p);
@@ -48,8 +47,11 @@ public class RegisterActivity extends AppCompatActivity {
             
             if (role.equals("cliente")) {
                 edit.putString("nombreAdultoMayor", n);
-            } else if (!prefs.contains("nombreAdultoMayor")) {
-                edit.putString("nombreAdultoMayor", "Mi Familiar");
+            } else {
+                edit.putString("nombre", n);
+                if (!prefs.contains("nombreAdultoMayor")) {
+                    edit.putString("nombreAdultoMayor", "Mi Familiar");
+                }
             }
             
             edit.apply();

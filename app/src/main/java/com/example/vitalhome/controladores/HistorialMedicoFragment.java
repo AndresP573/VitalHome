@@ -35,8 +35,13 @@ public class HistorialMedicoFragment extends Fragment {
         rv.setAdapter(new MedicalRecordAdapter(data));
 
         v.findViewById(R.id.btnVolverHistorial).setOnClickListener(view -> 
-            Navigation.findNavController(view).navigate(R.id.nav_dashboard)
+            requireActivity().getOnBackPressedDispatcher().onBackPressed()
         );
+
+        View arrowBack = v.findViewById(R.id.btnBackArrowHistorial);
+        if (arrowBack != null) {
+            arrowBack.setOnClickListener(x -> requireActivity().getOnBackPressedDispatcher().onBackPressed());
+        }
 
         return v;
     }

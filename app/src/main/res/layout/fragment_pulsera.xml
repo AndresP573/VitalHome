@@ -12,20 +12,38 @@
         android:orientation="vertical"
         android:padding="20dp">
 
-        <LinearLayout
+        <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingTop="32dp"
+            android:layout_marginTop="20dp"
             android:paddingBottom="16dp">
 
-            <TextView
+            <ImageButton
+                android:id="@+id/btnBackArrowPulsera"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_alignParentStart="true"
+                android:layout_centerVertical="true"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_arrow_back"
+                app:tint="#0A2E73"
+                android:contentDescription="Volver" />
+
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Signos Vitales"
-                android:textColor="#0A2E73"
-                android:textSize="28sp"
-                android:textStyle="bold" />
+                android:layout_toEndOf="@id/btnBackArrowPulsera"
+                android:layout_centerVertical="true"
+                android:layout_marginStart="8dp"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Signos Vitales"
+                    android:textColor="#0A2E73"
+                    android:textSize="28sp"
+                    android:textStyle="bold" />
 
             <TextView
                 android:layout_width="wrap_content"
@@ -34,6 +52,7 @@
                 android:textColor="#62708A"
                 android:textSize="17sp" />
         </LinearLayout>
+    </RelativeLayout>
 
         <!-- Card Frecuencia -->
         <com.google.android.material.card.MaterialCardView

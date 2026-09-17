@@ -10,6 +10,7 @@ constraintlayout = "2.2.2"
 biometric = "1.2.0-alpha05"
 navigation = "2.8.7"
 gson = "2.11.0"
+kotlinxSerialization = "1.11.0"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -23,6 +24,7 @@ biometric = { group = "androidx.biometric", name = "biometric", version.ref = "b
 navigation-fragment = { group = "androidx.navigation", name = "navigation-fragment", version.ref = "navigation" }
 navigation-ui = { group = "androidx.navigation", name = "navigation-ui", version.ref = "navigation" }
 gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
+kotlinx-serialization-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-core", version.ref = "kotlinxSerialization" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

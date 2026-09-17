@@ -47,8 +47,13 @@ public class MedicamentosFragment extends Fragment implements MedicationAdapter.
         btnAdd.setOnClickListener(x -> addMed());
         
         v.findViewById(R.id.btnVolverMeds).setOnClickListener(x -> 
-            Navigation.findNavController(x).navigate(R.id.nav_dashboard)
+            requireActivity().getOnBackPressedDispatcher().onBackPressed()
         );
+
+        View arrowBack = v.findViewById(R.id.btnBackArrowMeds);
+        if (arrowBack != null) {
+            arrowBack.setOnClickListener(x -> requireActivity().getOnBackPressedDispatcher().onBackPressed());
+        }
 
         initList(v);
 

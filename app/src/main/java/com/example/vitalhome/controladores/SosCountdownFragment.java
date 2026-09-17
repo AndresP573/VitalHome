@@ -38,6 +38,11 @@ public class SosCountdownFragment extends Fragment {
             enviarAlertaInmediata(view);
         });
 
+        v.findViewById(R.id.btnBackArrowSOS).setOnClickListener(view -> {
+            if (timer != null) timer.cancel();
+            Navigation.findNavController(view).navigateUp();
+        });
+
         startTimer(v);
 
         return v;
@@ -61,7 +66,7 @@ public class SosCountdownFragment extends Fragment {
         // Lógica de alerta
         AppRepo repo = new AppRepo(requireContext());
         String hora = new SimpleDateFormat("HH:mm", Locale.getDefault()).format(new Date());
-        repo.addEvent(new AlertEvent("SOS", "Emergencia confirmada", "Habitación", hora));
+        repo.addEvent(new AlertEvent("SOS", "Emergencia confirmada", "Casa", hora));
         
         NotificationHelper.sendSOS(requireContext(), "Familiar");
         

@@ -4,10 +4,12 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -31,30 +33,93 @@ public class DashboardClienteFragment extends Fragment implements MedicationAdap
     private TextView lblPulso, lblOxigeno;
     private LinearLayout listadoMeds;
 
+    // Contenedores de las pantallas divididas
+    private LinearLayout layoutInicio, layoutMedicamentos, layoutContactos;
+    private TextView tvTabInicioLabel, tvTabMedicamentosLabel, tvTabContactosLabel;
+
+    // Campos de contactos
+    private EditText etContactName1, etContactPhone1, etContactName2, etContactPhone2;
+    private SharedPreferences prefs;
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.fragment_dashboard_cliente, container, false);
         repo = new AppRepo(requireContext());
+        prefs = requireContext().getSharedPreferences("VitalHomePrefs", Context.MODE_PRIVATE);
 
-        SharedPreferences p = requireContext().getSharedPreferences("VitalHomePrefs", Context.MODE_PRIVATE);
-        String name = p.getString("nombreAdultoMayor", "Usuario");
-
+        String name = prefs.getString("nombreAdultoMayor", "Usuario");
         ((TextView)v.findViewById(R.id.tvSaludoCliente)).setText("Hola, " + name);
+
         lblPulso = v.findViewById(R.id.tvPulsoCliente);
         lblOxigeno = v.findViewById(R.id.tvOxigenoCliente);
         listadoMeds = v.findViewById(R.id.containerRemedios);
 
-        // Listeners de los nuevos sensores
-        v.findViewById(R.id.cardSensorFall).setOnClickListener(view -> 
-            Navigation.findNavController(view).navigate(R.id.nav_alertas)
-        );
-        
-        v.findViewById(R.id.cardSensorWater).setOnClickListener(view -> 
-            Navigation.findNavController(view).navigate(R.id.nav_alertas)
+        // Bindear secciones
+        layoutInicio = v.findViewById(R.id.layoutClienteInicio);
+        layoutMedicamentos = v.findViewById(R.id.layoutClienteMedicamentos);
+        layoutContactos = v.findViewById(R.id.layoutClienteContactos);
+
+        // Bindear etiquetas de pestañas
+        tvTabInicioLabel = v.findViewById(R.id.tvTabInicioLabel);
+        tvTabMedicamentosLabel = v.findViewById(R.id.tvTabMedicamentosLabel);
+        tvTabContactosLabel = v.findViewById(R.id.tvTabContactosLabel);
+
+        // Bindear campos de contactos
+        etContactName1 = v.findViewById(R.id.etContactName1);
+        etContactPhone1 = v.findViewById(R.id.etContactPhone1);
+        etContactName2 = v.findViewById(R.id.etContactName2);
+        etContactPhone2 = v.findViewById(R.id.etContactPhone2);
+
+        // Configurar navegación de pestañas divididas
+        v.findViewById(R.id.btnTabInicio).setOnClickListener(view -> switchTab(1));
+        v.findViewById(R.id.btnTabMedicamentos).setOnClickListener(view -> switchTab(2));
+        v.findViewById(R.id.btnTabContactos).setOnClickListener(view -> switchTab(3));
+
+        // Guardar contactos
+        v.findViewById(R.id.btnGuardarContactos).setOnClickListener(view -> guardarContactos());
+
+        // Botón ver perfil médico dentro de la pantalla de remedios
+        v.findViewById(R.id.btnVerPerfilMedicoCliente).setOnClickListener(view -> 
+            Navigation.findNavController(view).navigate(R.id.nav_profile_medico)
         );
 
+        cargarContactos();
+
         return v;
+    }
+
+    private void switchTab(int tabIndex) {
+        layoutInicio.setVisibility(tabIndex == 1 ? View.VISIBLE : View.GONE);
+        layoutMedicamentos.setVisibility(tabIndex == 2 ? View.VISIBLE : View.GONE);
+        layoutContactos.setVisibility(tabIndex == 3 ? View.VISIBLE : View.GONE);
+
+        tvTabInicioLabel.setTextColor(tabIndex == 1 ? Color.parseColor("#1457D9") : Color.parseColor("#62708A"));
+        tvTabMedicamentosLabel.setTextColor(tabIndex == 2 ? Color.parseColor("#1457D9") : Color.parseColor("#62708A"));
+        tvTabContactosLabel.setTextColor(tabIndex == 3 ? Color.parseColor("#1457D9") : Color.parseColor("#62708A"));
+    }
+
+    private void guardarContactos() {
+        String n1 = etContactName1.getText().toString().trim();
+        String p1 = etContactPhone1.getText().toString().trim();
+        String n2 = etContactName2.getText().toString().trim();
+        String p2 = etContactPhone2.getText().toString().trim();
+
+        prefs.edit()
+            .putString("client_contact_name_1", n1)
+            .putString("client_contact_phone_1", p1)
+            .putString("client_contact_name_2", n2)
+            .putString("client_contact_phone_2", p2)
+            .apply();
+
+        Toast.makeText(requireContext(), "Contactos guardados exitosamente", Toast.LENGTH_SHORT).show();
+    }
+
+    private void cargarContactos() {
+        etContactName1.setText(prefs.getString("client_contact_name_1", ""));
+        etContactPhone1.setText(prefs.getString("client_contact_phone_1", ""));
+        etContactName2.setText(prefs.getString("client_contact_name_2", ""));
+        etContactPhone2.setText(prefs.getString("client_contact_phone_2", ""));
     }
 
     @Override
@@ -63,8 +128,7 @@ public class DashboardClienteFragment extends Fragment implements MedicationAdap
         refrescarSignos();
         armarListaMeds();
         if (getView() != null) {
-            SharedPreferences p = requireContext().getSharedPreferences("VitalHomePrefs", Context.MODE_PRIVATE);
-            setOnClickListeners(getView(), p.getString("nombreAdultoMayor", "Usuario"));
+            setOnClickListeners(getView());
         }
     }
 
@@ -108,8 +172,7 @@ public class DashboardClienteFragment extends Fragment implements MedicationAdap
     }
 
     private void refrescarSignos() {
-        String json = requireContext().getSharedPreferences("VitalHomePrefs", Context.MODE_PRIVATE)
-                .getString("ultimos_vitals", "{}");
+        String json = prefs.getString("ultimos_vitals", "{}");
         try {
             JSONObject data = new JSONObject(json);
             if (data.has("pulso")) lblPulso.setText(data.getInt("pulso") + " LPM");
@@ -117,8 +180,7 @@ public class DashboardClienteFragment extends Fragment implements MedicationAdap
         } catch (Exception ignored) {}
     }
 
-    private void setOnClickListeners(View v, String abuelo) {
-        // Ahora el SOS lleva a la cuenta regresiva (de la rama BotonSOS)
+    private void setOnClickListeners(View v) {
         v.findViewById(R.id.btnSOS).setOnClickListener(view -> {
             Navigation.findNavController(view).navigate(R.id.nav_sos_countdown);
         });
@@ -130,28 +192,29 @@ public class DashboardClienteFragment extends Fragment implements MedicationAdap
             
             repo.addEvent(new AlertEvent("SALUD", "Control: " + p + " LPM", "Casa", getTime()));
             
-            requireContext().getSharedPreferences("VitalHomePrefs", Context.MODE_PRIVATE).edit()
-                .putString("ultimos_vitals", "{\"pulso\":" + p + ",\"oxig\":" + o + ",\"pres\":\"" + pres + "\"}").apply();
+            prefs.edit().putString("ultimos_vitals", "{\"pulso\":" + p + ",\"oxig\":" + o + ",\"pres\":\"" + pres + "\"}").apply();
             
             refrescarSignos();
             lanzarPopup(p, o, pres);
         });
 
         v.findViewById(R.id.btnSwitchRoleCliente).setOnClickListener(view -> {
-            requireContext().getSharedPreferences("VitalHomePrefs", Context.MODE_PRIVATE).edit()
-                .putString("rol", "cuidador").apply();
+            prefs.edit().putString("rol", "cuidador").apply();
             recargarApp();
         });
 
         v.findViewById(R.id.btnLogoutCliente).setOnClickListener(view -> {
-            requireContext().getSharedPreferences("VitalHomePrefs", Context.MODE_PRIVATE).edit()
-                .putBoolean("isLoggedIn", false).apply();
+            prefs.edit().putBoolean("isLoggedIn", false).apply();
             requireActivity().finish();
         });
 
         v.findViewById(R.id.btnCallCaregiver).setOnClickListener(view -> {
-            Toast.makeText(requireContext(), "Llamando a tu cuidador...", Toast.LENGTH_LONG).show();
-            // Aquí iría la lógica de Intent.ACTION_CALL si tuviéramos permisos
+            String primaryContactPhone = prefs.getString("client_contact_phone_1", "").trim();
+            if (!primaryContactPhone.isEmpty()) {
+                Toast.makeText(requireContext(), "Llamando a: " + prefs.getString("client_contact_name_1", "Cuidador") + " (" + primaryContactPhone + ")...", Toast.LENGTH_LONG).show();
+            } else {
+                Toast.makeText(requireContext(), "Llamando a tu cuidador...", Toast.LENGTH_LONG).show();
+            }
         });
     }
 

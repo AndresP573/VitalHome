@@ -40,8 +40,13 @@ public class PulseraFragment extends Fragment {
         }
 
         v.findViewById(R.id.btnVolverPulsera).setOnClickListener(view -> 
-            Navigation.findNavController(view).navigate(R.id.nav_dashboard)
+            requireActivity().getOnBackPressedDispatcher().onBackPressed()
         );
+
+        View arrowBack = v.findViewById(R.id.btnBackArrowPulsera);
+        if (arrowBack != null) {
+            arrowBack.setOnClickListener(x -> requireActivity().getOnBackPressedDispatcher().onBackPressed());
+        }
         
         return v;
     }

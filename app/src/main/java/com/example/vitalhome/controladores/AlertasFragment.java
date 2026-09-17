@@ -43,8 +43,13 @@ public class AlertasFragment extends Fragment {
         });
 
         v.findViewById(R.id.btnVolverAlertas).setOnClickListener(x -> 
-            Navigation.findNavController(x).navigate(R.id.nav_dashboard)
+            requireActivity().getOnBackPressedDispatcher().onBackPressed()
         );
+
+        View arrowBack = v.findViewById(R.id.btnBackArrowAlertas);
+        if (arrowBack != null) {
+            arrowBack.setOnClickListener(x -> requireActivity().getOnBackPressedDispatcher().onBackPressed());
+        }
 
         return v;
     }

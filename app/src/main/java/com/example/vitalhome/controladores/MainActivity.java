@@ -26,15 +26,29 @@ public class MainActivity extends AppCompatActivity {
         
         if (host != null) {
             NavController controller = host.getNavController();
+            androidx.navigation.NavGraph graph = controller.getNavInflater().inflate(R.navigation.nav_graph);
             
             if ("cliente".equals(rol)) {
                 if (nav != null) nav.setVisibility(View.GONE);
-                controller.setGraph(R.navigation.nav_graph);
-                controller.navigate(R.id.nav_dashboard_cliente);
+                graph.setStartDestination(R.id.nav_dashboard_cliente);
             } else {
                 if (nav != null) nav.setVisibility(View.VISIBLE);
+                graph.setStartDestination(R.id.nav_dashboard);
                 configurarNav(controller, p);
             }
+            controller.setGraph(graph);
+
+            getOnBackPressedDispatcher().addCallback(this, new androidx.activity.OnBackPressedCallback(true) {
+                @Override
+                public void handleOnBackPressed() {
+                    int startDestId = controller.getGraph().getStartDestinationId();
+                    if (controller.getCurrentDestination() != null && controller.getCurrentDestination().getId() == startDestId) {
+                        finish();
+                    } else {
+                        controller.popBackStack(startDestId, false);
+                    }
+                }
+            });
         }
     }
 

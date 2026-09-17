@@ -18,8 +18,13 @@ public class HogarFragment extends Fragment {
         View v = inflater.inflate(R.layout.fragment_hogar, container, false);
         
         v.findViewById(R.id.btnVolverHogar).setOnClickListener(view -> 
-            Navigation.findNavController(view).navigate(R.id.nav_dashboard)
+            requireActivity().getOnBackPressedDispatcher().onBackPressed()
         );
+
+        View arrowBack = v.findViewById(R.id.btnBackArrowHogar);
+        if (arrowBack != null) {
+            arrowBack.setOnClickListener(x -> requireActivity().getOnBackPressedDispatcher().onBackPressed());
+        }
         
         return v;
     }
