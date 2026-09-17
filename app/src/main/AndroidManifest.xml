@@ -3,7 +3,6 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.USE_BIOMETRIC" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.VIBRATE" />
 
@@ -17,9 +16,8 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Vitalhome">
 
-        <!-- 1. Login como pantalla de inicio (Launcher) -->
         <activity
-            android:name=".LoginActivity"
+            android:name=".controladores.LoginActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -27,12 +25,10 @@
             </intent-filter>
         </activity>
 
-        <!-- 2. Pantalla de Registro -->
-        <activity android:name=".RegisterActivity" />
+        <activity android:name=".controladores.RegisterActivity" />
 
-        <!-- 3. MainActivity con el WebView -->
         <activity
-            android:name=".MainActivity"
+            android:name=".controladores.MainActivity"
             android:exported="true"
             android:windowSoftInputMode="adjustResize" />
 

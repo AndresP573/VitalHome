@@ -1,0 +1,89 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F7FAFF"
+    android:orientation="vertical"
+    android:padding="20dp">
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingTop="32dp"
+        android:paddingBottom="16dp">
+
+        <ImageButton
+            android:id="@+id/btnBackArrowAlertas"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_arrow_back"
+            app:tint="#0A2E73"
+            android:contentDescription="Volver" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tvTituloAlertas"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Registro de Eventos"
+                android:textColor="#0A2E73"
+                android:textSize="24sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvSubAlertas"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Historial cronológico."
+                android:textColor="#62708A"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnBorrarTodo"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="LIMPIAR"
+            android:textColor="#EF4444"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            app:icon="@android:drawable/ic_menu_delete"
+            app:iconPadding="4dp"
+            app:iconSize="20dp"
+            app:iconTint="#EF4444" />
+    </LinearLayout>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvAlertas"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="8dp"
+        android:layout_weight="1"
+        android:padding="4dp"
+        android:clipToPadding="false" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnVolverAlertas"
+        style="@style/Widget.Material3.Button.TextButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="100dp"
+        android:text="🔙 VOLVER AL INICIO"
+        android:textColor="#1457D9"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        app:cornerRadius="12dp" />
+
+</LinearLayout>

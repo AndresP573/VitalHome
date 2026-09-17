@@ -1,9 +1,15 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
-    <style name="Base.Theme.Vitalhome" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+    <style name="Base.Theme.Vitalhome" parent="Theme.Material3.Light.NoActionBar">
+        <item name="colorPrimary">#1457D9</item>
+        <item name="android:windowBackground">#F7FAFF</item>
+        <item name="android:statusBarColor">#FFFFFF</item>
+        <item name="android:windowLightStatusBar">true</item>
     </style>
 
     <style name="Theme.Vitalhome" parent="Base.Theme.Vitalhome" />
+
+    <style name="GiganteDialog" parent="Theme.Material3.Light.Dialog">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowIsFloating">true</item>
+    </style>
 </resources>
