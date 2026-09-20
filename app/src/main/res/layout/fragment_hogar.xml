@@ -78,6 +78,7 @@
                     android:textStyle="bold" />
 
                 <TextView
+                    android:id="@+id/tvEstadoPuerta"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
@@ -85,6 +86,13 @@
                     android:textColor="#10B981"
                     android:textSize="28sp"
                     android:textStyle="bold" />
+
+                <Button
+                    android:id="@+id/btnSimularPuerta"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="Simular apertura" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
@@ -119,6 +127,48 @@
                     android:textColor="#0A2E73"
                     android:textSize="28sp"
                     android:textStyle="bold" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Detector de Humo -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            app:cardBackgroundColor="#FFFFFF"
+            app:cardCornerRadius="20dp"
+            app:strokeColor="#10B981"
+            app:strokeWidth="2dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🔥 Detector de Humo"
+                    android:textColor="#62708A"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvEstadoFuego"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="SIN HUMO"
+                    android:textColor="#10B981"
+                    android:textSize="28sp"
+                    android:textStyle="bold" />
+
+                <Button
+                    android:id="@+id/btnSimularFuego"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="Simular fuego" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 

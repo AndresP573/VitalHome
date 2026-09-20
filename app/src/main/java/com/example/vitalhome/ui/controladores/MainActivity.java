@@ -1,15 +1,26 @@
 package com.example.vitalhome.ui.controladores;
 
+import android.Manifest;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 import com.example.vitalhome.R;
 
 public class MainActivity extends AppCompatActivity {
+
+    private final ActivityResultLauncher<String> requestPermissionLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
+                // Callback de manejo del permiso (se puede dejar vacío o logs internos)
+            });
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,6 +51,14 @@ public class MainActivity extends AppCompatActivity {
                 androidx.navigation.NavGraph graph = controller.getNavInflater().inflate(R.navigation.nav_graph);
                 graph.setStartDestination("cliente".equals(rol) ? R.id.nav_dashboard_cliente : R.id.nav_dashboard);
                 controller.setGraph(graph);
+
+                // Solicitar permiso POST_NOTIFICATIONS en Android 13+ si no está concedido
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) 
+                            != PackageManager.PERMISSION_GRANTED) {
+                        requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS);
+                    }
+                }
             }
 
             // 3. El OnBackPressedCallback se queda igual

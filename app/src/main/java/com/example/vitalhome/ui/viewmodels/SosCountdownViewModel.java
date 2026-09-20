@@ -8,7 +8,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import com.example.vitalhome.data.modelo.AlertEvent;
 import com.example.vitalhome.ui.controladores.AppRepo;
-import com.example.vitalhome.ui.controladores.NotificationHelper;
+import com.example.vitalhome.utils.NotificationHelper;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -54,6 +54,13 @@ public class SosCountdownViewModel extends AndroidViewModel {
         repo.addEvent(new AlertEvent("SOS", "Emergencia confirmada", "Casa", hora));
         NotificationHelper.sendSOS(getApplication(), "Familiar");
         timerFinished.setValue(true);
+    }
+
+    public void estoyBien() {
+        cancelTimer();
+        String hora = new SimpleDateFormat("HH:mm", Locale.getDefault()).format(new Date());
+        repo.addEvent(new AlertEvent("SOS", "Estoy bien: alerta cancelada", "Casa", hora));
+        NotificationHelper.sosEstoyBien(getApplication(), "Familiar");
     }
 
     public void eventoConsumido() {

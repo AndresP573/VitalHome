@@ -34,7 +34,7 @@ public class SosCountdownFragment extends Fragment {
         });
         
         v.findViewById(R.id.btnCancelSOS).setOnClickListener(view -> {
-            viewModel.cancelTimer();
+            viewModel.estoyBien();
             Navigation.findNavController(view).navigateUp();
         });
 

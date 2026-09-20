@@ -10,6 +10,7 @@ import androidx.lifecycle.MutableLiveData;
 import com.example.vitalhome.data.modelo.AlertEvent;
 import com.example.vitalhome.data.modelo.Medication;
 import com.example.vitalhome.ui.controladores.AppRepo;
+import com.example.vitalhome.utils.NotificationHelper;
 import org.json.JSONObject;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -99,15 +100,54 @@ public class DashboardClienteViewModel extends AndroidViewModel {
     }
 
     public void medirAhora() {
-        int p = (int) (Math.random() * 30 + 65);
-        int o = (int) (Math.random() * 5 + 95);
-        String pres = (int)(Math.random()*25+110) + "/" + (int)(Math.random()*15+70);
-        
+        // Lógica probabilística de rangos de prueba
+        int p;
+        if (Math.random() < 0.25) {
+            p = (int) (Math.random() * 30 + 101); // 101-130
+        } else {
+            p = (int) (Math.random() * 36 + 60);  // 60-95
+        }
+
+        int o;
+        if (Math.random() < 0.15) {
+            o = (int) (Math.random() * 4 + 88);   // 88-91
+        } else {
+            o = (int) (Math.random() * 5 + 95);   // 95-99
+        }
+
+        int sis, dia;
+        if (Math.random() < 0.25) {
+            sis = (int) (Math.random() * 26 + 140); // 140-165
+            dia = (int) (Math.random() * 16 + 90);  // 90-105
+        } else {
+            sis = (int) (Math.random() * 25 + 110); // 110-134
+            dia = (int) (Math.random() * 15 + 70);  // 70-84
+        }
+        String presString = sis + "/" + dia;
+
         repo.addEvent(new AlertEvent("SALUD", "Control: " + p + " LPM", "Casa", getTime()));
-        prefs.edit().putString("ultimos_vitals", "{\"pulso\":" + p + ",\"oxig\":" + o + ",\"pres\":\"" + pres + "\"}").apply();
+        prefs.edit().putString("ultimos_vitals", "{\"pulso\":" + p + ",\"oxig\":" + o + ",\"pres\":\"" + presString + "\"}").apply();
         
         refrescarSignos();
-        lastVitalsUpdate.setValue(new VitalsUpdate(p, o, pres));
+        lastVitalsUpdate.setValue(new VitalsUpdate(p, o, presString));
+
+        // Disparar notificaciones y eventos correspondientes
+        if (p > 100) {
+            NotificationHelper.pulsoElevado(getApplication(), p);
+            repo.addEvent(new AlertEvent("SALUD", "Pulso elevado: " + p + " LPM", "Casa", getTime()));
+        } else {
+            NotificationHelper.pulso(getApplication(), p);
+        }
+
+        if (sis >= 140 || dia >= 90) {
+            NotificationHelper.presionElevada(getApplication(), sis, dia);
+            repo.addEvent(new AlertEvent("SALUD", "Presión elevada: " + presString, "Casa", getTime()));
+        }
+
+        if (o < 92) {
+            NotificationHelper.oxigenoBajo(getApplication(), o);
+            repo.addEvent(new AlertEvent("SALUD", "Oxígeno bajo: " + o + "%", "Casa", getTime()));
+        }
     }
 
     public void vitalsMostrado() {
