@@ -26,18 +26,23 @@ public class MainActivity extends AppCompatActivity {
         
         if (host != null) {
             NavController controller = host.getNavController();
-            androidx.navigation.NavGraph graph = controller.getNavInflater().inflate(R.navigation.nav_graph);
             
+            // 1. La visibilidad de la barra de navegación y configurarNav se ejecutan SIEMPRE
             if ("cliente".equals(rol)) {
                 if (nav != null) nav.setVisibility(View.GONE);
-                graph.setStartDestination(R.id.nav_dashboard_cliente);
             } else {
                 if (nav != null) nav.setVisibility(View.VISIBLE);
-                graph.setStartDestination(R.id.nav_dashboard);
                 configurarNav(controller, p);
             }
-            controller.setGraph(graph);
 
+            // 2. El armado del grafo se ejecuta SOLO cuando savedInstanceState == null
+            if (savedInstanceState == null) {
+                androidx.navigation.NavGraph graph = controller.getNavInflater().inflate(R.navigation.nav_graph);
+                graph.setStartDestination("cliente".equals(rol) ? R.id.nav_dashboard_cliente : R.id.nav_dashboard);
+                controller.setGraph(graph);
+            }
+
+            // 3. El OnBackPressedCallback se queda igual
             getOnBackPressedDispatcher().addCallback(this, new androidx.activity.OnBackPressedCallback(true) {
                 @Override
                 public void handleOnBackPressed() {
