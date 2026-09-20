@@ -1,4 +1,4 @@
-package com.example.vitalhome.adapter;
+package com.example.vitalhome.ui.adapter;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -7,7 +7,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.vitalhome.R;
-import com.example.vitalhome.modelo.MedicalRecord;
+import com.example.vitalhome.data.modelo.MedicalRecord;
 import java.util.List;
 
 public class MedicalRecordAdapter extends RecyclerView.Adapter<MedicalRecordAdapter.RecordViewHolder> {

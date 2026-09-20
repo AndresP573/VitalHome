@@ -1,4 +1,4 @@
-package com.example.vitalhome.controladores;
+package com.example.vitalhome.ui.controladores;
 
 import android.content.Context;
 import android.content.SharedPreferences;

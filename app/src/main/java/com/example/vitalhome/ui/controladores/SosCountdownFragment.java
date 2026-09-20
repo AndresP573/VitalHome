@@ -1,4 +1,4 @@
-package com.example.vitalhome.controladores;
+package com.example.vitalhome.ui.controladores;
 
 import android.os.Bundle;
 import android.os.CountDownTimer;
@@ -11,7 +11,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 import com.example.vitalhome.R;
-import com.example.vitalhome.modelo.AlertEvent;
+import com.example.vitalhome.data.modelo.AlertEvent;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;

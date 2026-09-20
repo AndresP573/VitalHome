@@ -1,4 +1,4 @@
-package com.example.vitalhome.adapter;
+package com.example.vitalhome.ui.adapter;
 
 import android.graphics.Color;
 import android.view.LayoutInflater;
@@ -9,7 +9,7 @@ import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.vitalhome.R;
-import com.example.vitalhome.modelo.AlertEvent;
+import com.example.vitalhome.data.modelo.AlertEvent;
 import com.google.android.material.card.MaterialCardView;
 import java.util.List;
 

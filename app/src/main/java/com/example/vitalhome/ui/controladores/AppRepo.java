@@ -1,9 +1,9 @@
-package com.example.vitalhome.controladores;
+package com.example.vitalhome.ui.controladores;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import com.example.vitalhome.modelo.AlertEvent;
-import com.example.vitalhome.modelo.Medication;
+import com.example.vitalhome.data.modelo.AlertEvent;
+import com.example.vitalhome.data.modelo.Medication;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import java.util.ArrayList;

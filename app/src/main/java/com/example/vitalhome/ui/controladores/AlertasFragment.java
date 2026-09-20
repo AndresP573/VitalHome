@@ -1,4 +1,4 @@
-package com.example.vitalhome.controladores;
+package com.example.vitalhome.ui.controladores;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -8,12 +8,11 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.vitalhome.R;
-import com.example.vitalhome.adapter.AlertAdapter;
-import com.example.vitalhome.modelo.AlertEvent;
+import com.example.vitalhome.ui.adapter.AlertAdapter;
+import com.example.vitalhome.data.modelo.AlertEvent;
 import java.util.ArrayList;
 import java.util.List;
 

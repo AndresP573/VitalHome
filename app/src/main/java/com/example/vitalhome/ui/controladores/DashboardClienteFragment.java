@@ -1,4 +1,4 @@
-package com.example.vitalhome.controladores;
+package com.example.vitalhome.ui.controladores;
 
 import android.app.AlertDialog;
 import android.content.Context;
@@ -18,9 +18,9 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 import com.example.vitalhome.R;
-import com.example.vitalhome.adapter.MedicationAdapter;
-import com.example.vitalhome.modelo.AlertEvent;
-import com.example.vitalhome.modelo.Medication;
+import com.example.vitalhome.ui.adapter.MedicationAdapter;
+import com.example.vitalhome.data.modelo.AlertEvent;
+import com.example.vitalhome.data.modelo.Medication;
 import org.json.JSONObject;
 import java.text.SimpleDateFormat;
 import java.util.Date;

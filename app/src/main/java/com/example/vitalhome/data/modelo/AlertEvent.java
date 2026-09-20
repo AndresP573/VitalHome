@@ -1,4 +1,4 @@
-package com.example.vitalhome.modelo;
+package com.example.vitalhome.data.modelo;
 
 public class AlertEvent {
     private String tipo;
