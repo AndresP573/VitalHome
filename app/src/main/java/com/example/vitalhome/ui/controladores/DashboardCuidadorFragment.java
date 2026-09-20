@@ -1,7 +1,5 @@
 package com.example.vitalhome.ui.controladores;
 
-import android.content.Context;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -12,18 +10,31 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 import com.example.vitalhome.R;
+import androidx.lifecycle.ViewModelProvider;
+import com.example.vitalhome.ui.viewmodels.DashboardCuidadorViewModel;
 
 public class DashboardCuidadorFragment extends Fragment {
 
-    private AppRepo repo;
-    private View root;
+    private DashboardCuidadorViewModel viewModel;
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        root = inflater.inflate(R.layout.fragment_dashboard_cuidador, container, false);
-        repo = new AppRepo(requireContext());
+        View root = inflater.inflate(R.layout.fragment_dashboard_cuidador, container, false);
+        viewModel = new ViewModelProvider(this).get(DashboardCuidadorViewModel.class);
         
+        TextView tvSaludo = root.findViewById(R.id.tvSaludo);
+        TextView tvLabelPulsera = root.findViewById(R.id.tvLabelPulsera);
+        TextView tvMedsSummary = root.findViewById(R.id.tvMedsSummary);
+
+        viewModel.getNombreUsuario().observe(getViewLifecycleOwner(), s -> tvSaludo.setText("Hola, " + s));
+        viewModel.getNombreAdultoMayor().observe(getViewLifecycleOwner(), s -> {
+            if (tvLabelPulsera != null) tvLabelPulsera.setText("⌚ Pulsera de " + s);
+        });
+        viewModel.getMedicinasCount().observe(getViewLifecycleOwner(), count -> {
+            if (tvMedsSummary != null) tvMedsSummary.setText(count + " en el plan");
+        });
+
         setClickListeners(root);
         return root;
     }
@@ -31,25 +42,7 @@ public class DashboardCuidadorFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        if (root != null) {
-            actualizarInterfaz(root);
-        }
-    }
-
-    private void actualizarInterfaz(View v) {
-        SharedPreferences prefs = requireContext().getSharedPreferences("VitalHomePrefs", Context.MODE_PRIVATE);
-        String u = prefs.getString("nombre", "Usuario");
-        String a = prefs.getString("nombreAdultoMayor", "Familiar");
-
-        ((TextView)v.findViewById(R.id.tvSaludo)).setText("Hola, " + u);
-        
-        TextView lbl = v.findViewById(R.id.tvLabelPulsera);
-        if (lbl != null) lbl.setText("⌚ Pulsera de " + a);
-        
-        int cant = repo.getMeds().size();
-        
-        TextView bad = v.findViewById(R.id.tvMedsSummary);
-        if (bad != null) bad.setText(cant + " en el plan");
+        viewModel.refreshData();
     }
 
     private void setClickListeners(View v) {

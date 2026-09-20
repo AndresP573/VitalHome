@@ -12,32 +12,28 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.vitalhome.R;
 import com.example.vitalhome.ui.adapter.AlertAdapter;
-import com.example.vitalhome.data.modelo.AlertEvent;
-import java.util.ArrayList;
-import java.util.List;
+import androidx.lifecycle.ViewModelProvider;
+import com.example.vitalhome.ui.viewmodels.AlertasViewModel;
 
 public class AlertasFragment extends Fragment {
 
-    private AppRepo repo;
+    private AlertasViewModel viewModel;
     private AlertAdapter adapter;
-    private List<AlertEvent> lista;
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.fragment_alertas, container, false);
-        repo = new AppRepo(requireContext());
-        lista = repo.getEvents();
+        viewModel = new ViewModelProvider(this).get(AlertasViewModel.class);
 
         RecyclerView rv = v.findViewById(R.id.rvAlertas);
         rv.setLayoutManager(new LinearLayoutManager(requireContext()));
-        adapter = new AlertAdapter(lista);
+        
+        adapter = new AlertAdapter(viewModel.getEvents().getValue());
         rv.setAdapter(adapter);
 
         v.findViewById(R.id.btnBorrarTodo).setOnClickListener(x -> {
-            lista.clear();
-            repo.saveEvents(new ArrayList<>());
-            adapter.notifyDataSetChanged();
+            viewModel.clearAll();
             Toast.makeText(requireContext(), "Limpio", Toast.LENGTH_SHORT).show();
         });
 
@@ -51,5 +47,19 @@ public class AlertasFragment extends Fragment {
         }
 
         return v;
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        viewModel.getEvents().observe(getViewLifecycleOwner(), events -> {
+            adapter.notifyDataSetChanged();
+        });
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        viewModel.refresh();
     }
 }

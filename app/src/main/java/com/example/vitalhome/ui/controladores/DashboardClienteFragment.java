@@ -1,9 +1,7 @@
 package com.example.vitalhome.ui.controladores;
 
 import android.app.AlertDialog;
-import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -19,17 +17,14 @@ import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 import com.example.vitalhome.R;
 import com.example.vitalhome.ui.adapter.MedicationAdapter;
-import com.example.vitalhome.data.modelo.AlertEvent;
 import com.example.vitalhome.data.modelo.Medication;
-import org.json.JSONObject;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import androidx.lifecycle.ViewModelProvider;
+import com.example.vitalhome.ui.viewmodels.DashboardClienteViewModel;
 import java.util.List;
-import java.util.Locale;
 
 public class DashboardClienteFragment extends Fragment implements MedicationAdapter.AccionesMed {
 
-    private AppRepo repo;
+    private DashboardClienteViewModel viewModel;
     private TextView lblPulso, lblOxigeno;
     private LinearLayout listadoMeds;
 
@@ -39,21 +34,23 @@ public class DashboardClienteFragment extends Fragment implements MedicationAdap
 
     // Campos de contactos
     private EditText etContactName1, etContactPhone1, etContactName2, etContactPhone2;
-    private SharedPreferences prefs;
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.fragment_dashboard_cliente, container, false);
-        repo = new AppRepo(requireContext());
-        prefs = requireContext().getSharedPreferences("VitalHomePrefs", Context.MODE_PRIVATE);
+        viewModel = new ViewModelProvider(this).get(DashboardClienteViewModel.class);
 
-        String name = prefs.getString("nombreAdultoMayor", "Usuario");
-        ((TextView)v.findViewById(R.id.tvSaludoCliente)).setText("Hola, " + name);
+        TextView tvSaludo = v.findViewById(R.id.tvSaludoCliente);
+        viewModel.getNombreUsuario().observe(getViewLifecycleOwner(), s -> tvSaludo.setText("Hola, " + s));
 
         lblPulso = v.findViewById(R.id.tvPulsoCliente);
         lblOxigeno = v.findViewById(R.id.tvOxigenoCliente);
         listadoMeds = v.findViewById(R.id.containerRemedios);
+
+        viewModel.getPulso().observe(getViewLifecycleOwner(), lblPulso::setText);
+        viewModel.getOxigeno().observe(getViewLifecycleOwner(), lblOxigeno::setText);
+        viewModel.getMedicamentos().observe(getViewLifecycleOwner(), this::armarListaMeds);
 
         // Bindear secciones
         layoutInicio = v.findViewById(R.id.layoutClienteInicio);
@@ -65,16 +62,24 @@ public class DashboardClienteFragment extends Fragment implements MedicationAdap
         tvTabMedicamentosLabel = v.findViewById(R.id.tvTabMedicamentosLabel);
         tvTabContactosLabel = v.findViewById(R.id.tvTabContactosLabel);
 
-        // Bindear campos de contactos
+        // Observar índice de pestañas DESPUÉS del bindeo de layouts y etiquetas
+        viewModel.getTabIndex().observe(getViewLifecycleOwner(), this::switchTab);
+
+        // Campos de contactos
         etContactName1 = v.findViewById(R.id.etContactName1);
         etContactPhone1 = v.findViewById(R.id.etContactPhone1);
         etContactName2 = v.findViewById(R.id.etContactName2);
         etContactPhone2 = v.findViewById(R.id.etContactPhone2);
 
-        // Configurar navegación de pestañas divididas
-        v.findViewById(R.id.btnTabInicio).setOnClickListener(view -> switchTab(1));
-        v.findViewById(R.id.btnTabMedicamentos).setOnClickListener(view -> switchTab(2));
-        v.findViewById(R.id.btnTabContactos).setOnClickListener(view -> switchTab(3));
+        viewModel.getContactName1().observe(getViewLifecycleOwner(), etContactName1::setText);
+        viewModel.getContactPhone1().observe(getViewLifecycleOwner(), etContactPhone1::setText);
+        viewModel.getContactName2().observe(getViewLifecycleOwner(), etContactName2::setText);
+        viewModel.getContactPhone2().observe(getViewLifecycleOwner(), etContactPhone2::setText);
+
+        // Configurar navegación de pestañas divididas llamando a viewModel.setTab()
+        v.findViewById(R.id.btnTabInicio).setOnClickListener(view -> viewModel.setTab(1));
+        v.findViewById(R.id.btnTabMedicamentos).setOnClickListener(view -> viewModel.setTab(2));
+        v.findViewById(R.id.btnTabContactos).setOnClickListener(view -> viewModel.setTab(3));
 
         // Guardar contactos
         v.findViewById(R.id.btnGuardarContactos).setOnClickListener(view -> guardarContactos());
@@ -84,7 +89,12 @@ public class DashboardClienteFragment extends Fragment implements MedicationAdap
             Navigation.findNavController(view).navigate(R.id.nav_profile_medico)
         );
 
-        cargarContactos();
+        viewModel.getLastVitalsUpdate().observe(getViewLifecycleOwner(), update -> {
+            if (update != null) {
+                lanzarPopup(update.p, update.o, update.pres);
+                viewModel.vitalsMostrado();
+            }
+        });
 
         return v;
     }
@@ -105,38 +115,22 @@ public class DashboardClienteFragment extends Fragment implements MedicationAdap
         String n2 = etContactName2.getText().toString().trim();
         String p2 = etContactPhone2.getText().toString().trim();
 
-        prefs.edit()
-            .putString("client_contact_name_1", n1)
-            .putString("client_contact_phone_1", p1)
-            .putString("client_contact_name_2", n2)
-            .putString("client_contact_phone_2", p2)
-            .apply();
-
+        viewModel.guardarContactos(n1, p1, n2, p2);
         Toast.makeText(requireContext(), "Contactos guardados exitosamente", Toast.LENGTH_SHORT).show();
-    }
-
-    private void cargarContactos() {
-        etContactName1.setText(prefs.getString("client_contact_name_1", ""));
-        etContactPhone1.setText(prefs.getString("client_contact_phone_1", ""));
-        etContactName2.setText(prefs.getString("client_contact_name_2", ""));
-        etContactPhone2.setText(prefs.getString("client_contact_phone_2", ""));
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        refrescarSignos();
-        armarListaMeds();
+        viewModel.refreshData();
         if (getView() != null) {
             setOnClickListeners(getView());
         }
     }
 
-    private void armarListaMeds() {
+    private void armarListaMeds(List<Medication> items) {
         if (listadoMeds == null) return;
         listadoMeds.removeAllViews();
-        List<Medication> items = repo.getMeds();
-        items.sort((m1, m2) -> Boolean.compare(m2.isTaken(), m1.isTaken()));
         
         for (Medication m : items) {
             View row = LayoutInflater.from(requireContext()).inflate(R.layout.item_medication, listadoMeds, false);
@@ -158,26 +152,8 @@ public class DashboardClienteFragment extends Fragment implements MedicationAdap
 
     @Override
     public void tomar(Medication m) {
-        List<Medication> items = repo.getMeds();
-        for (Medication item : items) {
-            if (item.getId().equals(m.getId())) {
-                item.setTaken(true);
-                break;
-            }
-        }
-        repo.saveMeds(items);
-        repo.addEvent(new AlertEvent("MEDICINA", "Tomó " + m.getNombre(), "Casa", getTime()));
-        armarListaMeds();
+        viewModel.tomar(m);
         Toast.makeText(requireContext(), "¡Registrado!", Toast.LENGTH_SHORT).show();
-    }
-
-    private void refrescarSignos() {
-        String json = prefs.getString("ultimos_vitals", "{}");
-        try {
-            JSONObject data = new JSONObject(json);
-            if (data.has("pulso")) lblPulso.setText(data.getInt("pulso") + " LPM");
-            if (data.has("oxig")) lblOxigeno.setText(data.getInt("oxig") + "%");
-        } catch (Exception ignored) {}
     }
 
     private void setOnClickListeners(View v) {
@@ -186,32 +162,23 @@ public class DashboardClienteFragment extends Fragment implements MedicationAdap
         });
 
         v.findViewById(R.id.btnMedirAhoraCliente).setOnClickListener(view -> {
-            int p = (int) (Math.random() * 30 + 65);
-            int o = (int) (Math.random() * 5 + 95);
-            String pres = (int)(Math.random()*25+110) + "/" + (int)(Math.random()*15+70);
-            
-            repo.addEvent(new AlertEvent("SALUD", "Control: " + p + " LPM", "Casa", getTime()));
-            
-            prefs.edit().putString("ultimos_vitals", "{\"pulso\":" + p + ",\"oxig\":" + o + ",\"pres\":\"" + pres + "\"}").apply();
-            
-            refrescarSignos();
-            lanzarPopup(p, o, pres);
+            viewModel.medirAhora();
         });
 
         v.findViewById(R.id.btnSwitchRoleCliente).setOnClickListener(view -> {
-            prefs.edit().putString("rol", "cuidador").apply();
+            viewModel.switchRole();
             recargarApp();
         });
 
         v.findViewById(R.id.btnLogoutCliente).setOnClickListener(view -> {
-            prefs.edit().putBoolean("isLoggedIn", false).apply();
+            viewModel.logout();
             requireActivity().finish();
         });
 
         v.findViewById(R.id.btnCallCaregiver).setOnClickListener(view -> {
-            String primaryContactPhone = prefs.getString("client_contact_phone_1", "").trim();
+            String primaryContactPhone = etContactPhone1.getText().toString().trim();
             if (!primaryContactPhone.isEmpty()) {
-                Toast.makeText(requireContext(), "Llamando a: " + prefs.getString("client_contact_name_1", "Cuidador") + " (" + primaryContactPhone + ")...", Toast.LENGTH_LONG).show();
+                Toast.makeText(requireContext(), "Llamando a: " + etContactName1.getText().toString() + " (" + primaryContactPhone + ")...", Toast.LENGTH_LONG).show();
             } else {
                 Toast.makeText(requireContext(), "Llamando a tu cuidador...", Toast.LENGTH_LONG).show();
             }
@@ -234,9 +201,5 @@ public class DashboardClienteFragment extends Fragment implements MedicationAdap
     private void recargarApp() {
         startActivity(new Intent(requireActivity(), MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
         requireActivity().finish();
-    }
-
-    private String getTime() {
-        return new SimpleDateFormat("HH:mm", Locale.getDefault()).format(new Date());
     }
 }
