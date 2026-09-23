@@ -10,6 +10,7 @@ import androidx.lifecycle.MutableLiveData;
 import com.example.vitalhome.data.modelo.AlertEvent;
 import com.example.vitalhome.data.modelo.Medication;
 import com.example.vitalhome.ui.controladores.AppRepo;
+import com.example.vitalhome.utils.MedicationAlarmScheduler;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -35,10 +36,12 @@ public class MedicamentosViewModel extends AndroidViewModel {
 
     public void agregar(String nombre, String hora) {
         List<Medication> lista = plan.getValue();
-        lista.add(0, new Medication("" + System.currentTimeMillis(), nombre, hora));
+        Medication nuevoMed = new Medication("" + System.currentTimeMillis(), nombre, hora);
+        lista.add(0, nuevoMed);
         ordenar(lista);
         repo.saveMeds(lista);
         plan.setValue(lista);
+        MedicationAlarmScheduler.programar(getApplication(), nuevoMed);
     }
 
     public void tomar(Medication m) {
@@ -48,6 +51,7 @@ public class MedicamentosViewModel extends AndroidViewModel {
         repo.addEvent(new AlertEvent("MEDICINA", "Tomó " + m.getNombre(), "Casa", getTime()));
         ordenar(lista);
         plan.setValue(lista);
+        MedicationAlarmScheduler.cancelar(getApplication(), m.getId());
     }
 
     private void ordenar(List<Medication> lista) {

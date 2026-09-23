@@ -14,6 +14,7 @@ import androidx.core.content.ContextCompat;
 import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 import com.example.vitalhome.R;
+import com.example.vitalhome.utils.MedicationAlarmScheduler;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -59,6 +60,9 @@ public class MainActivity extends AppCompatActivity {
                         requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS);
                     }
                 }
+
+                // Reprogramar todas las alarmas en el inicio limpio de la actividad
+                MedicationAlarmScheduler.reprogramarTodas(this);
             }
 
             // 3. El OnBackPressedCallback se queda igual

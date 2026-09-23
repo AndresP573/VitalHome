@@ -6,6 +6,7 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
+import android.util.Log;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import com.example.vitalhome.R;
@@ -15,6 +16,7 @@ public class NotificationHelper {
     private static final String CANAL_EMERGENCIAS = "EMERGENCIAS_CHANNEL";
     private static final String CANAL_SALUD = "SALUD_CHANNEL";
     private static final String CANAL_HOGAR = "HOGAR_CHANNEL";
+    private static final String CANAL_MEDICAMENTOS = "MEDICAMENTOS_CHANNEL";
 
     private static void crearCanalSiFalta(Context ctx, String id, String nombre) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -139,6 +141,21 @@ public class NotificationHelper {
                 .setAutoCancel(true);
         try {
             NotificationManagerCompat.from(ctx).notify(7, n.build());
+        } catch (SecurityException ignored) {}
+    }
+
+    public static void medicamento(Context ctx, int notifId, String nombre, String hora) {
+        Log.d("AlarmDebug", "notificando medicamento: " + nombre);
+        crearCanalSiFalta(ctx, CANAL_MEDICAMENTOS, "Medicamentos");
+        NotificationCompat.Builder n = new NotificationCompat.Builder(ctx, CANAL_MEDICAMENTOS)
+                .setSmallIcon(R.drawable.ic_notif_pill)
+                .setContentTitle("💊 Hora de tu medicamento")
+                .setContentText("Es hora de tomar " + nombre + " (" + hora + ").")
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setContentIntent(getPendingIntent(ctx, notifId))
+                .setAutoCancel(true);
+        try {
+            NotificationManagerCompat.from(ctx).notify(notifId, n.build());
         } catch (SecurityException ignored) {}
     }
 }

@@ -10,6 +10,7 @@ import androidx.lifecycle.MutableLiveData;
 import com.example.vitalhome.data.modelo.AlertEvent;
 import com.example.vitalhome.data.modelo.Medication;
 import com.example.vitalhome.ui.controladores.AppRepo;
+import com.example.vitalhome.utils.MedicationAlarmScheduler;
 import com.example.vitalhome.utils.NotificationHelper;
 import org.json.JSONObject;
 import java.text.SimpleDateFormat;
@@ -97,6 +98,7 @@ public class DashboardClienteViewModel extends AndroidViewModel {
         repo.saveMeds(items);
         repo.addEvent(new AlertEvent("MEDICINA", "Tomó " + m.getNombre(), "Casa", getTime()));
         refrescarMeds();
+        MedicationAlarmScheduler.cancelar(getApplication(), m.getId());
     }
 
     public void medirAhora() {
