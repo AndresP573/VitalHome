@@ -11,6 +11,7 @@ import com.example.vitalhome.data.modelo.AlertEvent;
 import com.example.vitalhome.data.modelo.Medication;
 import com.example.vitalhome.ui.controladores.AppRepo;
 import com.example.vitalhome.utils.MedicationAlarmScheduler;
+import com.example.vitalhome.utils.NotificationHelper;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -52,6 +53,7 @@ public class MedicamentosViewModel extends AndroidViewModel {
         ordenar(lista);
         plan.setValue(lista);
         MedicationAlarmScheduler.cancelar(getApplication(), m.getId());
+        NotificationHelper.medicamentoTomado(getApplication(), m.getNombre(), getTime());
     }
 
     private void ordenar(List<Medication> lista) {

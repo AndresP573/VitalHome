@@ -21,17 +21,17 @@ import java.util.Locale;
 public class DashboardClienteViewModel extends AndroidViewModel {
     private final AppRepo repo;
     private final SharedPreferences prefs;
-    
+
     private final MutableLiveData<String> nombreUsuario = new MutableLiveData<>();
     private final MutableLiveData<String> pulso = new MutableLiveData<>();
     private final MutableLiveData<String> oxigeno = new MutableLiveData<>();
     private final MutableLiveData<List<Medication>> medicamentos = new MutableLiveData<>();
-    
+
     private final MutableLiveData<String> contactName1 = new MutableLiveData<>();
     private final MutableLiveData<String> contactPhone1 = new MutableLiveData<>();
     private final MutableLiveData<String> contactName2 = new MutableLiveData<>();
     private final MutableLiveData<String> contactPhone2 = new MutableLiveData<>();
-    
+
     private final MutableLiveData<Integer> tabIndex = new MutableLiveData<>(1);
 
     public static class VitalsUpdate {
@@ -79,11 +79,11 @@ public class DashboardClienteViewModel extends AndroidViewModel {
 
     public void guardarContactos(String n1, String p1, String n2, String p2) {
         prefs.edit()
-            .putString("client_contact_name_1", n1)
-            .putString("client_contact_phone_1", p1)
-            .putString("client_contact_name_2", n2)
-            .putString("client_contact_phone_2", p2)
-            .apply();
+                .putString("client_contact_name_1", n1)
+                .putString("client_contact_phone_1", p1)
+                .putString("client_contact_name_2", n2)
+                .putString("client_contact_phone_2", p2)
+                .apply();
         cargarContactos();
     }
 
@@ -99,6 +99,7 @@ public class DashboardClienteViewModel extends AndroidViewModel {
         repo.addEvent(new AlertEvent("MEDICINA", "Tomó " + m.getNombre(), "Casa", getTime()));
         refrescarMeds();
         MedicationAlarmScheduler.cancelar(getApplication(), m.getId());
+        NotificationHelper.medicamentoTomado(getApplication(), m.getNombre(), getTime());
     }
 
     public void medirAhora() {
@@ -129,7 +130,7 @@ public class DashboardClienteViewModel extends AndroidViewModel {
 
         repo.addEvent(new AlertEvent("SALUD", "Control: " + p + " LPM", "Casa", getTime()));
         prefs.edit().putString("ultimos_vitals", "{\"pulso\":" + p + ",\"oxig\":" + o + ",\"pres\":\"" + presString + "\"}").apply();
-        
+
         refrescarSignos();
         lastVitalsUpdate.setValue(new VitalsUpdate(p, o, presString));
 
@@ -177,7 +178,7 @@ public class DashboardClienteViewModel extends AndroidViewModel {
     public LiveData<String> getContactName2() { return contactName2; }
     public LiveData<String> getContactPhone2() { return contactPhone2; }
     public LiveData<VitalsUpdate> getLastVitalsUpdate() { return lastVitalsUpdate; }
-    
+
     public LiveData<Integer> getTabIndex() { return tabIndex; }
     public void setTab(int index) { tabIndex.setValue(index); }
 }
