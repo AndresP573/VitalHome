@@ -10,8 +10,13 @@ import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 import com.example.vitalhome.R;
 
+/**
+ * Fragmento de confirmación de alerta SOS enviada.
+ * Muestra el estado activo de la alerta de emergencia y permite indicar la resolución ("Estoy bien").
+ */
 public class SosFragment extends Fragment {
 
+    // --- Bloque 1: Inflado y listener de confirmación ---
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {

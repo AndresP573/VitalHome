@@ -9,7 +9,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import com.example.vitalhome.data.modelo.AlertEvent;
 import com.example.vitalhome.data.modelo.Medication;
-import com.example.vitalhome.ui.controladores.AppRepo;
+import com.example.vitalhome.data.repository.AppRepo;
 import com.example.vitalhome.utils.MedicationAlarmScheduler;
 import com.example.vitalhome.utils.NotificationHelper;
 import org.json.JSONObject;
@@ -18,7 +18,13 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
+/**
+ * ViewModel para el Dashboard del usuario (Cliente / Adulto Mayor).
+ * Administra los signos vitales, medicamentos del día, contactos de emergencia y mediciones simuladas de salud.
+ */
 public class DashboardClienteViewModel extends AndroidViewModel {
+
+    // --- Bloque 1: Atributos y LiveData ---
     private final AppRepo repo;
     private final SharedPreferences prefs;
 
@@ -34,6 +40,9 @@ public class DashboardClienteViewModel extends AndroidViewModel {
 
     private final MutableLiveData<Integer> tabIndex = new MutableLiveData<>(1);
 
+    /**
+     * Clase estática para encapsular los datos de actualización de signos vitales.
+     */
     public static class VitalsUpdate {
         public final int p, o;
         public final String pres;
@@ -41,6 +50,7 @@ public class DashboardClienteViewModel extends AndroidViewModel {
     }
     private final MutableLiveData<VitalsUpdate> lastVitalsUpdate = new MutableLiveData<>();
 
+    // --- Bloque 2: Constructor e Inicialización ---
     public DashboardClienteViewModel(@NonNull Application application) {
         super(application);
         repo = new AppRepo(application);
@@ -48,6 +58,7 @@ public class DashboardClienteViewModel extends AndroidViewModel {
         refreshData();
     }
 
+    // --- Bloque 3: Métodos para refrescar datos desde preferencias y repositorio ---
     public void refreshData() {
         nombreUsuario.setValue(prefs.getString("nombreAdultoMayor", "Usuario"));
         refrescarSignos();
@@ -77,6 +88,7 @@ public class DashboardClienteViewModel extends AndroidViewModel {
         contactPhone2.setValue(prefs.getString("client_contact_phone_2", ""));
     }
 
+    // --- Bloque 4: Gestión de Contactos de Emergencia ---
     public void guardarContactos(String n1, String p1, String n2, String p2) {
         prefs.edit()
                 .putString("client_contact_name_1", n1)
@@ -87,6 +99,7 @@ public class DashboardClienteViewModel extends AndroidViewModel {
         cargarContactos();
     }
 
+    // --- Bloque 5: Gestión de Medicamentos ---
     public void tomar(Medication m) {
         List<Medication> items = repo.getMeds();
         for (Medication item : items) {
@@ -102,6 +115,7 @@ public class DashboardClienteViewModel extends AndroidViewModel {
         NotificationHelper.medicamentoTomado(getApplication(), m.getNombre(), getTime());
     }
 
+    // --- Bloque 6: Medición y Simulación de Signos Vitales ---
     public void medirAhora() {
         // Lógica probabilística de rangos de prueba
         int p;
@@ -157,6 +171,7 @@ public class DashboardClienteViewModel extends AndroidViewModel {
         lastVitalsUpdate.setValue(null);
     }
 
+    // --- Bloque 7: Cambio de Rol y Cierre de Sesión ---
     public void switchRole() {
         prefs.edit().putString("rol", "cuidador").apply();
     }
@@ -165,6 +180,7 @@ public class DashboardClienteViewModel extends AndroidViewModel {
         prefs.edit().putBoolean("isLoggedIn", false).apply();
     }
 
+    // --- Bloque 8: Métodos Auxiliares y Getters ---
     private String getTime() {
         return new SimpleDateFormat("HH:mm", Locale.getDefault()).format(new Date());
     }

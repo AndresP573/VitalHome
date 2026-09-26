@@ -9,19 +9,26 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import org.json.JSONObject;
 
+/**
+ * ViewModel encargado de administrar la lectura de los datos de la pulsera inteligente.
+ */
 public class PulseraViewModel extends AndroidViewModel {
+
+    // --- Bloque 1: Atributos y LiveData ---
     private final SharedPreferences prefs;
     
     private final MutableLiveData<String> pulso = new MutableLiveData<>();
     private final MutableLiveData<String> oxigeno = new MutableLiveData<>();
     private final MutableLiveData<String> presion = new MutableLiveData<>();
 
+    // --- Bloque 2: Constructor e inicialización ---
     public PulseraViewModel(@NonNull Application application) {
         super(application);
         prefs = application.getSharedPreferences("VitalHomePrefs", Context.MODE_PRIVATE);
         loadVitals();
     }
 
+    // --- Bloque 3: Carga de signos vitales almacenados ---
     private void loadVitals() {
         String data = prefs.getString("ultimos_vitals", "{}");
         try {
@@ -36,6 +43,7 @@ public class PulseraViewModel extends AndroidViewModel {
         }
     }
 
+    // --- Bloque 4: Métodos Getters ---
     public LiveData<String> getPulso() { return pulso; }
     public LiveData<String> getOxigeno() { return oxigeno; }
     public LiveData<String> getPresion() { return presion; }

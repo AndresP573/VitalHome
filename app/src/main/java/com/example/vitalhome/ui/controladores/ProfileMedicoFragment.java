@@ -13,10 +13,15 @@ import com.example.vitalhome.R;
 import androidx.lifecycle.ViewModelProvider;
 import com.example.vitalhome.ui.viewmodels.ProfileMedicoViewModel;
 
+/**
+ * Fragmento para visualizar el perfil médico del usuario y sus contactos de emergencia configurados.
+ */
 public class ProfileMedicoFragment extends Fragment {
 
+    // --- Bloque 1: Atributos de la clase ---
     private ProfileMedicoViewModel viewModel;
 
+    // --- Bloque 2: Inflado de la vista y vinculación con LiveData ---
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {

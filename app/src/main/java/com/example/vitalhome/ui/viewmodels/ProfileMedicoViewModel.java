@@ -8,22 +8,30 @@ import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
+/**
+ * ViewModel encargado de la información del perfil médico del usuario y sus contactos de emergencia.
+ */
 public class ProfileMedicoViewModel extends AndroidViewModel {
+
+    // --- Bloque 1: Atributos y LiveData ---
     private final SharedPreferences prefs;
     private final MutableLiveData<String> name = new MutableLiveData<>();
     private final MutableLiveData<String> contact1 = new MutableLiveData<>();
     private final MutableLiveData<String> contact2 = new MutableLiveData<>();
 
+    // --- Bloque 2: Constructor e Inicialización ---
     public ProfileMedicoViewModel(@NonNull Application application) {
         super(application);
         prefs = application.getSharedPreferences("VitalHomePrefs", Context.MODE_PRIVATE);
         loadProfile();
     }
 
+    // --- Bloque 3: Acceso a LiveData ---
     public LiveData<String> getName() { return name; }
     public LiveData<String> getContact1() { return contact1; }
     public LiveData<String> getContact2() { return contact2; }
 
+    // --- Bloque 4: Carga de datos del perfil ---
     private void loadProfile() {
         name.setValue(prefs.getString("nombreAdultoMayor", "Marta Rodríguez"));
         

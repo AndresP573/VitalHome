@@ -28,7 +28,7 @@
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@drawable/ic_arrow_back"
                 app:tint="#0A2E73"
-                android:contentDescription="Volver" />
+                android:contentDescription="@string/btn_back_to_start" />
 
             <TextView
                 android:layout_width="wrap_content"
@@ -36,7 +36,7 @@
                 android:layout_toEndOf="@id/btnBackArrowMeds"
                 android:layout_centerVertical="true"
                 android:layout_marginStart="8dp"
-                android:text="Gestión de Remedios"
+                android:text="@string/title_remedies_management"
                 android:textColor="#0A2E73"
                 android:textSize="28sp"
                 android:textStyle="bold" />
@@ -45,7 +45,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Configurá el plan de tomas diario."
+            android:text="@string/sub_remedies_management"
             android:textColor="#62708A"
             android:textSize="17sp" />
 
@@ -69,7 +69,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="➕ Cargar nuevo"
+                    android:text="@string/title_add_new_med"
                     android:textColor="#102040"
                     android:textSize="18sp"
                     android:textStyle="bold" />
@@ -78,7 +78,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
-                    android:hint="Nombre del medicamento"
+                    android:hint="@string/hint_med_name"
                     style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/etMedNombre"
@@ -91,7 +91,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
-                    android:hint="Horario (HH:MM)"
+                    android:hint="@string/hint_med_time"
                     style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/etMedHora"
@@ -109,7 +109,7 @@
                     android:layout_marginTop="20dp"
                     android:backgroundTint="#1457D9"
                     android:padding="16dp"
-                    android:text="💾 GUARDAR MEDICINA"
+                    android:text="@string/btn_save_med"
                     android:textColor="#FFFFFF"
                     android:textStyle="bold"
                     app:cornerRadius="18dp" />
@@ -121,7 +121,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="32dp"
             android:layout_gravity="center_horizontal"
-            android:text="💊 Remedios"
+            android:text="@string/title_remedies"
             android:textColor="#0A2E73"
             android:textSize="22sp"
             android:textStyle="bold" />
@@ -140,7 +140,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="30dp"
             android:layout_marginBottom="100dp"
-            android:text="🔙 VOLVER AL INICIO"
+            android:text="@string/btn_back_to_start"
             android:textColor="#1457D9"
             android:textStyle="bold" />
 

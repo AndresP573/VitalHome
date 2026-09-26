@@ -22,7 +22,7 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@drawable/ic_arrow_back"
             app:tint="#0A2E73"
-            android:contentDescription="Volver" />
+            android:contentDescription="@string/btn_back_to_start" />
 
         <LinearLayout
             android:layout_width="0dp"
@@ -35,7 +35,7 @@
                 android:id="@+id/tvTituloAlertas"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Registro de Eventos"
+                android:text="@string/title_event_log"
                 android:textColor="#0A2E73"
                 android:textSize="24sp"
                 android:textStyle="bold" />
@@ -44,7 +44,7 @@
                 android:id="@+id/tvSubAlertas"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Historial cronológico."
+                android:text="@string/sub_event_log"
                 android:textColor="#62708A"
                 android:textSize="14sp" />
         </LinearLayout>
@@ -54,7 +54,7 @@
             style="@style/Widget.Material3.Button.TextButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="LIMPIAR"
+            android:text="@string/btn_clear_all"
             android:textColor="#EF4444"
             android:textSize="12sp"
             android:textStyle="bold"
@@ -80,7 +80,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:layout_marginBottom="100dp"
-        android:text="🔙 VOLVER AL INICIO"
+        android:text="@string/btn_back_to_start"
         android:textColor="#1457D9"
         android:textSize="16sp"
         android:textStyle="bold"

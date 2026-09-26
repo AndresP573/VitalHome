@@ -11,8 +11,13 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.vitalhome.R;
 
+/**
+ * Actividad encargada del registro de nuevos usuarios en la aplicación.
+ * Registra las credenciales, rol seleccionado y configura SharedPreferences.
+ */
 public class RegisterActivity extends AppCompatActivity {
 
+    // --- Bloque 1: Inicialización y lógica de registro ---
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -25,6 +30,7 @@ public class RegisterActivity extends AppCompatActivity {
         Button btnOk = findViewById(R.id.btnRegister);
         TextView btnLogin = findViewById(R.id.tvGoToLogin);
 
+        // Listener del botón de registro
         btnOk.setOnClickListener(v -> {
             String n = inNombre.getText().toString().trim();
             String e = inEmail.getText().toString().trim();
@@ -33,7 +39,7 @@ public class RegisterActivity extends AppCompatActivity {
             String role = (selRol.getCheckedRadioButtonId() == R.id.rbCliente) ? "cliente" : "cuidador";
 
             if (n.isEmpty() || e.isEmpty() || p.isEmpty()) {
-                Toast.makeText(this, "Faltan datos", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, getString(R.string.msg_faltan_datos), Toast.LENGTH_SHORT).show();
                 return;
             }
 
@@ -60,6 +66,7 @@ public class RegisterActivity extends AppCompatActivity {
             finish();
         });
 
+        // --- Bloque 2: Redirección al Login ---
         btnLogin.setOnClickListener(v -> {
             startActivity(new Intent(this, LoginActivity.class));
             finish();

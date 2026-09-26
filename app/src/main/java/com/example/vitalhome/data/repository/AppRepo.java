@@ -1,4 +1,4 @@
-package com.example.vitalhome.ui.controladores;
+package com.example.vitalhome.data.repository;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -9,7 +9,13 @@ import com.google.gson.reflect.TypeToken;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Repositorio de la aplicación para gestionar la persistencia local de datos en SharedPreferences.
+ * Maneja la lectura y escritura de listas de medicamentos e historial de alertas usando Gson.
+ */
 public class AppRepo {
+
+    // --- Bloque 1: Atributos y constructor ---
     private SharedPreferences p;
     private Gson gson = new Gson();
 
@@ -17,6 +23,7 @@ public class AppRepo {
         p = ctx.getSharedPreferences("VitalHomePrefs", Context.MODE_PRIVATE);
     }
 
+    // --- Bloque 2: Persistencia de medicamentos ---
     public List<Medication> getMeds() {
         String json = p.getString("lista_medicamentos", "[]");
         List<Medication> res = gson.fromJson(json, new TypeToken<List<Medication>>(){}.getType());
@@ -27,6 +34,7 @@ public class AppRepo {
         p.edit().putString("lista_medicamentos", gson.toJson(list)).apply();
     }
 
+    // --- Bloque 3: Persistencia de eventos de alerta ---
     public List<AlertEvent> getEvents() {
         String json = p.getString("historial_alertas", "[]");
         List<AlertEvent> res = gson.fromJson(json, new TypeToken<List<AlertEvent>>(){}.getType());

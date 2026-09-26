@@ -19,14 +19,24 @@ import com.example.vitalhome.R;
 import com.example.vitalhome.ui.adapter.MedicationAdapter;
 import com.example.vitalhome.data.modelo.Medication;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import com.example.vitalhome.ui.viewmodels.DashboardClienteViewModel;
+import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Fragmento correspondiente al Dashboard principal para el perfil Cliente (Adulto Mayor).
+ * Gestiona el control de signos vitales, plan de medicamentos, contactos de emergencia y navegación por pestañas.
+ */
 public class DashboardClienteFragment extends Fragment implements MedicationAdapter.AccionesMed {
 
+    // --- Bloque 1: Atributos y vistas ---
     private DashboardClienteViewModel viewModel;
     private TextView lblPulso, lblOxigeno;
-    private LinearLayout listadoMeds;
+    private RecyclerView rvRemedios;
+    private MedicationAdapter medAdapter;
+    private AlertDialog activeVitalsDialog;
 
     // Contenedores de las pantallas divididas
     private LinearLayout layoutInicio, layoutMedicamentos, layoutContactos;
@@ -35,6 +45,7 @@ public class DashboardClienteFragment extends Fragment implements MedicationAdap
     // Campos de contactos
     private EditText etContactName1, etContactPhone1, etContactName2, etContactPhone2;
 
+    // --- Bloque 2: Creación e inicialización de la vista ---
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -42,11 +53,15 @@ public class DashboardClienteFragment extends Fragment implements MedicationAdap
         viewModel = new ViewModelProvider(this).get(DashboardClienteViewModel.class);
 
         TextView tvSaludo = v.findViewById(R.id.tvSaludoCliente);
-        viewModel.getNombreUsuario().observe(getViewLifecycleOwner(), s -> tvSaludo.setText("Hola, " + s));
+        viewModel.getNombreUsuario().observe(getViewLifecycleOwner(), s -> tvSaludo.setText(getString(R.string.greeting_hello, s)));
 
         lblPulso = v.findViewById(R.id.tvPulsoCliente);
         lblOxigeno = v.findViewById(R.id.tvOxigenoCliente);
-        listadoMeds = v.findViewById(R.id.containerRemedios);
+        
+        rvRemedios = v.findViewById(R.id.rvRemediosCliente);
+        rvRemedios.setLayoutManager(new LinearLayoutManager(requireContext()));
+        medAdapter = new MedicationAdapter(new ArrayList<>(), true, this);
+        rvRemedios.setAdapter(medAdapter);
 
         viewModel.getPulso().observe(getViewLifecycleOwner(), lblPulso::setText);
         viewModel.getOxigeno().observe(getViewLifecycleOwner(), lblOxigeno::setText);
@@ -99,6 +114,7 @@ public class DashboardClienteFragment extends Fragment implements MedicationAdap
         return v;
     }
 
+    // --- Bloque 3: Alternancia de pestañas ---
     private void switchTab(int tabIndex) {
         layoutInicio.setVisibility(tabIndex == 1 ? View.VISIBLE : View.GONE);
         layoutMedicamentos.setVisibility(tabIndex == 2 ? View.VISIBLE : View.GONE);
@@ -109,6 +125,7 @@ public class DashboardClienteFragment extends Fragment implements MedicationAdap
         tvTabContactosLabel.setTextColor(tabIndex == 3 ? Color.parseColor("#1457D9") : Color.parseColor("#62708A"));
     }
 
+    // --- Bloque 4: Guardado de contactos ---
     private void guardarContactos() {
         String n1 = etContactName1.getText().toString().trim();
         String p1 = etContactPhone1.getText().toString().trim();
@@ -116,9 +133,10 @@ public class DashboardClienteFragment extends Fragment implements MedicationAdap
         String p2 = etContactPhone2.getText().toString().trim();
 
         viewModel.guardarContactos(n1, p1, n2, p2);
-        Toast.makeText(requireContext(), "Contactos guardados exitosamente", Toast.LENGTH_SHORT).show();
+        Toast.makeText(requireContext(), getString(R.string.msg_contactos_guardados), Toast.LENGTH_SHORT).show();
     }
 
+    // --- Bloque 5: Ciclo de vida y listeners ---
     @Override
     public void onResume() {
         super.onResume();
@@ -128,34 +146,21 @@ public class DashboardClienteFragment extends Fragment implements MedicationAdap
         }
     }
 
+    // --- Bloque 6: Construcción dinámica de la lista de medicamentos ---
     private void armarListaMeds(List<Medication> items) {
-        if (listadoMeds == null) return;
-        listadoMeds.removeAllViews();
-        
-        for (Medication m : items) {
-            View row = LayoutInflater.from(requireContext()).inflate(R.layout.item_medication, listadoMeds, false);
-            ((TextView)row.findViewById(R.id.tvMedName)).setText(m.getNombre());
-            
-            TextView badge = row.findViewById(R.id.tvMedBadge);
-            View btn = row.findViewById(R.id.btnTakeMed);
-
-            if (m.isTaken()) {
-                badge.setText("Tomado");
-                btn.setVisibility(View.GONE);
-            } else {
-                badge.setText(m.getHora());
-                btn.setOnClickListener(click -> tomar(m));
-            }
-            listadoMeds.addView(row);
+        if (medAdapter != null && items != null) {
+            medAdapter.updateList(items);
         }
     }
 
+    // --- Bloque 7: Implementación de la interfaz AccionesMed ---
     @Override
     public void tomar(Medication m) {
         viewModel.tomar(m);
-        Toast.makeText(requireContext(), "¡Registrado!", Toast.LENGTH_SHORT).show();
+        Toast.makeText(requireContext(), getString(R.string.msg_registrado), Toast.LENGTH_SHORT).show();
     }
 
+    // --- Bloque 8: Configuración de los listeners de botones y acciones ---
     private void setOnClickListeners(View v) {
         v.findViewById(R.id.btnSOS).setOnClickListener(view -> {
             Navigation.findNavController(view).navigate(R.id.nav_sos_countdown);
@@ -178,28 +183,63 @@ public class DashboardClienteFragment extends Fragment implements MedicationAdap
         v.findViewById(R.id.btnCallCaregiver).setOnClickListener(view -> {
             String primaryContactPhone = etContactPhone1.getText().toString().trim();
             if (!primaryContactPhone.isEmpty()) {
-                Toast.makeText(requireContext(), "Llamando a: " + etContactName1.getText().toString() + " (" + primaryContactPhone + ")...", Toast.LENGTH_LONG).show();
+                Toast.makeText(requireContext(), getString(R.string.msg_llamando_a, etContactName1.getText().toString(), primaryContactPhone), Toast.LENGTH_LONG).show();
             } else {
-                Toast.makeText(requireContext(), "Llamando a tu cuidador...", Toast.LENGTH_LONG).show();
+                Toast.makeText(requireContext(), getString(R.string.msg_llamando_cuidador), Toast.LENGTH_LONG).show();
             }
         });
     }
 
+    // --- Bloque 9: Diálogo emergente de signos vitales ---
     private void lanzarPopup(int p, int o, String r) {
+        if (activeVitalsDialog != null && activeVitalsDialog.isShowing()) {
+            activeVitalsDialog.dismiss();
+        }
         View pop = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_vitals, null);
-        AlertDialog alert = new AlertDialog.Builder(requireContext()).setView(pop).create();
-        if (alert.getWindow() != null) alert.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        activeVitalsDialog = new AlertDialog.Builder(requireContext()).setView(pop).create();
+        if (activeVitalsDialog.getWindow() != null) {
+            activeVitalsDialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
 
         ((TextView) pop.findViewById(R.id.tvPopPulso)).setText(p + " LPM");
         ((TextView) pop.findViewById(R.id.tvPopOxigeno)).setText(o + "%");
         ((TextView) pop.findViewById(R.id.tvPopPresion)).setText(r);
         
-        pop.findViewById(R.id.btnCerrarPop).setOnClickListener(x -> alert.dismiss());
-        alert.show();
+        pop.findViewById(R.id.btnCerrarPop).setOnClickListener(x -> {
+            if (activeVitalsDialog != null) {
+                activeVitalsDialog.dismiss();
+            }
+        });
+        activeVitalsDialog.show();
     }
 
+    // --- Bloque 10: Recarga de la actividad principal ---
     private void recargarApp() {
         startActivity(new Intent(requireActivity(), MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
         requireActivity().finish();
+    }
+
+    // --- Bloque 11: Limpieza del ciclo de vida ---
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        if (activeVitalsDialog != null && activeVitalsDialog.isShowing()) {
+            activeVitalsDialog.dismiss();
+        }
+        activeVitalsDialog = null;
+        rvRemedios = null;
+        medAdapter = null;
+        lblPulso = null;
+        lblOxigeno = null;
+        layoutInicio = null;
+        layoutMedicamentos = null;
+        layoutContactos = null;
+        tvTabInicioLabel = null;
+        tvTabMedicamentosLabel = null;
+        tvTabContactosLabel = null;
+        etContactName1 = null;
+        etContactPhone1 = null;
+        etContactName2 = null;
+        etContactPhone2 = null;
     }
 }

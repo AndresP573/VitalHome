@@ -1,16 +1,109 @@
 <resources>
+    <!-- Configuración general y de aplicación -->
     <string name="app_name">vitalhome</string>
     <string name="vitalhome_title">VitalHome</string>
     <string name="vitalhome_tagline">Protección Inteligente</string>
+
+    <!-- Inicio de Sesión y Registro -->
     <string name="email_hint">Correo electrónico</string>
     <string name="password_hint">Contraseña</string>
     <string name="name_hint">Nombre y Apellido</string>
     <string name="login_button">INICIAR SESIÓN</string>
-    <string name="register_prompt">¿No tenés cuenta? Regístrate aquí</string>
+    <string name="register_prompt">¿No tiene cuenta? Regístrese aquí</string>
     <string name="create_account">Crear Cuenta</string>
     <string name="who_uses_app">¿Quién usará esta aplicación?</string>
     <string name="role_adulto_mayor">Soy el Adulto Mayor</string>
     <string name="role_cuidador">Soy el Familiar/Cuidador</string>
     <string name="register_button">REGISTRARSE</string>
-    <string name="go_to_login">¿Ya tenés cuenta? Inicia sesión</string>
+    <string name="go_to_login">¿Ya tiene cuenta? Inicie sesión</string>
+
+    <!-- Mensajes informativos y Toasts -->
+    <string name="msg_faltan_datos">Por favor, complete todos los campos requeridos.</string>
+    <string name="msg_guardado">Medicamento guardado correctamente.</string>
+    <string name="msg_registrado">Medicamento registrado correctamente.</string>
+    <string name="msg_completa_datos">Por favor, ingrese sus credenciales de acceso.</string>
+    <string name="msg_pass_incorrecta">Contraseña incorrecta.</string>
+    <string name="msg_contactos_guardados">Contactos de emergencia guardados exitosamente.</string>
+    <string name="msg_alertas_limpias">Historial de alertas limpiado.</string>
+    <string name="msg_llamando_a">Llamando a: %1$s (%2$s)&#8230;</string>
+    <string name="msg_llamando_cuidador">Llamando a su cuidador...</string>
+
+    <!-- Saludos y etiquetas formateadas -->
+    <string name="greeting_hello">Hola, %1$s</string>
+    <string name="label_pulsera_of">⌚ Pulsera de %1$s</string>
+    <string name="label_meds_count">%1$d en el plan</string>
+    <string name="status_tomado">Tomado</string>
+
+    <!-- Diálogo de Signos Vitales -->
+    <string name="vitals_dialog_title">🩺 Tu Salud</string>
+    <string name="vitals_pulse">PULSO</string>
+    <string name="vitals_oxygen">OXÍGENO</string>
+    <string name="vitals_pressure">PRESIÓN</string>
+    <string name="vitals_btn_ok">👍 ¡ESTOY BIEN!</string>
+
+    <!-- Dashboard Cliente -->
+    <string name="client_dash_hello">Hola</string>
+    <string name="client_dash_how_are_you">¿Cómo estás hoy?</string>
+    <string name="client_dash_my_health">MI SALUD</string>
+    <string name="label_pulso">Pulso</string>
+    <string name="label_oxigeno">Oxígeno</string>
+    <string name="btn_medir_ahora">MEDIR AHORA</string>
+    <string name="btn_sos">SOS</string>
+    <string name="btn_call_caregiver">📞 LLAMAR A MI CUIDADOR</string>
+    <string name="btn_switch_to_caregiver">CAMBIAR A CUIDADOR</string>
+    <string name="btn_logout">CERRAR SESIÓN Y SALIR</string>
+    <string name="title_my_remedies">💊 Mis Remedios Diarios</string>
+    <string name="btn_view_medical_profile">📋 VER MI PERFIL MÉDICO</string>
+    <string name="title_my_contacts">👤 Mis Contactos</string>
+    <string name="sub_my_contacts">Ingrese las personas a llamar en emergencia.</string>
+    <string name="contact_1_title">Contacto 1 (Principal)</string>
+    <string name="hint_contact_name_1">Nombre (ej. Hijo Juan)</string>
+    <string name="hint_contact_phone">Número de Teléfono</string>
+    <string name="contact_2_title">Contacto 2 (Auxiliar)</string>
+    <string name="hint_contact_name_2">Nombre (ej. Vecina Ana)</string>
+    <string name="btn_save_contacts">💾 GUARDAR CONTACTOS</string>
+    <string name="tab_inicio">INICIO</string>
+    <string name="tab_remedios">REMEDIOS</string>
+    <string name="tab_contactos">CONTACTOS</string>
+
+    <!-- Dashboard Cuidador -->
+    <string name="caregiver_dash_subtitle">Estado de su familiar hoy.</string>
+    <string name="label_pulsera_default">⌚ Pulsera</string>
+    <string name="label_conectada">Conectada</string>
+    <string name="label_pulsera_info">🔋 85% | 📍 En el hogar</string>
+    <string name="btn_view_vitals">Ver signos vitales →</string>
+    <string name="title_meds">💊 Medicinas</string>
+    <string name="sub_meds">Estado de las tomas de hoy.</string>
+    <string name="btn_medical_history">📜 HISTORIAL MÉDICO</string>
+    <string name="btn_home_activity">🏠 ACTIVIDAD EN CASA</string>
+
+    <!-- Medicamentos / Remedios -->
+    <string name="title_remedies_management">Gestión de Remedios</string>
+    <string name="sub_remedies_management">Configure el plan de tomas diario.</string>
+    <string name="title_add_new_med">➕ Cargar nuevo</string>
+    <string name="hint_med_name">Nombre del medicamento</string>
+    <string name="hint_med_time">Horario (HH:MM)</string>
+    <string name="btn_save_med">💾 GUARDAR MEDICINA</string>
+    <string name="title_remedies">💊 Remedios</string>
+    <string name="btn_back_to_start">🔙 VOLVER AL INICIO</string>
+
+    <!-- Alertas -->
+    <string name="title_event_log">Registro de Eventos</string>
+    <string name="sub_event_log">Historial cronológico.</string>
+    <string name="btn_clear_all">LIMPIAR</string>
+
+    <!-- Sensores del Hogar -->
+    <string name="title_home_activity">Actividad del Hogar</string>
+    <string name="sub_home_activity">Sensores instalados en el domicilio.</string>
+    <string name="label_front_door">🚪 Puerta Principal</string>
+    <string name="door_open">ABIERTA</string>
+    <string name="door_closed">CERRADA</string>
+    <string name="btn_close_door">Cerrar puerta</string>
+    <string name="btn_simulate_door_open">Simular apertura</string>
+    <string name="label_ambient_temp">🌡️ Temperatura Ambiente</string>
+    <string name="label_smoke_detector">🔥 Detector de Humo</string>
+    <string name="fire_detected">¡FUEGO!</string>
+    <string name="smoke_none">SIN HUMO</string>
+    <string name="btn_turn_off_alarm">Apagar alarma</string>
+    <string name="btn_simulate_fire">Simular fuego</string>
 </resources>

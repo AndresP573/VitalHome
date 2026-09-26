@@ -13,22 +13,32 @@ import com.example.vitalhome.R;
 import com.example.vitalhome.data.modelo.Medication;
 import java.util.List;
 
+/**
+ * Adaptador de RecyclerView para la lista de medicamentos (Medication).
+ * Muestra el estado de cada medicamento y gestiona el evento de acción al marcarlo como tomado.
+ */
 public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.MedViewHolder> {
 
+    // --- Bloque 1: Atributos de la clase e interfaz ---
     private List<Medication> plan;
     private boolean esAbuelo;
     private AccionesMed listener;
 
+    /**
+     * Interfaz para notificar acciones de toma de medicamento.
+     */
     public interface AccionesMed {
         void tomar(Medication m);
     }
 
+    // --- Bloque 2: Constructor ---
     public MedicationAdapter(List<Medication> plan, boolean esAbuelo, AccionesMed listener) {
         this.plan = plan;
         this.esAbuelo = esAbuelo;
         this.listener = listener;
     }
 
+    // --- Bloque 3: Creación de ViewHolder ---
     @NonNull
     @Override
     public MedViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -36,12 +46,14 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
         return new MedViewHolder(v);
     }
 
+    // --- Bloque 4: Vinculación de datos y configuración de estado ---
     @Override
     public void onBindViewHolder(@NonNull MedViewHolder holder, int pos) {
         Medication m = plan.get(pos);
         holder.txt.setText(m.getNombre());
         holder.txt.setTextColor(ContextCompat.getColor(holder.itemView.getContext(), R.color.primaryDark));
         
+        // Configuración visual según si la medicina ya fue tomada o está pendiente
         if (m.isTaken()) {
             holder.badge.setText("Tomado");
             holder.badge.setBackgroundColor(Color.parseColor("#E6FFFA"));
@@ -63,12 +75,20 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
         }
     }
 
+    // --- Bloque 5: Conteo de elementos y actualización ---
     @Override
-    public int getItemCount() { return plan.size(); }
+    public int getItemCount() { return plan != null ? plan.size() : 0; }
 
+    public void updateList(List<Medication> newPlan) {
+        this.plan = newPlan;
+        notifyDataSetChanged();
+    }
+
+    // --- Bloque 6: Clase interna ViewHolder ---
     static class MedViewHolder extends RecyclerView.ViewHolder {
         TextView txt, badge;
         Button btn;
+        
         public MedViewHolder(@NonNull View itemView) {
             super(itemView);
             txt = itemView.findViewById(R.id.tvMedName);

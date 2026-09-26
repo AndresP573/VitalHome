@@ -9,18 +9,26 @@ import com.example.vitalhome.data.modelo.MedicalRecord;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * ViewModel para gestionar y proveer la lista de registros médicos en el historial clínico.
+ */
 public class HistorialMedicoViewModel extends AndroidViewModel {
+
+    // --- Bloque 1: Atributos y LiveData ---
     private final MutableLiveData<List<MedicalRecord>> records = new MutableLiveData<>();
 
+    // --- Bloque 2: Constructor e inicialización ---
     public HistorialMedicoViewModel(@NonNull Application application) {
         super(application);
         loadRecords();
     }
 
+    // --- Bloque 3: Métodos de acceso a LiveData ---
     public LiveData<List<MedicalRecord>> getRecords() {
         return records;
     }
 
+    // --- Bloque 4: Carga de registros médicos de prueba ---
     private void loadRecords() {
         List<MedicalRecord> data = new ArrayList<>();
         data.add(new MedicalRecord("10/09/2026", "Chequeo Cardiológico", "Dr. Ricardo Pérez", "Electrocardiograma normal. Ritmo sinusal estable. Próximo control en 6 meses."));

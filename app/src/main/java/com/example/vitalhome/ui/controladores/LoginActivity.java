@@ -11,21 +11,31 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.vitalhome.R;
 
+/**
+ * Actividad responsable de gestionar el inicio de sesión de los usuarios (Cliente o Cuidador).
+ */
 public class LoginActivity extends AppCompatActivity {
 
+    // --- Bloque 1: Inicialización de la pantalla de Login ---
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
         SharedPreferences p = getSharedPreferences("VitalHomePrefs", MODE_PRIVATE);
+        if (p.getBoolean("isLoggedIn", false)) {
+            startActivity(new Intent(this, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
+            finish();
+            return;
+        }
+
         EditText inMail = findViewById(R.id.etEmailLogin);
         EditText inPass = findViewById(R.id.etPasswordLogin);
         RadioGroup selPerfil = findViewById(R.id.rgLoginRole);
         Button btnEntrar = findViewById(R.id.btnLogin);
         TextView btnGoReg = findViewById(R.id.tvGoToRegister);
 
-        // Carga inicial
+        // --- Bloque 2: Carga inicial de correo según rol seleccionado ---
         int actualId = selPerfil.getCheckedRadioButtonId();
         String k = (actualId == R.id.rbLoginAdulto) ? "email_cliente" : "email_cuidador";
         inMail.setText(p.getString(k, p.getString("email", "")));
@@ -37,6 +47,7 @@ public class LoginActivity extends AppCompatActivity {
             inMail.setText(m);
         });
 
+        // --- Bloque 3: Validación e inicio de sesión ---
         btnEntrar.setOnClickListener(v -> {
             String mail = inMail.getText().toString().trim();
             String pass = inPass.getText().toString().trim();
@@ -45,7 +56,7 @@ public class LoginActivity extends AppCompatActivity {
             String passOk = p.getString("password", "");
 
             if (mail.isEmpty() || pass.isEmpty()) {
-                Toast.makeText(this, "Completá los datos che", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, getString(R.string.msg_completa_datos), Toast.LENGTH_SHORT).show();
                 return;
             }
 
@@ -60,10 +71,11 @@ public class LoginActivity extends AppCompatActivity {
                 startActivity(new Intent(this, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
                 finish();
             } else {
-                Toast.makeText(this, "Pass incorrecta", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, getString(R.string.msg_pass_incorrecta), Toast.LENGTH_SHORT).show();
             }
         });
 
+        // --- Bloque 4: Navegación hacia la pantalla de registro ---
         btnGoReg.setOnClickListener(v -> startActivity(new Intent(this, RegisterActivity.class)));
     }
 }

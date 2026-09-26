@@ -31,7 +31,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center"
-                    android:text="Hola"
+                    android:text="@string/client_dash_hello"
                     android:textColor="#0A2E73"
                     android:textSize="42sp"
                     android:textStyle="bold" />
@@ -41,7 +41,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center"
-                    android:text="¿Cómo estás hoy?"
+                    android:text="@string/client_dash_how_are_you"
                     android:textColor="#62708A"
                     android:textSize="24sp"
                     android:textStyle="bold" />
@@ -75,7 +75,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="MI SALUD"
+                            android:text="@string/client_dash_my_health"
                             android:textColor="#62708A"
                             android:textSize="14sp"
                             android:textStyle="bold" />
@@ -103,7 +103,7 @@
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="Pulso"
+                                    android:text="@string/label_pulso"
                                     android:textSize="12sp" />
                             </LinearLayout>
 
@@ -124,7 +124,7 @@
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="Oxígeno"
+                                    android:text="@string/label_oxigeno"
                                     android:textSize="12sp" />
                             </LinearLayout>
                         </LinearLayout>
@@ -134,7 +134,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="16dp"
-                            android:text="MEDIR AHORA"
+                            android:text="@string/btn_medir_ahora"
                             android:backgroundTint="#2F7CF6"
                             android:textStyle="bold"
                             app:cornerRadius="15dp" />
@@ -154,7 +154,7 @@
                         android:background="@drawable/bg_sos_button"
                         android:contentDescription="Botón de emergencia SOS"
                         android:elevation="12dp"
-                        android:text="SOS"
+                        android:text="@string/btn_sos"
                         android:textColor="@android:color/white"
                         android:textSize="32sp"
                         android:textStyle="bold" />
@@ -168,7 +168,7 @@
                     android:layout_marginTop="8dp"
                     android:backgroundTint="#10B981"
                     android:padding="18dp"
-                    android:text="📞 LLAMAR A MI CUIDADOR"
+                    android:text="@string/btn_call_caregiver"
                     android:textColor="#FFFFFF"
                     android:textSize="18sp"
                     android:textStyle="bold"
@@ -180,7 +180,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="32dp"
-                    android:text="CAMBIAR A CUIDADOR"
+                    android:text="@string/btn_switch_to_caregiver"
                     android:textSize="18sp"
                     android:textStyle="bold"
                     android:textColor="#1457D9" />
@@ -192,7 +192,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
                     android:layout_marginBottom="24dp"
-                    android:text="CERRAR SESIÓN Y SALIR"
+                    android:text="@string/btn_logout"
                     android:textColor="#EF4444"
                     android:textStyle="bold" />
             </LinearLayout>
@@ -209,17 +209,17 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="24dp"
-                    android:text="💊 Mis Remedios Diarios"
+                    android:text="@string/title_my_remedies"
                     android:textColor="#0A2E73"
                     android:textSize="26sp"
                     android:textStyle="bold" />
 
-                <LinearLayout
-                    android:id="@+id/containerRemedios"
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rvRemediosCliente"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:layout_marginTop="16dp" />
+                    android:layout_marginTop="16dp"
+                    android:nestedScrollingEnabled="false" />
 
                 <!-- Opción Ver mi perfil médico mudado aquí -->
                 <Button
@@ -229,7 +229,7 @@
                     android:layout_marginTop="40dp"
                     android:layout_marginBottom="40dp"
                     android:backgroundTint="#1457D9"
-                    android:text="📋 VER MI PERFIL MÉDICO"
+                    android:text="@string/btn_view_medical_profile"
                     android:textColor="#FFFFFF"
                     android:textSize="18sp"
                     android:textStyle="bold"
@@ -248,7 +248,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="24dp"
-                    android:text="👤 Mis Contactos"
+                    android:text="@string/title_my_contacts"
                     android:textColor="#0A2E73"
                     android:textSize="26sp"
                     android:textStyle="bold" />
@@ -257,7 +257,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    android:text="Cargá las personas a llamar en emergencia."
+                    android:text="@string/sub_my_contacts"
                     android:textColor="#62708A"
                     android:textSize="16sp" />
 
@@ -280,7 +280,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Contacto 1 (Principal)"
+                            android:text="@string/contact_1_title"
                             android:textColor="#102040"
                             android:textSize="18sp"
                             android:textStyle="bold" />
@@ -289,7 +289,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="12dp"
-                            android:hint="Nombre (ej. Hijo Juan)"
+                            android:hint="@string/hint_contact_name_1"
                             style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
                             <com.google.android.material.textfield.TextInputEditText
                                 android:id="@+id/etContactName1"
@@ -302,7 +302,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="10dp"
-                            android:hint="Número de Teléfono"
+                            android:hint="@string/hint_contact_phone"
                             style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
                             <com.google.android.material.textfield.TextInputEditText
                                 android:id="@+id/etContactPhone1"
@@ -333,7 +333,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Contacto 2 (Auxiliar)"
+                            android:text="@string/contact_2_title"
                             android:textColor="#102040"
                             android:textSize="18sp"
                             android:textStyle="bold" />
@@ -342,7 +342,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="12dp"
-                            android:hint="Nombre (ej. Vecina Ana)"
+                            android:hint="@string/hint_contact_name_2"
                             style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
                             <com.google.android.material.textfield.TextInputEditText
                                 android:id="@+id/etContactName2"
@@ -355,7 +355,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="10dp"
-                            android:hint="Número de Teléfono"
+                            android:hint="@string/hint_contact_phone"
                             style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
                             <com.google.android.material.textfield.TextInputEditText
                                 android:id="@+id/etContactPhone2"
@@ -375,7 +375,7 @@
                     android:layout_marginBottom="40dp"
                     android:backgroundTint="#10B981"
                     android:padding="16dp"
-                    android:text="💾 GUARDAR CONTACTOS"
+                    android:text="@string/btn_save_contacts"
                     android:textColor="#FFFFFF"
                     android:textSize="18sp"
                     android:textStyle="bold"
@@ -422,7 +422,7 @@
                     android:id="@+id/tvTabInicioLabel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="INICIO"
+                    android:text="@string/tab_inicio"
                     android:textSize="12sp"
                     android:textStyle="bold"
                     android:textColor="#1457D9" />
@@ -448,7 +448,7 @@
                     android:id="@+id/tvTabMedicamentosLabel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="REMEDIOS"
+                    android:text="@string/tab_remedios"
                     android:textSize="12sp"
                     android:textStyle="bold"
                     android:textColor="#62708A" />
@@ -474,7 +474,7 @@
                     android:id="@+id/tvTabContactosLabel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="CONTACTOS"
+                    android:text="@string/tab_contactos"
                     android:textSize="12sp"
                     android:textStyle="bold"
                     android:textColor="#62708A" />

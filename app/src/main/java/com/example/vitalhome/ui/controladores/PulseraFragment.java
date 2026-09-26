@@ -13,10 +13,15 @@ import com.example.vitalhome.R;
 import androidx.lifecycle.ViewModelProvider;
 import com.example.vitalhome.ui.viewmodels.PulseraViewModel;
 
+/**
+ * Fragmento que muestra los detalles de los signos vitales obtenidos desde la pulsera inteligente.
+ */
 public class PulseraFragment extends Fragment {
 
+    // --- Bloque 1: Atributo ViewModel ---
     private PulseraViewModel viewModel;
 
+    // --- Bloque 2: Inflado e inicialización de vistas ---
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {

@@ -13,10 +13,16 @@ import com.example.vitalhome.R;
 import androidx.lifecycle.ViewModelProvider;
 import com.example.vitalhome.ui.viewmodels.SosCountdownViewModel;
 
+/**
+ * Fragmento que muestra la pantalla de cuenta regresiva previa al envío de la alerta SOS.
+ * Permite cancelar la cuenta regresiva, confirmar la emergencia inmediatamente o indicar "Estoy bien".
+ */
 public class SosCountdownFragment extends Fragment {
 
+    // --- Bloque 1: Atributo ViewModel ---
     private SosCountdownViewModel viewModel;
 
+    // --- Bloque 2: Inflado e integración del temporizador ---
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -33,6 +39,7 @@ public class SosCountdownFragment extends Fragment {
             }
         });
         
+        // Listeners para acciones SOS
         v.findViewById(R.id.btnCancelSOS).setOnClickListener(view -> {
             viewModel.estoyBien();
             Navigation.findNavController(view).navigateUp();
@@ -50,5 +57,22 @@ public class SosCountdownFragment extends Fragment {
         viewModel.startTimer();
 
         return v;
+    }
+
+    // --- Bloque 3: Gestión del ciclo de vida ---
+    @Override
+    public void onPause() {
+        super.onPause();
+        if (viewModel != null) {
+            viewModel.cancelTimer();
+        }
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        if (viewModel != null) {
+            viewModel.cancelTimer();
+        }
     }
 }

@@ -14,10 +14,15 @@ import com.example.vitalhome.ui.adapter.MedicalRecordAdapter;
 import androidx.lifecycle.ViewModelProvider;
 import com.example.vitalhome.ui.viewmodels.HistorialMedicoViewModel;
 
+/**
+ * Fragmento encargado de presentar la pantalla de historial clínico y consultas médicas.
+ */
 public class HistorialMedicoFragment extends Fragment {
 
+    // --- Bloque 1: Atributo ViewModel ---
     private HistorialMedicoViewModel viewModel;
 
+    // --- Bloque 2: Inflado e inicialización de la lista ---
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -29,6 +34,7 @@ public class HistorialMedicoFragment extends Fragment {
         
         rv.setAdapter(new MedicalRecordAdapter(viewModel.getRecords().getValue()));
 
+        // Configuración de botones para volver atrás
         v.findViewById(R.id.btnVolverHistorial).setOnClickListener(view -> 
             requireActivity().getOnBackPressedDispatcher().onBackPressed()
         );

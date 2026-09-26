@@ -14,10 +14,15 @@ import androidx.lifecycle.ViewModelProvider;
 import com.example.vitalhome.R;
 import com.example.vitalhome.ui.viewmodels.HogarViewModel;
 
+/**
+ * Fragmento para el monitoreo y simulación de sensores del hogar (puerta y detección de fuego/humo).
+ */
 public class HogarFragment extends Fragment {
 
+    // --- Bloque 1: Atributos de la clase ---
     private HogarViewModel viewModel;
 
+    // --- Bloque 2: Inflado e integración con ViewModel ---
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -29,33 +34,37 @@ public class HogarFragment extends Fragment {
         TextView tvEstadoFuego = v.findViewById(R.id.tvEstadoFuego);
         Button btnSimularFuego = v.findViewById(R.id.btnSimularFuego);
 
+        // Observación del estado del sensor de la puerta
         viewModel.getPuertaAbierta().observe(getViewLifecycleOwner(), abierta -> {
             if (abierta) {
-                tvEstadoPuerta.setText("ABIERTA");
+                tvEstadoPuerta.setText(getString(R.string.door_open));
                 tvEstadoPuerta.setTextColor(Color.parseColor("#EF4444"));
-                btnSimularPuerta.setText("Cerrar puerta");
+                btnSimularPuerta.setText(getString(R.string.btn_close_door));
             } else {
-                tvEstadoPuerta.setText("CERRADA");
+                tvEstadoPuerta.setText(getString(R.string.door_closed));
                 tvEstadoPuerta.setTextColor(Color.parseColor("#10B981"));
-                btnSimularPuerta.setText("Simular apertura");
+                btnSimularPuerta.setText(getString(R.string.btn_simulate_door_open));
             }
         });
 
+        // Observación del estado del sensor de fuego
         viewModel.getFuegoDetectado().observe(getViewLifecycleOwner(), fuego -> {
             if (fuego) {
-                tvEstadoFuego.setText("¡FUEGO!");
+                tvEstadoFuego.setText(getString(R.string.fire_detected));
                 tvEstadoFuego.setTextColor(Color.parseColor("#EF4444"));
-                btnSimularFuego.setText("Apagar alarma");
+                btnSimularFuego.setText(getString(R.string.btn_turn_off_alarm));
             } else {
-                tvEstadoFuego.setText("SIN HUMO");
+                tvEstadoFuego.setText(getString(R.string.smoke_none));
                 tvEstadoFuego.setTextColor(Color.parseColor("#10B981"));
-                btnSimularFuego.setText("Simular fuego");
+                btnSimularFuego.setText(getString(R.string.btn_simulate_fire));
             }
         });
 
+        // Listeners para las simulaciones de sensores
         btnSimularPuerta.setOnClickListener(view -> viewModel.togglePuerta());
         btnSimularFuego.setOnClickListener(view -> viewModel.toggleFuego());
 
+        // Navegación de retorno
         v.findViewById(R.id.btnVolverHogar).setOnClickListener(view -> 
             requireActivity().getOnBackPressedDispatcher().onBackPressed()
         );

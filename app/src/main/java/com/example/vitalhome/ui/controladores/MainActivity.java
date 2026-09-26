@@ -16,13 +16,19 @@ import androidx.navigation.fragment.NavHostFragment;
 import com.example.vitalhome.R;
 import com.example.vitalhome.utils.MedicationAlarmScheduler;
 
+/**
+ * Actividad principal de la aplicación VitalHome.
+ * Controla la navegación general mediante Jetpack Navigation, la verificación de permisos y la inicialización de alarmas.
+ */
 public class MainActivity extends AppCompatActivity {
 
+    // --- Bloque 1: Permisos de notificaciones en Android 13+ ---
     private final ActivityResultLauncher<String> requestPermissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
                 // Callback de manejo del permiso (se puede dejar vacío o logs internos)
             });
 
+    // --- Bloque 2: Inicialización y configuración del NavController ---
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -80,6 +86,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    // --- Bloque 3: Configuración de la barra de navegación inferior ---
     private void configurarNav(NavController controller, SharedPreferences p) {
         findViewById(R.id.btnNavInicio).setOnClickListener(v -> controller.navigate(R.id.nav_dashboard));
         findViewById(R.id.btnNavAlertas).setOnClickListener(v -> controller.navigate(R.id.nav_alertas));
@@ -91,11 +98,12 @@ public class MainActivity extends AppCompatActivity {
 
         findViewById(R.id.btnNavSalir).setOnClickListener(v -> {
             p.edit().putBoolean("isLoggedIn", false).apply();
-            finishAffinity();
-            System.exit(0);
+            startActivity(new Intent(this, LoginActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK));
+            finish();
         });
     }
 
+    // --- Bloque 4: Recarga de la actividad ---
     private void recargar() {
         startActivity(new Intent(this, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK));
         finish();

@@ -27,7 +27,7 @@
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@drawable/ic_arrow_back"
                 app:tint="#0A2E73"
-                android:contentDescription="Volver" />
+                android:contentDescription="@string/btn_back_to_start" />
 
             <LinearLayout
                 android:layout_width="wrap_content"
@@ -40,7 +40,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Actividad del Hogar"
+                    android:text="@string/title_home_activity"
                     android:textColor="#0A2E73"
                     android:textSize="28sp"
                     android:textStyle="bold" />
@@ -48,7 +48,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Sensores instalados en el domicilio."
+                    android:text="@string/sub_home_activity"
                     android:textColor="#62708A"
                     android:textSize="17sp" />
             </LinearLayout>
@@ -73,7 +73,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="🚪 Puerta Principal"
+                    android:text="@string/label_front_door"
                     android:textColor="#62708A"
                     android:textStyle="bold" />
 
@@ -82,7 +82,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:text="CERRADA"
+                    android:text="@string/door_closed"
                     android:textColor="#10B981"
                     android:textSize="28sp"
                     android:textStyle="bold" />
@@ -92,7 +92,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:text="Simular apertura" />
+                    android:text="@string/btn_simulate_door_open" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
@@ -115,7 +115,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="🌡️ Temperatura Ambiente"
+                    android:text="@string/label_ambient_temp"
                     android:textColor="#62708A"
                     android:textStyle="bold" />
 
@@ -149,7 +149,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="🔥 Detector de Humo"
+                    android:text="@string/label_smoke_detector"
                     android:textColor="#62708A"
                     android:textStyle="bold" />
 
@@ -158,7 +158,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:text="SIN HUMO"
+                    android:text="@string/smoke_none"
                     android:textColor="#10B981"
                     android:textSize="28sp"
                     android:textStyle="bold" />
@@ -168,7 +168,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:text="Simular fuego" />
+                    android:text="@string/btn_simulate_fire" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
@@ -179,7 +179,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="32dp"
             android:layout_marginBottom="100dp"
-            android:text="🔙 VOLVER AL INICIO"
+            android:text="@string/btn_back_to_start"
             android:textColor="#1457D9"
             android:textStyle="bold" />
 

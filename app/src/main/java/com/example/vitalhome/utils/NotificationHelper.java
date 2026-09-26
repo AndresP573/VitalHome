@@ -11,12 +11,19 @@ import androidx.core.app.NotificationManagerCompat;
 import com.example.vitalhome.R;
 import com.example.vitalhome.ui.controladores.MainActivity;
 
+/**
+ * Clase utilitaria encargada de la creación de canales de notificación y la emisión
+ * de alertas del sistema (SOS, salud, eventos del hogar y recordatorios de medicación).
+ */
 public class NotificationHelper {
+
+    // --- Bloque 1: Constantes de canales de notificación ---
     private static final String CANAL_EMERGENCIAS = "EMERGENCIAS_CHANNEL";
     private static final String CANAL_SALUD = "SALUD_CHANNEL";
     private static final String CANAL_HOGAR = "HOGAR_CHANNEL";
     private static final String CANAL_MEDICAMENTOS = "MEDICAMENTOS_CHANNEL";
 
+    // --- Bloque 2: Métodos auxiliares para canales e intents ---
     private static void crearCanalSiFalta(Context ctx, String id, String nombre) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel c = new NotificationChannel(id, nombre, NotificationManager.IMPORTANCE_HIGH);
@@ -31,6 +38,7 @@ public class NotificationHelper {
         return PendingIntent.getActivity(ctx, requestCode, i, PendingIntent.FLAG_IMMUTABLE);
     }
 
+    // --- Bloque 3: Notificaciones de Emergencia / SOS ---
     public static void sendSOS(Context ctx, String quien) {
         crearCanalSiFalta(ctx, CANAL_EMERGENCIAS, "Emergencias");
         NotificationCompat.Builder n = new NotificationCompat.Builder(ctx, CANAL_EMERGENCIAS)
@@ -59,6 +67,7 @@ public class NotificationHelper {
         } catch (SecurityException ignored) {}
     }
 
+    // --- Bloque 4: Notificaciones de Salud y Signos Vitales ---
     public static void pulso(Context ctx, int lpm) {
         crearCanalSiFalta(ctx, CANAL_SALUD, "Salud");
         NotificationCompat.Builder n = new NotificationCompat.Builder(ctx, CANAL_SALUD)
@@ -115,6 +124,7 @@ public class NotificationHelper {
         } catch (SecurityException ignored) {}
     }
 
+    // --- Bloque 5: Notificaciones de Eventos del Hogar ---
     public static void fuego(Context ctx) {
         crearCanalSiFalta(ctx, CANAL_EMERGENCIAS, "Emergencias");
         NotificationCompat.Builder n = new NotificationCompat.Builder(ctx, CANAL_EMERGENCIAS)
@@ -143,6 +153,7 @@ public class NotificationHelper {
         } catch (SecurityException ignored) {}
     }
 
+    // --- Bloque 6: Notificaciones de Medicamentos ---
     public static void medicamento(Context ctx, int notifId, String nombre, String hora) {
         crearCanalSiFalta(ctx, CANAL_MEDICAMENTOS, "Medicamentos");
         NotificationCompat.Builder n = new NotificationCompat.Builder(ctx, CANAL_MEDICAMENTOS)
