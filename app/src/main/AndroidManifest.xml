@@ -5,6 +5,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
 
     <application
         android:allowBackup="true"
@@ -17,7 +18,7 @@
         android:theme="@style/Theme.Vitalhome">
 
         <activity
-            android:name=".controladores.LoginActivity"
+            android:name=".ui.controladores.LoginActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -25,12 +26,14 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".controladores.RegisterActivity" />
+        <activity android:name=".ui.controladores.RegisterActivity" />
 
         <activity
-            android:name=".controladores.MainActivity"
+            android:name=".ui.controladores.MainActivity"
             android:exported="true"
             android:windowSoftInputMode="adjustResize" />
+
+        <receiver android:name=".utils.MedicationAlarmReceiver" android:exported="false" />
 
     </application>
 

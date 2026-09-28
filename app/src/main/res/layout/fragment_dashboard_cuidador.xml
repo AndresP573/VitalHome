@@ -19,7 +19,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="32dp"
-            android:text="Hola"
+            android:text="@string/client_dash_hello"
             android:textColor="#0A2E73"
             android:textSize="32sp"
             android:textStyle="bold" />
@@ -27,7 +27,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Estado de tu familiar hoy."
+            android:text="@string/caregiver_dash_subtitle"
             android:textColor="#62708A"
             android:textSize="18sp" />
 
@@ -55,7 +55,7 @@
                         android:id="@+id/tvLabelPulsera"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="⌚ Pulsera"
+                        android:text="@string/label_pulsera_default"
                         android:textColor="#102040"
                         android:textStyle="bold"
                         android:textSize="18sp" />
@@ -63,7 +63,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_alignParentEnd="true"
-                        android:text="Conectada"
+                        android:text="@string/label_conectada"
                         android:textColor="#2F7CF6"
                         android:textStyle="bold" />
                 </RelativeLayout>
@@ -72,7 +72,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
-                    android:text="🔋 85% | 📍 En el hogar"
+                    android:text="@string/label_pulsera_info"
                     android:textColor="#62708A"
                     android:textSize="16sp" />
 
@@ -80,7 +80,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
-                    android:text="Ver signos vitales →"
+                    android:text="@string/btn_view_vitals"
                     android:textColor="#1457D9"
                     android:textStyle="bold" />
             </LinearLayout>
@@ -109,7 +109,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="💊 Medicinas"
+                        android:text="@string/title_meds"
                         android:textColor="#102040"
                         android:textStyle="bold"
                         android:textSize="18sp" />
@@ -126,7 +126,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
-                    android:text="Estado de las tomas de hoy."
+                    android:text="@string/sub_meds"
                     android:textColor="#62708A"
                     android:textSize="16sp" />
             </LinearLayout>
@@ -140,7 +140,7 @@
             android:layout_marginTop="24dp"
             android:backgroundTint="#1457D9"
             android:padding="18dp"
-            android:text="📜 HISTORIAL MÉDICO"
+            android:text="@string/btn_medical_history"
             android:textColor="#FFFFFF"
             android:textSize="18sp"
             android:textStyle="bold"
@@ -153,7 +153,7 @@
             android:layout_marginTop="16dp"
             android:backgroundTint="#2F7CF6"
             android:padding="18dp"
-            android:text="🏠 ACTIVIDAD EN CASA"
+            android:text="@string/btn_home_activity"
             android:textColor="#FFFFFF"
             android:textSize="18sp"
             android:textStyle="bold"

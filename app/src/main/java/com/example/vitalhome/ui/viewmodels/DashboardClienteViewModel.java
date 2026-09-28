@@ -1,0 +1,200 @@
+package com.example.vitalhome.ui.viewmodels;
+
+import android.app.Application;
+import android.content.Context;
+import android.content.SharedPreferences;
+import androidx.annotation.NonNull;
+import androidx.lifecycle.AndroidViewModel;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
+import com.example.vitalhome.data.modelo.AlertEvent;
+import com.example.vitalhome.data.modelo.Medication;
+import com.example.vitalhome.data.repository.AppRepo;
+import com.example.vitalhome.utils.MedicationAlarmScheduler;
+import com.example.vitalhome.utils.NotificationHelper;
+import org.json.JSONObject;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+
+/**
+ * ViewModel para el Dashboard del usuario (Cliente / Adulto Mayor).
+ * Administra los signos vitales, medicamentos del día, contactos de emergencia y mediciones simuladas de salud.
+ */
+public class DashboardClienteViewModel extends AndroidViewModel {
+
+    // --- Bloque 1: Atributos y LiveData ---
+    private final AppRepo repo;
+    private final SharedPreferences prefs;
+
+    private final MutableLiveData<String> nombreUsuario = new MutableLiveData<>();
+    private final MutableLiveData<String> pulso = new MutableLiveData<>();
+    private final MutableLiveData<String> oxigeno = new MutableLiveData<>();
+    private final MutableLiveData<List<Medication>> medicamentos = new MutableLiveData<>();
+
+    private final MutableLiveData<String> contactName1 = new MutableLiveData<>();
+    private final MutableLiveData<String> contactPhone1 = new MutableLiveData<>();
+    private final MutableLiveData<String> contactName2 = new MutableLiveData<>();
+    private final MutableLiveData<String> contactPhone2 = new MutableLiveData<>();
+
+    private final MutableLiveData<Integer> tabIndex = new MutableLiveData<>(1);
+
+    /**
+     * Clase estática para encapsular los datos de actualización de signos vitales.
+     */
+    public static class VitalsUpdate {
+        public final int p, o;
+        public final String pres;
+        public VitalsUpdate(int p, int o, String pres) { this.p = p; this.o = o; this.pres = pres; }
+    }
+    private final MutableLiveData<VitalsUpdate> lastVitalsUpdate = new MutableLiveData<>();
+
+    // --- Bloque 2: Constructor e Inicialización ---
+    public DashboardClienteViewModel(@NonNull Application application) {
+        super(application);
+        repo = new AppRepo(application);
+        prefs = application.getSharedPreferences("VitalHomePrefs", Context.MODE_PRIVATE);
+        refreshData();
+    }
+
+    // --- Bloque 3: Métodos para refrescar datos desde preferencias y repositorio ---
+    public void refreshData() {
+        nombreUsuario.setValue(prefs.getString("nombreAdultoMayor", "Usuario"));
+        refrescarSignos();
+        refrescarMeds();
+        cargarContactos();
+    }
+
+    private void refrescarSignos() {
+        String json = prefs.getString("ultimos_vitals", "{}");
+        try {
+            JSONObject data = new JSONObject(json);
+            if (data.has("pulso")) pulso.setValue(data.getInt("pulso") + " LPM");
+            if (data.has("oxig")) oxigeno.setValue(data.getInt("oxig") + "%");
+        } catch (Exception ignored) {}
+    }
+
+    private void refrescarMeds() {
+        List<Medication> items = repo.getMeds();
+        items.sort((m1, m2) -> Boolean.compare(m2.isTaken(), m1.isTaken()));
+        medicamentos.setValue(items);
+    }
+
+    private void cargarContactos() {
+        contactName1.setValue(prefs.getString("client_contact_name_1", ""));
+        contactPhone1.setValue(prefs.getString("client_contact_phone_1", ""));
+        contactName2.setValue(prefs.getString("client_contact_name_2", ""));
+        contactPhone2.setValue(prefs.getString("client_contact_phone_2", ""));
+    }
+
+    // --- Bloque 4: Gestión de Contactos de Emergencia ---
+    public void guardarContactos(String n1, String p1, String n2, String p2) {
+        prefs.edit()
+                .putString("client_contact_name_1", n1)
+                .putString("client_contact_phone_1", p1)
+                .putString("client_contact_name_2", n2)
+                .putString("client_contact_phone_2", p2)
+                .apply();
+        cargarContactos();
+    }
+
+    // --- Bloque 5: Gestión de Medicamentos ---
+    public void tomar(Medication m) {
+        List<Medication> items = repo.getMeds();
+        for (Medication item : items) {
+            if (item.getId().equals(m.getId())) {
+                item.setTaken(true);
+                break;
+            }
+        }
+        repo.saveMeds(items);
+        repo.addEvent(new AlertEvent("MEDICINA", "Tomó " + m.getNombre(), "Casa", getTime()));
+        refrescarMeds();
+        MedicationAlarmScheduler.cancelar(getApplication(), m.getId());
+        NotificationHelper.medicamentoTomado(getApplication(), m.getNombre(), getTime());
+    }
+
+    // --- Bloque 6: Medición y Simulación de Signos Vitales ---
+    public void medirAhora() {
+        // Lógica probabilística de rangos de prueba
+        int p;
+        if (Math.random() < 0.25) {
+            p = (int) (Math.random() * 30 + 101); // 101-130
+        } else {
+            p = (int) (Math.random() * 36 + 60);  // 60-95
+        }
+
+        int o;
+        if (Math.random() < 0.15) {
+            o = (int) (Math.random() * 4 + 88);   // 88-91
+        } else {
+            o = (int) (Math.random() * 5 + 95);   // 95-99
+        }
+
+        int sis, dia;
+        if (Math.random() < 0.25) {
+            sis = (int) (Math.random() * 26 + 140); // 140-165
+            dia = (int) (Math.random() * 16 + 90);  // 90-105
+        } else {
+            sis = (int) (Math.random() * 25 + 110); // 110-134
+            dia = (int) (Math.random() * 15 + 70);  // 70-84
+        }
+        String presString = sis + "/" + dia;
+
+        repo.addEvent(new AlertEvent("SALUD", "Control: " + p + " LPM", "Casa", getTime()));
+        prefs.edit().putString("ultimos_vitals", "{\"pulso\":" + p + ",\"oxig\":" + o + ",\"pres\":\"" + presString + "\"}").apply();
+
+        refrescarSignos();
+        lastVitalsUpdate.setValue(new VitalsUpdate(p, o, presString));
+
+        // Disparar notificaciones y eventos correspondientes
+        if (p > 100) {
+            NotificationHelper.pulsoElevado(getApplication(), p);
+            repo.addEvent(new AlertEvent("SALUD", "Pulso elevado: " + p + " LPM", "Casa", getTime()));
+        } else {
+            NotificationHelper.pulso(getApplication(), p);
+        }
+
+        if (sis >= 140 || dia >= 90) {
+            NotificationHelper.presionElevada(getApplication(), sis, dia);
+            repo.addEvent(new AlertEvent("SALUD", "Presión elevada: " + presString, "Casa", getTime()));
+        }
+
+        if (o < 92) {
+            NotificationHelper.oxigenoBajo(getApplication(), o);
+            repo.addEvent(new AlertEvent("SALUD", "Oxígeno bajo: " + o + "%", "Casa", getTime()));
+        }
+    }
+
+    public void vitalsMostrado() {
+        lastVitalsUpdate.setValue(null);
+    }
+
+    // --- Bloque 7: Cambio de Rol y Cierre de Sesión ---
+    public void switchRole() {
+        prefs.edit().putString("rol", "cuidador").apply();
+    }
+
+    public void logout() {
+        prefs.edit().putBoolean("isLoggedIn", false).apply();
+    }
+
+    // --- Bloque 8: Métodos Auxiliares y Getters ---
+    private String getTime() {
+        return new SimpleDateFormat("HH:mm", Locale.getDefault()).format(new Date());
+    }
+
+    public LiveData<String> getNombreUsuario() { return nombreUsuario; }
+    public LiveData<String> getPulso() { return pulso; }
+    public LiveData<String> getOxigeno() { return oxigeno; }
+    public LiveData<List<Medication>> getMedicamentos() { return medicamentos; }
+    public LiveData<String> getContactName1() { return contactName1; }
+    public LiveData<String> getContactPhone1() { return contactPhone1; }
+    public LiveData<String> getContactName2() { return contactName2; }
+    public LiveData<String> getContactPhone2() { return contactPhone2; }
+    public LiveData<VitalsUpdate> getLastVitalsUpdate() { return lastVitalsUpdate; }
+
+    public LiveData<Integer> getTabIndex() { return tabIndex; }
+    public void setTab(int index) { tabIndex.setValue(index); }
+}
