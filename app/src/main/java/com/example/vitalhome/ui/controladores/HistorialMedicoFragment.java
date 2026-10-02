@@ -34,11 +34,7 @@ public class HistorialMedicoFragment extends Fragment {
         
         rv.setAdapter(new MedicalRecordAdapter(viewModel.getRecords().getValue()));
 
-        // Configuración de botones para volver atrás
-        v.findViewById(R.id.btnVolverHistorial).setOnClickListener(view -> 
-            requireActivity().getOnBackPressedDispatcher().onBackPressed()
-        );
-
+        // Configuración de botón para volver atrás
         View arrowBack = v.findViewById(R.id.btnBackArrowHistorial);
         if (arrowBack != null) {
             arrowBack.setOnClickListener(x -> requireActivity().getOnBackPressedDispatcher().onBackPressed());

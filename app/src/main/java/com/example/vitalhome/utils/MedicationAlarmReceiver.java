@@ -18,10 +18,19 @@ import java.util.Locale;
  */
 public class MedicationAlarmReceiver extends BroadcastReceiver {
 
-    // --- Bloque 1: Recepción del intent de alarma ---
+    // --- Bloque 1: Recepción del intent de alarma o reinicio ---
     @Override
     public void onReceive(Context context, Intent intent) {
         if (intent == null) return;
+
+        // Reprogramación automática tras reinicio del dispositivo o actualización
+        if (Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction()) || 
+            "android.intent.action.MY_PACKAGE_REPLACED".equals(intent.getAction())) {
+            Log.d("AlarmDebug", "Reinicio detectado. Reprogramando alarmas...");
+            MedicationAlarmScheduler.reprogramarTodas(context);
+            return;
+        }
+
         String medId = intent.getStringExtra("med_id");
         Log.d("AlarmDebug", "onReceive llegó con med_id: " + medId);
         if (medId == null) return;
@@ -36,7 +45,7 @@ public class MedicationAlarmReceiver extends BroadcastReceiver {
 
         Medication targetMed = null;
         for (Medication m : meds) {
-            if (medId.equals(m.getId())) {
+            if (java.util.Objects.equals(medId, m.getId())) {
                 targetMed = m;
                 break;
             }

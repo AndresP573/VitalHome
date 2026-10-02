@@ -45,11 +45,7 @@ public class AlertasFragment extends Fragment {
             Toast.makeText(requireContext(), getString(R.string.msg_alertas_limpias), Toast.LENGTH_SHORT).show();
         });
 
-        // Configuración de botones de navegación / regresar
-        v.findViewById(R.id.btnVolverAlertas).setOnClickListener(x -> 
-            requireActivity().getOnBackPressedDispatcher().onBackPressed()
-        );
-
+        // Configuración de botón de regresar por flecha
         View arrowBack = v.findViewById(R.id.btnBackArrowAlertas);
         if (arrowBack != null) {
             arrowBack.setOnClickListener(x -> requireActivity().getOnBackPressedDispatcher().onBackPressed());

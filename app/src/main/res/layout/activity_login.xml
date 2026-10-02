@@ -13,10 +13,12 @@
         android:gravity="center"
         android:padding="24dp">
 
-        <View
-            android:layout_width="80dp"
-            android:layout_height="80dp"
-            android:background="@android:color/holo_blue_dark"
+        <ImageView
+            android:layout_width="180dp"
+            android:layout_height="100dp"
+            android:src="@drawable/ic_app_logo"
+            android:scaleType="fitCenter"
+            android:contentDescription="@string/vitalhome_title"
             android:layout_marginBottom="16dp" />
 
         <TextView
@@ -50,13 +52,34 @@
             android:textStyle="bold"
             android:layout_marginBottom="16dp"/>
 
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:hintEnabled="false"
+            app:endIconMode="password_toggle"
+            app:endIconTint="#0A2E73"
+            android:layout_marginBottom="16dp">
+
+            <EditText
+                android:id="@+id/etPasswordLogin"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:hint="@string/password_hint"
+                android:inputType="textPassword"
+                android:autofillHints="password"
+                android:padding="12dp"
+                android:background="#FFFFFF"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+        </com.google.android.material.textfield.TextInputLayout>
+
         <EditText
-            android:id="@+id/etPasswordLogin"
+            android:id="@+id/etPhoneLogin"
             android:layout_width="match_parent"
             android:layout_height="60dp"
-            android:hint="@string/password_hint"
-            android:inputType="textPassword"
-            android:autofillHints="password"
+            android:hint="@string/hint_contact_phone_caregiver"
+            android:inputType="phone"
+            android:autofillHints="phone"
             android:padding="12dp"
             android:background="#FFFFFF"
             android:textSize="18sp"
@@ -66,7 +89,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="¿Cómo quieres ingresar?"
+            android:text="@string/login_role_prompt"
             android:textColor="#0A2E73"
             android:textSize="16sp"
             android:textStyle="bold"
@@ -85,7 +108,8 @@
                 android:id="@+id/rbLoginAdulto"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Abuelo"
+                android:text="@string/role_abuelo_short"
+                android:paddingStart="0dp"
                 android:paddingEnd="16dp"
                 android:textStyle="bold"
                 android:minHeight="48dp"/>
@@ -94,7 +118,7 @@
                 android:id="@+id/rbLoginCuidador"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Cuidador"
+                android:text="@string/role_cuidador_short"
                 android:checked="true"
                 android:textStyle="bold"
                 android:minHeight="48dp"/>

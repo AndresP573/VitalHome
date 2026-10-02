@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Alertas</string>
+    <!--  Inicio  -->
+    <string name="greeting">Hola, Marta</string>
+    <string name="status_calm">Todo tranquilo por ahora</string>
+    <string name="sos_button">SOS</string>
+    <string name="no_active_alerts">Sin alertas activas</string>
+    <string name="sensor_fall">Sensor caída</string>
+    <string name="sensor_water">Sensor agua</string>
+    <string name="sensor_active">Activo</string>
+    <!--  Alerta  -->
+    <string name="alert_fall_title">Caída detectada</string>
+    <string name="alert_notifying">Notificando en %1$ds</string>
+    <string name="alert_cancel">Estoy bien, cancelar</string>
+    <string name="alert_confirm">Necesito ayuda</string>
+    <!--  Historial  -->
+    <string name="history_title">Historial de eventos</string>
+    <string name="filter_all">Todos</string>
+    <string name="filter_falls">Caídas</string>
+    <string name="filter_water">Agua</string>
+    <string name="event_fall">Caída detectada</string>
+    <string name="event_water">Fuga de agua, cocina</string>
+    <string name="event_sos">SOS manual</string>
+    <string name="event_resolved">Resuelta</string>
+    <!--  Perfil  -->
+    <string name="profile_title">Perfil y configuración</string>
+    <string name="profile_name">Marta Rodríguez</string>
+    <string name="profile_age">78 años</string>
+    <string name="emergency_contacts">Contactos de emergencia</string>
+    <string name="contact_son">Hijo — Juan</string>
+    <string name="contact_neighbor">Vecina — Ana</string>
+    <string name="sensitivity_label">Sensibilidad sensor de caída</string>
+    <!--  Navegación  -->
+    <string name="nav_home">Inicio</string>
+    <string name="nav_alert">Alerta</string>
+    <string name="nav_history">Historial</string>
+    <string name="nav_profile">Perfil</string>
+</resources>

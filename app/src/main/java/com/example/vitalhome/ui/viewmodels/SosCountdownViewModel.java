@@ -25,12 +25,32 @@ public class SosCountdownViewModel extends AndroidViewModel {
     
     private final MutableLiveData<String> countdownText = new MutableLiveData<>();
     private final MutableLiveData<Boolean> timerFinished = new MutableLiveData<>();
+    private final MutableLiveData<String> notifyingContactsText = new MutableLiveData<>();
 
     // --- Bloque 2: Constructor ---
     public SosCountdownViewModel(@NonNull Application application) {
         super(application);
         repo = new AppRepo(application);
         timerFinished.setValue(false);
+        cargarContactosNotificacion(application);
+    }
+
+    private void cargarContactosNotificacion(Application application) {
+        android.content.SharedPreferences prefs = application.getSharedPreferences("VitalHomePrefs", android.content.Context.MODE_PRIVATE);
+        String n1 = prefs.getString("client_contact_name_1", "").trim();
+        String n2 = prefs.getString("client_contact_name_2", "").trim();
+
+        String aviso;
+        if (!n1.isEmpty() && !n2.isEmpty()) {
+            aviso = "Avisando a: " + n1 + " y " + n2;
+        } else if (!n1.isEmpty()) {
+            aviso = "Avisando a: " + n1;
+        } else if (!n2.isEmpty()) {
+            aviso = "Avisando a: " + n2;
+        } else {
+            aviso = "Avisando a tus contactos de emergencia";
+        }
+        notifyingContactsText.setValue(aviso);
     }
 
     // --- Bloque 3: Gestión del Temporizador SOS ---
@@ -70,7 +90,25 @@ public class SosCountdownViewModel extends AndroidViewModel {
         cancelTimer();
         String hora = new SimpleDateFormat("HH:mm", Locale.getDefault()).format(new Date());
         repo.addEvent(new AlertEvent("SOS", "Emergencia confirmada", "Casa", hora));
-        NotificationHelper.sendSOS(getApplication(), "Familiar");
+
+        // Sincronización Global en Tiempo Real a través de la Colección 'alerts' en Firestore
+        android.content.SharedPreferences prefs = getApplication().getSharedPreferences("VitalHomePrefs", android.content.Context.MODE_PRIVATE);
+        String abueloEmail = prefs.getString("email", "marta@vitalhome.com");
+        String abueloNombre = prefs.getString("nombreAdultoMayor", prefs.getString("nombre", "Marta Rodríguez"));
+
+        java.util.Map<String, Object> sosData = new java.util.HashMap<>();
+        sosData.put("pacienteEmail", abueloEmail);
+        sosData.put("pacienteNombre", abueloNombre);
+        sosData.put("tipo", "SOS");
+        sosData.put("titulo", "¡SOS ACTIVADO!");
+        sosData.put("descripcion", "¡Emergencia SOS confirmada por " + abueloNombre + "!");
+        sosData.put("timestamp", new Date());
+        sosData.put("resuelto", false);
+
+        com.google.firebase.firestore.FirebaseFirestore.getInstance("default")
+            .collection("alerts")
+            .add(sosData);
+
         timerFinished.setValue(true);
     }
 
@@ -91,6 +129,7 @@ public class SosCountdownViewModel extends AndroidViewModel {
     // --- Bloque 5: Getters y Limpieza ---
     public LiveData<String> getCountdownText() { return countdownText; }
     public LiveData<Boolean> getTimerFinished() { return timerFinished; }
+    public LiveData<String> getNotifyingContactsText() { return notifyingContactsText; }
 
     @Override
     protected void onCleared() {

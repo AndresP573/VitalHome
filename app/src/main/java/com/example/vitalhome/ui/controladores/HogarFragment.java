@@ -64,11 +64,7 @@ public class HogarFragment extends Fragment {
         btnSimularPuerta.setOnClickListener(view -> viewModel.togglePuerta());
         btnSimularFuego.setOnClickListener(view -> viewModel.toggleFuego());
 
-        // Navegación de retorno
-        v.findViewById(R.id.btnVolverHogar).setOnClickListener(view -> 
-            requireActivity().getOnBackPressedDispatcher().onBackPressed()
-        );
-
+        // Navegación de retorno mediante la flecha
         View arrowBack = v.findViewById(R.id.btnBackArrowHogar);
         if (arrowBack != null) {
             arrowBack.setOnClickListener(x -> requireActivity().getOnBackPressedDispatcher().onBackPressed());

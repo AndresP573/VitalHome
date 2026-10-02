@@ -133,16 +133,5 @@
             android:layout_marginTop="12dp"
             android:nestedScrollingEnabled="false" />
 
-        <Button
-            android:id="@+id/btnVolverMeds"
-            style="@style/Widget.Material3.Button.TextButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="30dp"
-            android:layout_marginBottom="100dp"
-            android:text="@string/btn_back_to_start"
-            android:textColor="#1457D9"
-            android:textStyle="bold" />
-
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>

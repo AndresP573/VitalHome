@@ -5,6 +5,18 @@
     android:layout_height="match_parent"
     android:background="@color/danger">
 
+    <ImageButton
+        android:id="@+id/btnBackArrowSOSActive"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_margin="16dp"
+        android:background="?android:attr/selectableItemBackgroundBorderless"
+        android:src="@drawable/ic_arrow_back"
+        app:tint="#FFFFFF"
+        android:contentDescription="@string/btn_back_description"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
     <TextView
         android:id="@+id/tvIcon"
         android:layout_width="wrap_content"

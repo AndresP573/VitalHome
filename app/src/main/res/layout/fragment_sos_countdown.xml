@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F7FAFF">
+    android:background="#F7FAFF"
+    tools:targetApi="21">
 
     <ScrollView
         android:layout_width="match_parent"
@@ -29,17 +31,17 @@
                     android:id="@+id/btnBackArrowSOS"
                     android:layout_width="48dp"
                     android:layout_height="48dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
                     android:src="@drawable/ic_arrow_back"
                     app:tint="#FFFFFF"
-                    android:contentDescription="Volver" />
+                    android:contentDescription="@string/btn_back_description" />
 
                 <TextView
                     android:id="@+id/textAlertTitle"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center"
-                    android:text="¡SOS ACTIVADO!"
+                    android:text="@string/title_sos_activated"
                     android:textColor="#FFFFFF"
                     android:textSize="32sp"
                     android:textStyle="bold"
@@ -50,7 +52,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
-                    android:text="Notificando en 10s"
+                    android:text="@string/sub_sos_countdown"
                     android:textColor="#FFFFFF"
                     android:textSize="24sp"
                     android:textStyle="bold" />
@@ -61,7 +63,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="20dp"
                     android:gravity="center"
-                    android:text="Avisando a: Juan y Ana"
+                    android:text="@string/sub_sos_notifying_contacts"
                     android:textColor="#FEE2E2"
                     android:textSize="18sp"
                     android:textStyle="italic" />
@@ -80,7 +82,7 @@
                     android:layout_height="90dp"
                     android:layout_marginBottom="16dp"
                     android:backgroundTint="#10B981"
-                    android:text="ESTOY BIEN, CANCELAR"
+                    android:text="@string/btn_cancel_sos"
                     android:textColor="#FFFFFF"
                     android:textSize="22sp"
                     android:textStyle="bold"
@@ -93,22 +95,12 @@
                     android:layout_height="90dp"
                     android:layout_marginBottom="24dp"
                     android:backgroundTint="#EF4444"
-                    android:text="NECESITO AYUDA YA"
+                    android:text="@string/btn_confirm_sos_now"
                     android:textColor="#FFFFFF"
                     android:textSize="22sp"
                     android:textStyle="bold"
                     app:cornerRadius="25dp"
                     app:elevation="4dp" />
-
-                <Button
-                    android:id="@+id/btnViewMedicalProfile"
-                    style="@style/Widget.Material3.Button.TextButton"
-                    android:layout_width="match_parent"
-                    android:layout_height="64dp"
-                    android:text="VER MI PERFIL MÉDICO"
-                    android:textColor="#1457D9"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
             </LinearLayout>
         </LinearLayout>
     </ScrollView>

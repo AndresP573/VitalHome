@@ -73,20 +73,28 @@ public class MedicationAlarmScheduler {
                     PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT
             );
 
-            // --- Bloque 4: Registro de la alarma en AlarmManager del sistema ---
+            // --- Bloque 4: Registro de la alarma en AlarmManager del sistema con Máxima Prioridad ---
             AlarmManager am = (AlarmManager) ctx.getSystemService(Context.ALARM_SERVICE);
             if (am != null) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                    if (am.canScheduleExactAlarms()) {
-                        Log.d("AlarmDebug", "Programando alarma exacta para: " + cal.getTime());
-                        am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(), pi);
+                Intent showIntent = new Intent(ctx, com.example.vitalhome.ui.controladores.MainActivity.class);
+                PendingIntent showPi = PendingIntent.getActivity(
+                        ctx, 
+                        requestCode, 
+                        showIntent, 
+                        PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT
+                );
+
+                AlarmManager.AlarmClockInfo clockInfo = new AlarmManager.AlarmClockInfo(cal.getTimeInMillis(), showPi);
+                Log.d("AlarmDebug", "Programando AlarmClock exacta e infalible para: " + cal.getTime());
+
+                try {
+                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S || am.canScheduleExactAlarms()) {
+                        am.setAlarmClock(clockInfo, pi);
                     } else {
-                        Log.d("AlarmDebug", "Programando alarma NO exacta para: " + cal.getTime());
                         am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(), pi);
                     }
-                } else {
-                    Log.d("AlarmDebug", "Programando alarma exacta para: " + cal.getTime());
-                    am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(), pi);
+                } catch (SecurityException se) {
+                    am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(), pi);
                 }
             }
         } catch (Exception e) {
@@ -127,22 +135,23 @@ public class MedicationAlarmScheduler {
     }
 
     /**
-     * Reprograma las alarmas de todos los medicamentos no tomados.
+     * Reprograma las alarmas de todos los medicamentos no tomados en un hilo secundario de fondo (Multi-threading).
      */
     public static void reprogramarTodas(Context ctx) {
-        try {
-            // --- Bloque Único: Lectura del repositorio y reprogramación de pendientes ---
-            AppRepo repo = new AppRepo(ctx);
-            List<Medication> meds = repo.getMeds();
-            if (meds != null) {
-                for (Medication m : meds) {
-                    if (!m.isTaken()) {
-                        programar(ctx, m);
+        AppExecutors.getInstance().diskIO().execute(() -> {
+            try {
+                AppRepo repo = new AppRepo(ctx);
+                List<Medication> meds = repo.getMeds();
+                if (meds != null) {
+                    for (Medication m : meds) {
+                        if (!m.isTaken()) {
+                            programar(ctx, m);
+                        }
                     }
                 }
+            } catch (Exception e) {
+                Log.e("AlarmDebug", "Error reprogramando alarmas en hilo secundario", e);
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        });
     }
 }

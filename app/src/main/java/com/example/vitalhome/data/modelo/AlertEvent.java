@@ -1,24 +1,24 @@
 package com.example.vitalhome.data.modelo;
 
 /**
- * Clase que representa un evento de alerta en el sistema VitalHome.
- * Almacena la información de tipo, datos adicionales, ubicación y hora del evento.
+ * Modelo de datos que representa un evento registrado en el historial de la aplicación.
+ * Registra alertas de salud, emergencias SOS, avisos de medicamentos y sensores del hogar.
  */
 public class AlertEvent {
-    // --- Bloque 1: Atributos de la clase ---
-    private String tipo;
-    private String data;
-    private String loc;
-    private String hora;
 
-    // --- Bloque 2: Constructor ---
+    // --- Atributos inmutables del evento ---
+    private final String tipo;
+    private final String data;
+    private final String loc;
+    private final String hora;
+
     /**
-     * Constructor de AlertEvent.
+     * Constructor principal para crear una nueva instancia de evento de alerta.
      *
-     * @param tipo Tipo de alerta (ej. SOS, SALUD, MEDICINA)
-     * @param data Descripción o detalle del evento
-     * @param loc Ubicación geográfica o contextual
-     * @param hora Hora de ocurrencia del evento
+     * @param tipo Categoria del evento ("SOS", "SALUD", "MEDICINA", "HOGAR").
+     * @param data Descripción detallada de la alerta o evento registrado.
+     * @param loc Ubicación física del evento (ej. "Casa").
+     * @param hora Hora formateada del registro (HH:mm).
      */
     public AlertEvent(String tipo, String data, String loc, String hora) {
         this.tipo = tipo;
@@ -27,7 +27,7 @@ public class AlertEvent {
         this.hora = hora;
     }
 
-    // --- Bloque 3: Métodos Getters ---
+    // --- Métodos Getters ---
     public String getTipo() { return tipo; }
     public String getData() { return data; }
     public String getLoc() { return loc; }

@@ -160,41 +160,99 @@
                         android:textStyle="bold" />
                 </FrameLayout>
 
-                <!-- Botón de Llamada Rápida (Toque Humano) -->
-                <Button
-                    android:id="@+id/btnCallCaregiver"
+                <!-- TARJETA DE OPCIONES Y SESIÓN -->
+                <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:backgroundTint="#10B981"
-                    android:padding="18dp"
-                    android:text="@string/btn_call_caregiver"
-                    android:textColor="#FFFFFF"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    app:cornerRadius="18dp" />
-
-                <Button
-                    android:id="@+id/btnSwitchRoleCliente"
-                    style="@style/Widget.Material3.Button.TextButton"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="32dp"
-                    android:text="@string/btn_switch_to_caregiver"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:textColor="#1457D9" />
-
-                <Button
-                    android:id="@+id/btnLogoutCliente"
-                    style="@style/Widget.Material3.Button.TextButton"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
+                    android:layout_marginTop="16dp"
                     android:layout_marginBottom="24dp"
-                    android:text="@string/btn_logout"
-                    android:textColor="#EF4444"
-                    android:textStyle="bold" />
+                    app:cardBackgroundColor="#FFFFFF"
+                    app:cardCornerRadius="22dp"
+                    app:cardElevation="1dp"
+                    app:strokeColor="#D8E3F5"
+                    app:strokeWidth="1dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="20dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/label_options_session"
+                            android:textColor="#62708A"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+
+                        <!-- Botón de Llamada Rápida (Toque Humano) -->
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnCallCaregiver"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="12dp"
+                            android:backgroundTint="#10B981"
+                            android:paddingVertical="14dp"
+                            android:text="@string/btn_call_caregiver"
+                            android:textColor="#FFFFFF"
+                            android:textSize="16sp"
+                            android:textStyle="bold"
+                            app:cornerRadius="14dp"
+                            app:icon="@android:drawable/ic_menu_call"
+                            app:iconGravity="textStart"
+                            app:iconTint="#FFFFFF" />
+
+                        <!-- Botón Cambiar a Perfil Cuidador (Oculto para entorno real) -->
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnSwitchRoleCliente"
+                            style="@style/Widget.Material3.Button.OutlinedButton"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp"
+                            android:paddingVertical="12dp"
+                            android:text="@string/btn_switch_to_caregiver"
+                            android:textColor="#1457D9"
+                            android:textSize="15sp"
+                            android:textStyle="bold"
+                            android:visibility="gone"
+                            app:cornerRadius="14dp"
+                            app:strokeColor="#1457D9" />
+
+                        <!-- Fila con Botones Diferenciados: Cerrar Sesión y Salir de la App -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:layout_marginTop="12dp">
+
+                            <!-- Botón 1: Cerrar Sesión -->
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/btnLogoutCliente"
+                                style="@style/Widget.Material3.Button.TextButton"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="@string/btn_cerrar_sesion"
+                                android:textColor="#D97706"
+                                android:textSize="13sp"
+                                android:textStyle="bold" />
+
+                            <!-- Botón 2: Salir de la App -->
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/btnSalirAppCliente"
+                                style="@style/Widget.Material3.Button.TextButton"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="@string/btn_salir_app"
+                                android:textColor="#EF4444"
+                                android:textSize="13sp"
+                                android:textStyle="bold" />
+
+                        </LinearLayout>
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
             </LinearLayout>
 
             <!-- SECCIÓN 2: MEDICAMENTOS -->
@@ -205,14 +263,46 @@
                 android:orientation="vertical"
                 android:visibility="gone">
 
-                <TextView
-                    android:layout_width="wrap_content"
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="24dp"
-                    android:text="@string/title_my_remedies"
-                    android:textColor="#0A2E73"
-                    android:textSize="26sp"
-                    android:textStyle="bold" />
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginTop="16dp">
+
+                    <ImageButton
+                        android:id="@+id/btnBackArrowRemedios"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:background="?android:attr/selectableItemBackgroundBorderless"
+                        android:src="@drawable/ic_arrow_back"
+                        app:tint="#0A2E73"
+                        android:contentDescription="@string/btn_back_description" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="8dp"
+                        android:text="@string/title_my_remedies"
+                        android:textColor="#0A2E73"
+                        android:textSize="24sp"
+                        android:textStyle="bold" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnLimpiarRemediosCliente"
+                        style="@style/Widget.Material3.Button.TextButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/btn_clear_all"
+                        android:textColor="#EF4444"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        app:icon="@android:drawable/ic_menu_delete"
+                        app:iconPadding="4dp"
+                        app:iconSize="20dp"
+                        app:iconTint="#EF4444" />
+                </LinearLayout>
 
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/rvRemediosCliente"
@@ -244,23 +334,47 @@
                 android:orientation="vertical"
                 android:visibility="gone">
 
-                <TextView
-                    android:layout_width="wrap_content"
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="24dp"
-                    android:text="@string/title_my_contacts"
-                    android:textColor="#0A2E73"
-                    android:textSize="26sp"
-                    android:textStyle="bold" />
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginTop="16dp">
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:text="@string/sub_my_contacts"
-                    android:textColor="#62708A"
-                    android:textSize="16sp" />
+                    <ImageButton
+                        android:id="@+id/btnBackArrowContactos"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:background="?android:attr/selectableItemBackgroundBorderless"
+                        android:src="@drawable/ic_arrow_back"
+                        app:tint="#0A2E73"
+                        android:contentDescription="@string/btn_back_description" />
 
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/title_my_contacts"
+                            android:textColor="#0A2E73"
+                            android:textSize="26sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="@string/sub_my_contacts"
+                            android:textColor="#62708A"
+                            android:textSize="14sp" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- TARJETA CONTACTO 1 -->
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -285,35 +399,103 @@
                             android:textSize="18sp"
                             android:textStyle="bold" />
 
-                        <com.google.android.material.textfield.TextInputLayout
+                        <!-- Formulario de Entrada Contacto 1 -->
+                        <LinearLayout
+                            android:id="@+id/cardFormContact1"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="12dp"
-                            android:hint="@string/hint_contact_name_1"
-                            style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
-                            <com.google.android.material.textfield.TextInputEditText
-                                android:id="@+id/etContactName1"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:textColor="#102040" />
-                        </com.google.android.material.textfield.TextInputLayout>
+                            android:orientation="vertical"
+                            android:visibility="visible">
 
-                        <com.google.android.material.textfield.TextInputLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="10dp"
-                            android:hint="@string/hint_contact_phone"
-                            style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
-                            <com.google.android.material.textfield.TextInputEditText
-                                android:id="@+id/etContactPhone1"
+                            <com.google.android.material.textfield.TextInputLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:inputType="phone"
-                                android:textColor="#102040" />
-                        </com.google.android.material.textfield.TextInputLayout>
+                                android:layout_marginTop="12dp"
+                                android:hint="@string/hint_contact_name_1"
+                                style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+                                <com.google.android.material.textfield.TextInputEditText
+                                    android:id="@+id/etContactName1"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:textColor="#102040" />
+                            </com.google.android.material.textfield.TextInputLayout>
+
+                            <com.google.android.material.textfield.TextInputLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="10dp"
+                                android:hint="@string/hint_contact_phone"
+                                style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+                                <com.google.android.material.textfield.TextInputEditText
+                                    android:id="@+id/etContactPhone1"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:inputType="phone"
+                                    android:textColor="#102040" />
+                            </com.google.android.material.textfield.TextInputLayout>
+                        </LinearLayout>
+
+                        <!-- Vista de Contacto 1 Registrado -->
+                        <LinearLayout
+                            android:id="@+id/cardSavedContact1"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:layout_marginTop="12dp"
+                            android:visibility="gone">
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:id="@+id/tvSavedName1"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/contact_placeholder_name_1"
+                                    android:textColor="#0A2E73"
+                                    android:textSize="20sp"
+                                    android:textStyle="bold" />
+
+                                <TextView
+                                    android:id="@+id/tvSavedPhone1"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="4dp"
+                                    android:text="@string/contact_placeholder_phone_1"
+                                    android:textColor="#1457D9"
+                                    android:textSize="16sp"
+                                    android:textStyle="bold" />
+                            </LinearLayout>
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/btnEditContact1"
+                                style="@style/Widget.Material3.Button.TextButton"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/btn_edit_contact"
+                                android:textColor="#1457D9"
+                                android:textSize="13sp"
+                                android:textStyle="bold" />
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/btnDeleteContact1"
+                                style="@style/Widget.Material3.Button.TextButton"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/btn_delete_contact"
+                                android:textColor="#EF4444"
+                                android:textSize="13sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
+                <!-- TARJETA CONTACTO 2 -->
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -338,32 +520,99 @@
                             android:textSize="18sp"
                             android:textStyle="bold" />
 
-                        <com.google.android.material.textfield.TextInputLayout
+                        <!-- Formulario de Entrada Contacto 2 -->
+                        <LinearLayout
+                            android:id="@+id/cardFormContact2"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="12dp"
-                            android:hint="@string/hint_contact_name_2"
-                            style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
-                            <com.google.android.material.textfield.TextInputEditText
-                                android:id="@+id/etContactName2"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:textColor="#102040" />
-                        </com.google.android.material.textfield.TextInputLayout>
+                            android:orientation="vertical"
+                            android:visibility="visible">
 
-                        <com.google.android.material.textfield.TextInputLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="10dp"
-                            android:hint="@string/hint_contact_phone"
-                            style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
-                            <com.google.android.material.textfield.TextInputEditText
-                                android:id="@+id/etContactPhone2"
+                            <com.google.android.material.textfield.TextInputLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:inputType="phone"
-                                android:textColor="#102040" />
-                        </com.google.android.material.textfield.TextInputLayout>
+                                android:layout_marginTop="12dp"
+                                android:hint="@string/hint_contact_name_2"
+                                style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+                                <com.google.android.material.textfield.TextInputEditText
+                                    android:id="@+id/etContactName2"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:textColor="#102040" />
+                            </com.google.android.material.textfield.TextInputLayout>
+
+                            <com.google.android.material.textfield.TextInputLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="10dp"
+                                android:hint="@string/hint_contact_phone"
+                                style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+                                <com.google.android.material.textfield.TextInputEditText
+                                    android:id="@+id/etContactPhone2"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:inputType="phone"
+                                    android:textColor="#102040" />
+                            </com.google.android.material.textfield.TextInputLayout>
+                        </LinearLayout>
+
+                        <!-- Vista de Contacto 2 Registrado -->
+                        <LinearLayout
+                            android:id="@+id/cardSavedContact2"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:layout_marginTop="12dp"
+                            android:visibility="gone">
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:id="@+id/tvSavedName2"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/contact_placeholder_name_2"
+                                    android:textColor="#0A2E73"
+                                    android:textSize="20sp"
+                                    android:textStyle="bold" />
+
+                                <TextView
+                                    android:id="@+id/tvSavedPhone2"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="4dp"
+                                    android:text="@string/contact_placeholder_phone_2"
+                                    android:textColor="#1457D9"
+                                    android:textSize="16sp"
+                                    android:textStyle="bold" />
+                            </LinearLayout>
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/btnEditContact2"
+                                style="@style/Widget.Material3.Button.TextButton"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/btn_edit_contact"
+                                android:textColor="#1457D9"
+                                android:textSize="13sp"
+                                android:textStyle="bold" />
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/btnDeleteContact2"
+                                style="@style/Widget.Material3.Button.TextButton"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/btn_delete_contact"
+                                android:textColor="#EF4444"
+                                android:textSize="13sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 

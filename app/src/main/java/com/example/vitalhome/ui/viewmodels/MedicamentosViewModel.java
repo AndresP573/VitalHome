@@ -1,81 +1,143 @@
 package com.example.vitalhome.ui.viewmodels;
 
 import android.app.Application;
-
 import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
-
-import com.example.vitalhome.data.modelo.AlertEvent;
 import com.example.vitalhome.data.modelo.Medication;
 import com.example.vitalhome.data.repository.AppRepo;
 import com.example.vitalhome.utils.MedicationAlarmScheduler;
-import com.example.vitalhome.utils.NotificationHelper;
-
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
+import java.util.Map;
+import java.util.UUID;
 
 /**
- * ViewModel responsable de la gestión del plan de medicamentos.
- * Permite agregar nuevos medicamentos, marcar la toma y programar/cancelar alarmas.
+ * ViewModel encargado del mantenimiento y registro de medicamentos dentro del plan diario.
+ * Sincroniza en tiempo real los medicamentos desde Cloud Firestore.
  */
 public class MedicamentosViewModel extends AndroidViewModel {
 
-    // --- Bloque 1: Atributos y LiveData ---
+    // --- Atributos de repositorio y LiveData ---
     private final AppRepo repo;
     private final MutableLiveData<List<Medication>> plan = new MutableLiveData<>();
+    private ListenerRegistration medsListener;
 
-    // --- Bloque 2: Constructor e inicialización ---
-    public MedicamentosViewModel(@NonNull Application app) {
-        super(app);
-        repo = new AppRepo(app);
+    public MedicamentosViewModel(@NonNull Application application) {
+        super(application);
+        repo = new AppRepo(application);
+        cargarPlan();
+        iniciarEscuchaMedsFirestore();
+    }
+
+    private void cargarPlan() {
         List<Medication> lista = repo.getMeds();
         ordenar(lista);
         plan.setValue(lista);
     }
 
-    // --- Bloque 3: Acceso a LiveData ---
-    public LiveData<List<Medication>> getPlan() {
-        return plan;
+    private void iniciarEscuchaMedsFirestore() {
+        try {
+            FirebaseFirestore db = FirebaseFirestore.getInstance("default");
+            medsListener = db.collection("medications")
+                .addSnapshotListener((snapshots, e) -> {
+                    if (e != null || snapshots == null) return;
+                    List<Medication> listaMeds = new ArrayList<>();
+                    for (DocumentSnapshot doc : snapshots.getDocuments()) {
+                        String id = doc.getString("id");
+                        String nombre = doc.getString("nombre");
+                        String hora = doc.getString("hora");
+                        Boolean taken = doc.getBoolean("taken");
+
+                        if (id != null && nombre != null && hora != null) {
+                            listaMeds.add(new Medication(id, nombre, hora, Boolean.TRUE.equals(taken)));
+                        }
+                    }
+                    if (!listaMeds.isEmpty()) {
+                        ordenar(listaMeds);
+                        repo.saveMeds(listaMeds);
+                        plan.postValue(listaMeds);
+                    }
+                });
+        } catch (Exception ignored) {}
     }
 
-    // --- Bloque 4: Operaciones de medicamentos ---
-    /**
-     * Agrega un nuevo medicamento al plan, persiste los datos y programa la alarma correspondiente.
-     */
-    public void agregar(String nombre, String hora) {
-        List<Medication> lista = plan.getValue();
-        Medication nuevoMed = new Medication("" + System.currentTimeMillis(), nombre, hora);
-        lista.add(0, nuevoMed);
-        ordenar(lista);
-        repo.saveMeds(lista);
-        plan.setValue(lista);
-        MedicationAlarmScheduler.programar(getApplication(), nuevoMed);
-    }
-
-    /**
-     * Registra la toma de un medicamento, cancela su alarma y genera eventos y notificaciones.
-     */
-    public void tomar(Medication m) {
-        List<Medication> lista = plan.getValue();
-        m.setTaken(true);
-        repo.saveMeds(lista);
-        repo.addEvent(new AlertEvent("MEDICINA", "Tomó " + m.getNombre(), "Casa", getTime()));
-        ordenar(lista);
-        plan.setValue(lista);
-        MedicationAlarmScheduler.cancelar(getApplication(), m.getId());
-        NotificationHelper.medicamentoTomado(getApplication(), m.getNombre(), getTime());
-    }
-
-    // --- Bloque 5: Métodos auxiliares ---
     private void ordenar(List<Medication> lista) {
-        lista.sort((m1, m2) -> Boolean.compare(m2.isTaken(), m1.isTaken()));
+        if (lista != null) {
+            lista.sort((m1, m2) -> {
+                if (m1.isTaken() != m2.isTaken()) {
+                    return m1.isTaken() ? 1 : -1;
+                }
+                return m1.getHora().compareTo(m2.getHora());
+            });
+        }
     }
 
-    private String getTime() {
-        return new SimpleDateFormat("HH:mm", Locale.getDefault()).format(new Date());
+    public void agregar(String nombre, String hora) {
+        String id = UUID.randomUUID().toString();
+        Medication nuevoMed = new Medication(id, nombre, hora, false);
+
+        List<Medication> lista = repo.getMeds();
+        if (lista == null) {
+            lista = new ArrayList<>();
+        }
+        lista.add(0, nuevoMed);
+        repo.saveMeds(lista);
+
+        // Guardar y sincronizar en Firestore
+        try {
+            Map<String, Object> medData = new HashMap<>();
+            medData.put("id", nuevoMed.getId());
+            medData.put("nombre", nuevoMed.getNombre());
+            medData.put("hora", nuevoMed.getHora());
+            medData.put("taken", false);
+
+            FirebaseFirestore.getInstance("default")
+                .collection("medications")
+                .document(nuevoMed.getId())
+                .set(medData);
+        } catch (Exception ignored) {}
+
+        MedicationAlarmScheduler.programar(getApplication(), nuevoMed);
+        cargarPlan();
+    }
+
+    public void tomar(Medication m) {
+        List<Medication> lista = repo.getMeds();
+        if (lista != null) {
+            for (Medication item : lista) {
+                if (item.getId().equals(m.getId())) {
+                    item.setTaken(true);
+                    break;
+                }
+            }
+            repo.saveMeds(lista);
+            MedicationAlarmScheduler.cancelar(getApplication(), m.getId());
+
+            // Actualizar estado en Firestore
+            try {
+                FirebaseFirestore.getInstance("default")
+                    .collection("medications")
+                    .document(m.getId())
+                    .update("taken", true);
+            } catch (Exception ignored) {}
+        }
+        cargarPlan();
+    }
+
+    public LiveData<List<Medication>> getPlan() { return plan; }
+
+    @Override
+    protected void onCleared() {
+        super.onCleared();
+        if (medsListener != null) {
+            medsListener.remove();
+            medsListener = null;
+        }
     }
 }

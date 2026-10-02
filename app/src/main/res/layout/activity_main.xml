@@ -73,6 +73,7 @@
                     android:src="@drawable/ic_switch_user"
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:scaleType="centerInside"
+                    android:visibility="gone"
                     android:contentDescription="Cambiar" />
 
                 <ImageButton

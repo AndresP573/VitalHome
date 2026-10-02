@@ -40,9 +40,10 @@ public class ProfileMedicoFragment extends Fragment {
             if (tvContact2 != null && !s.isEmpty()) tvContact2.setText(s);
         });
 
-        v.findViewById(R.id.btnVolverProfile).setOnClickListener(view -> 
-            Navigation.findNavController(view).navigateUp()
-        );
+        View arrowBack = v.findViewById(R.id.btnBackArrowProfile);
+        if (arrowBack != null) {
+            arrowBack.setOnClickListener(view -> Navigation.findNavController(view).navigateUp());
+        }
         
         return v;
     }

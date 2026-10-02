@@ -12,6 +12,7 @@ import androidx.navigation.Navigation;
 import com.example.vitalhome.R;
 import androidx.lifecycle.ViewModelProvider;
 import com.example.vitalhome.ui.viewmodels.SosCountdownViewModel;
+import java.util.Objects;
 
 /**
  * Fragmento que muestra la pantalla de cuenta regresiva previa al envío de la alerta SOS.
@@ -19,35 +20,37 @@ import com.example.vitalhome.ui.viewmodels.SosCountdownViewModel;
  */
 public class SosCountdownFragment extends Fragment {
 
-    // --- Bloque 1: Atributo ViewModel ---
+    // --- Atributo ViewModel ---
     private SosCountdownViewModel viewModel;
 
-    // --- Bloque 2: Inflado e integración del temporizador ---
+    // --- Inflado e integración del temporizador ---
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.fragment_sos_countdown, container, false);
         viewModel = new ViewModelProvider(this).get(SosCountdownViewModel.class);
-        
+
         TextView tvCountdown = v.findViewById(R.id.textCountdown);
+        TextView tvNotifyingContacts = v.findViewById(R.id.textNotifyingContacts);
 
         viewModel.getCountdownText().observe(getViewLifecycleOwner(), tvCountdown::setText);
+        if (tvNotifyingContacts != null) {
+            viewModel.getNotifyingContactsText().observe(getViewLifecycleOwner(), tvNotifyingContacts::setText);
+        }
         viewModel.getTimerFinished().observe(getViewLifecycleOwner(), finished -> {
-            if (Boolean.TRUE.equals(finished)) {
+            if (Objects.equals(Boolean.TRUE, finished)) {
                 viewModel.eventoConsumido();
                 Navigation.findNavController(v).navigate(R.id.nav_sos);
             }
         });
-        
+
         // Listeners para acciones SOS
         v.findViewById(R.id.btnCancelSOS).setOnClickListener(view -> {
             viewModel.estoyBien();
             Navigation.findNavController(view).navigateUp();
         });
 
-        v.findViewById(R.id.btnConfirmSOSNow).setOnClickListener(view -> {
-            viewModel.confirmSOS();
-        });
+        v.findViewById(R.id.btnConfirmSOSNow).setOnClickListener(view -> viewModel.confirmSOS());
 
         v.findViewById(R.id.btnBackArrowSOS).setOnClickListener(view -> {
             viewModel.cancelTimer();
@@ -59,7 +62,7 @@ public class SosCountdownFragment extends Fragment {
         return v;
     }
 
-    // --- Bloque 3: Gestión del ciclo de vida ---
+    // --- Gestión del ciclo de vida ---
     @Override
     public void onPause() {
         super.onPause();

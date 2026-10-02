@@ -3,6 +3,7 @@ package com.example.vitalhome.ui.controladores;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.RadioGroup;
@@ -10,72 +11,164 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.vitalhome.R;
+import com.example.vitalhome.data.local.AppDatabase;
+import com.example.vitalhome.data.local.UserEntity;
+import com.example.vitalhome.utils.AppExecutors;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 /**
  * Actividad responsable de gestionar el inicio de sesión de los usuarios (Cliente o Cuidador).
+ * Implementa autenticación híbrida consultando Room (SQLite) y Firestore ("default").
  */
 public class LoginActivity extends AppCompatActivity {
 
-    // --- Bloque 1: Inicialización de la pantalla de Login ---
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
         SharedPreferences p = getSharedPreferences("VitalHomePrefs", MODE_PRIVATE);
+
+        // Si es el primer uso de la app en este celular y no hay registro previo -> ir al registro paso a paso
+        if (!p.getBoolean("isRegistered", false)) {
+            startActivity(new Intent(this, RegisterActivity.class));
+            finish();
+            return;
+        }
+
+        // Si la sesión está activa -> ir a la pantalla principal
         if (p.getBoolean("isLoggedIn", false)) {
-            startActivity(new Intent(this, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
+            startActivity(new Intent(this, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK));
             finish();
             return;
         }
 
         EditText inMail = findViewById(R.id.etEmailLogin);
         EditText inPass = findViewById(R.id.etPasswordLogin);
+        EditText inPhone = findViewById(R.id.etPhoneLogin);
         RadioGroup selPerfil = findViewById(R.id.rgLoginRole);
         Button btnEntrar = findViewById(R.id.btnLogin);
         TextView btnGoReg = findViewById(R.id.tvGoToRegister);
 
-        // --- Bloque 2: Carga inicial de correo según rol seleccionado ---
+        // Carga inicial de datos según rol seleccionado
         int actualId = selPerfil.getCheckedRadioButtonId();
         String k = (actualId == R.id.rbLoginAdulto) ? "email_cliente" : "email_cuidador";
         inMail.setText(p.getString(k, p.getString("email", "")));
+        if (inPhone != null) {
+            inPhone.setText(p.getString("phone_cuidador", ""));
+            inPhone.setVisibility((actualId == R.id.rbLoginCuidador) ? View.VISIBLE : View.GONE);
+        }
 
-        // Listener para cambiar el mail apenas se toca un perfil
         selPerfil.setOnCheckedChangeListener((group, id) -> {
             String key = (id == R.id.rbLoginAdulto) ? "email_cliente" : "email_cuidador";
             String m = p.getString(key, p.getString("email", ""));
             inMail.setText(m);
+            if (inPhone != null) {
+                inPhone.setVisibility((id == R.id.rbLoginCuidador) ? View.VISIBLE : View.GONE);
+            }
         });
 
-        // --- Bloque 3: Validación e inicio de sesión ---
+        // --- Validación e inicio de sesión híbrido (Room + Firestore "default") ---
         btnEntrar.setOnClickListener(v -> {
             String mail = inMail.getText().toString().trim();
             String pass = inPass.getText().toString().trim();
-            
-            String role = (selPerfil.getCheckedRadioButtonId() == R.id.rbLoginAdulto) ? "cliente" : "cuidador";
-            String passOk = p.getString("password", "");
+            String tel = (inPhone != null) ? inPhone.getText().toString().trim() : "";
+            String selectedRole = (selPerfil.getCheckedRadioButtonId() == R.id.rbLoginAdulto) ? "cliente" : "cuidador";
 
             if (mail.isEmpty() || pass.isEmpty()) {
                 Toast.makeText(this, getString(R.string.msg_completa_datos), Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            if (pass.equals(passOk)) {
-                SharedPreferences.Editor edit = p.edit();
-                edit.putBoolean("isLoggedIn", true);
-                edit.putString("rol", role);
-                edit.putString("email", mail);
-                edit.putString(role.equals("cliente") ? "email_cliente" : "email_cuidador", mail);
-                edit.apply();
-                
-                startActivity(new Intent(this, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
-                finish();
-            } else {
-                Toast.makeText(this, getString(R.string.msg_pass_incorrecta), Toast.LENGTH_SHORT).show();
-            }
+            btnEntrar.setEnabled(false);
+
+            // 1. Consultar la base de datos local SQLite (Room) en hilo secundario
+            AppExecutors.getInstance().diskIO().execute(() -> {
+                UserEntity localUser = AppDatabase.getInstance(getApplicationContext())
+                        .userDao().getUserByEmail(mail);
+
+                AppExecutors.getInstance().mainThread().execute(() -> {
+                    btnEntrar.setEnabled(true);
+
+                    // Si existe el usuario en la base de datos local
+                    if (localUser != null) {
+                        if (pass.equals(localUser.password) || pass.equals(p.getString("password", ""))) {
+                            iniciarSesionExitosa(p, mail, pass, localUser.rol != null ? localUser.rol : selectedRole, tel);
+                        } else {
+                            Toast.makeText(this, getString(R.string.msg_pass_incorrecta), Toast.LENGTH_SHORT).show();
+                        }
+                    } else {
+                        // 2. Si no está localmente, verificar en la nube (Firestore "default")
+                        FirebaseFirestore db = FirebaseFirestore.getInstance("default");
+                        String docId = mail.replace(".", "_");
+
+                        db.collection("users").document(docId).get()
+                                .addOnSuccessListener(doc -> {
+                                    if (doc.exists()) {
+                                        // Guardar en Room para acceso offline futuro
+                                        UserEntity newUser = new UserEntity();
+                                        newUser.email = mail;
+                                        newUser.password = pass;
+                                        newUser.nombreCompleto = doc.getString("nombre");
+                                        newUser.rol = doc.getString("rol") != null ? doc.getString("rol") : selectedRole;
+                                        newUser.telefono = doc.getString("telefono");
+                                        newUser.createdAt = System.currentTimeMillis();
+
+                                        AppExecutors.getInstance().diskIO().execute(() -> {
+                                            AppDatabase.getInstance(getApplicationContext()).userDao().insert(newUser);
+                                        });
+
+                                        iniciarSesionExitosa(p, mail, pass, newUser.rol, tel);
+                                    } else {
+                                        // Verificación fallback con SharedPreferences
+                                        String passOk = p.getString("password", "");
+                                        if (!passOk.isEmpty() && pass.equals(passOk)) {
+                                            iniciarSesionExitosa(p, mail, pass, selectedRole, tel);
+                                        } else {
+                                            Toast.makeText(this, getString(R.string.msg_pass_incorrecta), Toast.LENGTH_SHORT).show();
+                                        }
+                                    }
+                                })
+                                .addOnFailureListener(err -> {
+                                    String passOk = p.getString("password", "");
+                                    if (!passOk.isEmpty() && pass.equals(passOk)) {
+                                        iniciarSesionExitosa(p, mail, pass, selectedRole, tel);
+                                    } else {
+                                        Toast.makeText(this, getString(R.string.msg_pass_incorrecta), Toast.LENGTH_SHORT).show();
+                                    }
+                                });
+                    }
+                });
+            });
         });
 
-        // --- Bloque 4: Navegación hacia la pantalla de registro ---
-        btnGoReg.setOnClickListener(v -> startActivity(new Intent(this, RegisterActivity.class)));
+        // --- Navegación hacia la pantalla de registro permitiendo múltiples cuentas ---
+        btnGoReg.setOnClickListener(v -> {
+            Intent intent = new Intent(this, RegisterActivity.class);
+            intent.putExtra("forceNewRegister", true);
+            startActivity(intent);
+        });
+    }
+
+    private void iniciarSesionExitosa(SharedPreferences p, String mail, String pass, String role, String tel) {
+        SharedPreferences.Editor edit = p.edit();
+        edit.putBoolean("isRegistered", true);
+        edit.putBoolean("isLoggedIn", true);
+        edit.putString("rol", role);
+        edit.putString("email", mail);
+        edit.putString("password", pass);
+
+        if ("cliente".equals(role)) {
+            edit.putString("email_cliente", mail);
+        } else {
+            edit.putString("email_cuidador", mail);
+            edit.putString("phone_cuidador", tel);
+        }
+
+        edit.apply();
+
+        Toast.makeText(this, "Bienvenido/a " + mail, Toast.LENGTH_SHORT).show();
+        startActivity(new Intent(this, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK));
+        finish();
     }
 }

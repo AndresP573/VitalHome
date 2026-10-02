@@ -25,7 +25,7 @@
                 android:id="@+id/tvMedName"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Medicina"
+                android:text="@string/label_med_default_name"
                 android:textColor="#0A2E73"
                 android:textSize="22sp"
                 android:textStyle="bold" />
@@ -38,7 +38,7 @@
                 android:background="#FFF9E6"
                 android:paddingHorizontal="12dp"
                 android:paddingVertical="6dp"
-                android:text="08:00"
+                android:text="@string/label_med_default_time"
                 android:textColor="#D97706"
                 android:textSize="16sp"
                 android:textStyle="bold" />
@@ -51,7 +51,7 @@
             android:layout_marginTop="16dp"
             android:backgroundTint="#10B981"
             android:padding="18dp"
-            android:text="YA LO TOMÉ"
+            android:text="@string/btn_take_med"
             android:textColor="#FFFFFF"
             android:textSize="20sp"
             android:textStyle="bold"

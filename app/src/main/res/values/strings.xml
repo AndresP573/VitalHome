@@ -16,6 +16,18 @@
     <string name="role_cuidador">Soy el Familiar/Cuidador</string>
     <string name="register_button">REGISTRARSE</string>
     <string name="go_to_login">¿Ya tiene cuenta? Inicie sesión</string>
+    <string name="btn_continuar">CONTINUAR →</string>
+    <string name="sub_paso2_datos">Paso 2: Completa tus datos</string>
+    <string name="btn_edit_contact">✏️ Editar</string>
+    <string name="btn_delete_contact">🗑️ Eliminar</string>
+    <string name="contact_placeholder_name_1">Nombre Contacto 1</string>
+    <string name="contact_placeholder_phone_1">📞 1122334455</string>
+    <string name="contact_placeholder_name_2">Nombre Contacto 2</string>
+    <string name="contact_placeholder_phone_2">📞 8877665544</string>
+    <string name="icon_home">🏠</string>
+    <string name="icon_meds">💊</string>
+    <string name="icon_phone">📞</string>
+    <string name="label_options_session">Opciones y Sesión</string>
 
     <!-- Mensajes informativos y Toasts -->
     <string name="msg_faltan_datos">Por favor, complete todos los campos requeridos.</string>
@@ -40,6 +52,7 @@
     <string name="vitals_oxygen">OXÍGENO</string>
     <string name="vitals_pressure">PRESIÓN</string>
     <string name="vitals_btn_ok">👍 ¡ESTOY BIEN!</string>
+    <string name="sub_vitals">Datos en tiempo real de la pulsera</string>
 
     <!-- Dashboard Cliente -->
     <string name="client_dash_hello">Hola</string>
@@ -51,7 +64,9 @@
     <string name="btn_sos">SOS</string>
     <string name="btn_call_caregiver">📞 LLAMAR A MI CUIDADOR</string>
     <string name="btn_switch_to_caregiver">CAMBIAR A CUIDADOR</string>
-    <string name="btn_logout">CERRAR SESIÓN Y SALIR</string>
+    <string name="btn_logout">CERRAR SESIÓN</string>
+    <string name="btn_cerrar_sesion">CERRAR SESIÓN</string>
+    <string name="btn_salir_app">SALIR DE LA APP</string>
     <string name="title_my_remedies">💊 Mis Remedios Diarios</string>
     <string name="btn_view_medical_profile">📋 VER MI PERFIL MÉDICO</string>
     <string name="title_my_contacts">👤 Mis Contactos</string>
@@ -65,6 +80,39 @@
     <string name="tab_inicio">INICIO</string>
     <string name="tab_remedios">REMEDIOS</string>
     <string name="tab_contactos">CONTACTOS</string>
+
+    <!-- Cuenta regresiva SOS -->
+    <string name="btn_back_description">Volver</string>
+    <string name="title_sos_activated">¡SOS ACTIVADO!</string>
+    <string name="sub_sos_countdown">Notificando en 10s</string>
+    <string name="sub_sos_notifying_contacts">Avisando a: Juan y Ana</string>
+    <string name="btn_cancel_sos">ESTOY BIEN, CANCELAR</string>
+    <string name="btn_confirm_sos_now">NECESITO AYUDA YA</string>
+
+    <!-- Teléfono y Verificación de Cuidador -->
+    <string name="hint_contact_phone_caregiver">Teléfono de contacto</string>
+    <string name="msg_phone_verified">✓ Teléfono verificado: Coincide con los contactos del adulto mayor</string>
+    <string name="msg_phone_not_verified">Aviso: El teléfono no coincide con los contactos del adulto mayor</string>
+
+    <!-- Nuevas etiquetas de Registro y Vínculos -->
+    <string name="hint_vinculo">Vínculo (ej. Hijo, Sobrino, Nieto, Cuidador)</string>
+    <string name="label_vinculo_caregiver">Vínculo con el Adulto Mayor</string>
+    <string name="hint_vinculo_especifique">Especifique el vínculo (ej. Cónyuge, Vecino, Enfermero)</string>
+    <string name="hint_edad">Edad</string>
+
+    <!-- Mensajes de error en validación de campos -->
+    <string name="msg_user_already_registered">⚠️ El usuario ya se encuentra registrado. Por favor inicie sesión.</string>
+    <string name="label_genero_cuidador">Género del Familiar / Cuidador</string>
+    <string name="error_invalid_name">⚠️ Datos inválidos: Ingrese su Nombre y Apellido completo.</string>
+    <string name="error_invalid_vinculo">⚠️ Datos inválidos: Seleccione un vínculo válido.</string>
+    <string name="error_invalid_phone">⚠️ Datos inválidos: Ingrese un teléfono de contacto válido.</string>
+    <string name="error_invalid_age">⚠️ Datos inválidos: Ingrese una edad válida (1 a 120).</string>
+    <string name="error_invalid_email">⚠️ Datos inválidos: Ingrese un correo electrónico válido.</string>
+    <string name="error_invalid_password">⚠️ Datos inválidos: La contraseña debe tener al menos 4 caracteres.</string>
+    <string name="label_genero">Género</string>
+    <string name="gender_masculino">Masculino (M)</string>
+    <string name="gender_femenino">Femenino (F)</string>
+    <string name="msg_remedios_limpios">Plan de medicamentos limpiado correctamente.</string>
 
     <!-- Dashboard Cuidador -->
     <string name="caregiver_dash_subtitle">Estado de su familiar hoy.</string>
@@ -106,4 +154,41 @@
     <string name="smoke_none">SIN HUMO</string>
     <string name="btn_turn_off_alarm">Apagar alarma</string>
     <string name="btn_simulate_fire">Simular fuego</string>
+
+    <!-- Valores por defecto y etiquetas auxiliares UI -->
+    <string name="vitals_default_pulse">72 LPM</string>
+    <string name="vitals_default_oxygen">98%</string>
+    <string name="vitals_default_pressure">120/80</string>
+    <string name="title_medical_history">Historial Médico</string>
+    <string name="sub_medical_history">Registros y consultas anteriores.</string>
+    <string name="title_medical_profile">Mi Perfil Médico</string>
+    <string name="profile_default_name">Marta Rodríguez</string>
+    <string name="profile_default_age">78 años</string>
+    <string name="profile_blood_group">Grupo Sanguíneo: 0+</string>
+    <string name="profile_allergies">Alergias: Penicilina</string>
+    <string name="title_emergency_contacts">📞 Contactos de Emergencia</string>
+    <string name="profile_contact_1">Hijo — Juan (1234-5678)</string>
+    <string name="profile_contact_2">Vecina — Ana (8765-4321)</string>
+    <string name="title_settings">⚙️ Configuración</string>
+    <string name="label_fall_sensitivity">Sensibilidad sensor de caída</string>
+    <string name="label_item_type">TIPO</string>
+    <string name="label_item_time">00:00</string>
+    <string name="label_item_desc">Descripción del evento...</string>
+    <string name="label_record_title">Título del Estudio</string>
+    <string name="label_record_date">01/01/2026</string>
+    <string name="label_record_doctor">Dr. Apellido</string>
+    <string name="label_record_detail">Detalle del resultado o diagnóstico...</string>
+    <string name="label_med_default_name">Medicina</string>
+    <string name="label_med_default_time">08:00</string>
+    <string name="btn_take_med">YA LO TOMÉ</string>
+    <string name="icon_elderly">👵</string>
+    <string name="role_elderly_sub">Para uso directo del abuelo/a</string>
+    <string name="icon_family">👨‍👦</string>
+    <string name="role_family_sub">Para monitoreo y acompañamiento</string>
+    <string name="vinculo_hijo">Hijo / Hija</string>
+    <string name="login_role_prompt">¿Cómo quieres ingresar?</string>
+    <string name="role_abuelo_short">Abuelo</string>
+    <string name="role_cuidador_short">Cuidador</string>
+    <string name="default_temp">22°C</string>
+    <string name="default_dash_summary">...</string>
 </resources>
