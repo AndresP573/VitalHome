@@ -7,38 +7,52 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
-import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.vitalhome.R;
 import com.example.vitalhome.data.modelo.Medication;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Adaptador de RecyclerView para la lista de medicamentos (Medication).
- * Muestra el estado de cada medicamento y gestiona el evento de acción al marcarlo como tomado.
+ * Adaptador de RecyclerView para administrar la visualización y acciones del plan diario de medicamentos.
  */
 public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.MedViewHolder> {
 
-    // --- Bloque 1: Atributos de la clase e interfaz ---
-    private List<Medication> plan;
-    private boolean esAbuelo;
-    private AccionesMed listener;
-
     /**
-     * Interfaz para notificar acciones de toma de medicamento.
+     * Interfaz de comunicación para gestionar las acciones de marcado de medicamentos.
      */
     public interface AccionesMed {
         void tomar(Medication m);
     }
 
-    // --- Bloque 2: Constructor ---
-    public MedicationAdapter(List<Medication> plan, boolean esAbuelo, AccionesMed listener) {
-        this.plan = plan;
+    // --- Atributos del adaptador ---
+    private List<Medication> items;
+    private final boolean esAbuelo;
+    private final AccionesMed listener;
+
+    /**
+     * Constructor del adaptador de medicamentos.
+     *
+     * @param items Lista inicial de medicamentos.
+     * @param esAbuelo Indica si la vista la utiliza el perfil cliente/abuelo para habilitar el botón de toma.
+     * @param listener Interfaz de callback para ejecutar las acciones.
+     */
+    public MedicationAdapter(List<Medication> items, boolean esAbuelo, AccionesMed listener) {
+        this.items = items != null ? items : new ArrayList<>();
         this.esAbuelo = esAbuelo;
         this.listener = listener;
     }
 
-    // --- Bloque 3: Creación de ViewHolder ---
+    /**
+     * Actualiza la lista interna de medicamentos.
+     *
+     * @param newItems Lista actualizada de remedios.
+     */
+    public void updateList(List<Medication> newItems) {
+        this.items = newItems != null ? newItems : new ArrayList<>();
+        notifyDataSetChanged();
+    }
+
     @NonNull
     @Override
     public MedViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -46,54 +60,53 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
         return new MedViewHolder(v);
     }
 
-    // --- Bloque 4: Vinculación de datos y configuración de estado ---
     @Override
-    public void onBindViewHolder(@NonNull MedViewHolder holder, int pos) {
-        Medication m = plan.get(pos);
-        holder.txt.setText(m.getNombre());
-        holder.txt.setTextColor(ContextCompat.getColor(holder.itemView.getContext(), R.color.primaryDark));
-        
-        // Configuración visual según si la medicina ya fue tomada o está pendiente
+    public void onBindViewHolder(@NonNull MedViewHolder holder, int position) {
+        Medication m = items.get(position);
+
+        holder.tvNombre.setText(m.getNombre());
+
         if (m.isTaken()) {
-            holder.badge.setText("Tomado");
-            holder.badge.setBackgroundColor(Color.parseColor("#E6FFFA"));
-            holder.badge.setTextColor(Color.parseColor("#059669"));
-            holder.btn.setVisibility(View.GONE);
+            holder.tvBadge.setText(holder.itemView.getContext().getString(R.string.status_tomado));
+            holder.tvBadge.setBackgroundColor(Color.parseColor("#E6F4EA"));
+            holder.tvBadge.setTextColor(Color.parseColor("#137333"));
+            holder.btnTomar.setVisibility(View.GONE);
         } else {
-            holder.badge.setText(m.getHora());
-            holder.badge.setBackgroundColor(Color.parseColor("#FFF9E6"));
-            holder.badge.setTextColor(Color.parseColor("#D97706"));
-            
+            holder.tvBadge.setText(m.getHora());
+            holder.tvBadge.setBackgroundColor(Color.parseColor("#FFF9E6"));
+            holder.tvBadge.setTextColor(Color.parseColor("#D97706"));
+
             if (esAbuelo) {
-                holder.btn.setVisibility(View.VISIBLE);
-                holder.btn.setOnClickListener(v -> {
-                    if (listener != null) listener.tomar(m);
+                holder.btnTomar.setVisibility(View.VISIBLE);
+                holder.btnTomar.setOnClickListener(v -> {
+                    if (listener != null) {
+                        listener.tomar(m);
+                    }
                 });
             } else {
-                holder.btn.setVisibility(View.GONE);
+                holder.btnTomar.setVisibility(View.GONE);
             }
         }
     }
 
-    // --- Bloque 5: Conteo de elementos y actualización ---
     @Override
-    public int getItemCount() { return plan != null ? plan.size() : 0; }
-
-    public void updateList(List<Medication> newPlan) {
-        this.plan = newPlan;
-        notifyDataSetChanged();
+    public int getItemCount() {
+        return items.size();
     }
 
-    // --- Bloque 6: Clase interna ViewHolder ---
-    static class MedViewHolder extends RecyclerView.ViewHolder {
-        TextView txt, badge;
-        Button btn;
-        
+    /**
+     * ViewHolder público para la representación visual de cada medicamento.
+     */
+    public static class MedViewHolder extends RecyclerView.ViewHolder {
+        final TextView tvNombre;
+        final TextView tvBadge;
+        final Button btnTomar;
+
         public MedViewHolder(@NonNull View itemView) {
             super(itemView);
-            txt = itemView.findViewById(R.id.tvMedName);
-            badge = itemView.findViewById(R.id.tvMedBadge);
-            btn = itemView.findViewById(R.id.btnTakeMed);
+            tvNombre = itemView.findViewById(R.id.tvMedName);
+            tvBadge = itemView.findViewById(R.id.tvMedBadge);
+            btnTomar = itemView.findViewById(R.id.btnTakeMed);
         }
     }
 }

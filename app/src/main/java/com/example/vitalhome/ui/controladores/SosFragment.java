@@ -25,6 +25,13 @@ public class SosFragment extends Fragment {
         v.findViewById(R.id.btnEstoyBien).setOnClickListener(view -> 
             Navigation.findNavController(view).navigate(R.id.nav_dashboard_cliente)
         );
+
+        View arrowBack = v.findViewById(R.id.btnBackArrowSOSActive);
+        if (arrowBack != null) {
+            arrowBack.setOnClickListener(view -> 
+                Navigation.findNavController(view).navigate(R.id.nav_dashboard_cliente)
+            );
+        }
         
         return v;
     }

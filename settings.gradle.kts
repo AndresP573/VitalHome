@@ -22,6 +22,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "VitalHome"
+rootProject.name = "vitalhome"
 include(":app")
  

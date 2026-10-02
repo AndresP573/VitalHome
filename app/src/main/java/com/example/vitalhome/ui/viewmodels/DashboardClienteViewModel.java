@@ -17,6 +17,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 
 /**
  * ViewModel para el Dashboard del usuario (Cliente / Adulto Mayor).
@@ -24,7 +25,7 @@ import java.util.Locale;
  */
 public class DashboardClienteViewModel extends AndroidViewModel {
 
-    // --- Bloque 1: Atributos y LiveData ---
+    // --- Atributos y LiveData ---
     private final AppRepo repo;
     private final SharedPreferences prefs;
 
@@ -50,7 +51,11 @@ public class DashboardClienteViewModel extends AndroidViewModel {
     }
     private final MutableLiveData<VitalsUpdate> lastVitalsUpdate = new MutableLiveData<>();
 
-    // --- Bloque 2: Constructor e Inicialización ---
+    /**
+     * Constructor e Inicialización del ViewModel.
+     *
+     * @param application Contexto de la aplicación.
+     */
     public DashboardClienteViewModel(@NonNull Application application) {
         super(application);
         repo = new AppRepo(application);
@@ -58,7 +63,10 @@ public class DashboardClienteViewModel extends AndroidViewModel {
         refreshData();
     }
 
-    // --- Bloque 3: Métodos para refrescar datos desde preferencias y repositorio ---
+    // --- Métodos para refrescar datos desde preferencias y repositorio ---
+    /**
+     * Refresca los datos del perfil, signos vitales, remedios y contactos.
+     */
     public void refreshData() {
         nombreUsuario.setValue(prefs.getString("nombreAdultoMayor", "Usuario"));
         refrescarSignos();
@@ -88,7 +96,10 @@ public class DashboardClienteViewModel extends AndroidViewModel {
         contactPhone2.setValue(prefs.getString("client_contact_phone_2", ""));
     }
 
-    // --- Bloque 4: Gestión de Contactos de Emergencia ---
+    // --- Gestión de Contactos de Emergencia ---
+    /**
+     * Guarda los contactos de emergencia principales y secundarios.
+     */
     public void guardarContactos(String n1, String p1, String n2, String p2) {
         prefs.edit()
                 .putString("client_contact_name_1", n1)
@@ -99,11 +110,16 @@ public class DashboardClienteViewModel extends AndroidViewModel {
         cargarContactos();
     }
 
-    // --- Bloque 5: Gestión de Medicamentos ---
+    // --- Gestión de Medicamentos ---
+    /**
+     * Registra la toma de un medicamento por parte del adulto mayor.
+     *
+     * @param m Instancia del medicamento ingerido.
+     */
     public void tomar(Medication m) {
         List<Medication> items = repo.getMeds();
         for (Medication item : items) {
-            if (item.getId().equals(m.getId())) {
+            if (Objects.equals(item.getId(), m.getId())) {
                 item.setTaken(true);
                 break;
             }
@@ -115,63 +131,96 @@ public class DashboardClienteViewModel extends AndroidViewModel {
         NotificationHelper.medicamentoTomado(getApplication(), m.getNombre(), getTime());
     }
 
-    // --- Bloque 6: Medición y Simulación de Signos Vitales ---
+    /**
+     * Limpia la lista completa de medicamentos programados y cancela sus alarmas activas.
+     */
+    public void limpiarRemedios() {
+        List<Medication> items = repo.getMeds();
+        if (items != null) {
+            for (Medication m : items) {
+                MedicationAlarmScheduler.cancelar(getApplication(), m.getId());
+            }
+        }
+        repo.saveMeds(new java.util.ArrayList<>());
+        refrescarMeds();
+    }
+
+    // --- Medición y Simulación de Signos Vitales ---
+    /**
+     * Simula la medición en tiempo real de signos vitales en un hilo secundario (Multi-threading).
+     */
     public void medirAhora() {
-        // Lógica probabilística de rangos de prueba
-        int p;
-        if (Math.random() < 0.25) {
-            p = (int) (Math.random() * 30 + 101); // 101-130
-        } else {
-            p = (int) (Math.random() * 36 + 60);  // 60-95
-        }
+        com.example.vitalhome.utils.AppExecutors.getInstance().diskIO().execute(() -> {
+            int p;
+            if (Math.random() < 0.25) {
+                p = (int) (Math.random() * 30 + 101); // 101-130
+            } else {
+                p = (int) (Math.random() * 36 + 60);  // 60-95
+            }
 
-        int o;
-        if (Math.random() < 0.15) {
-            o = (int) (Math.random() * 4 + 88);   // 88-91
-        } else {
-            o = (int) (Math.random() * 5 + 95);   // 95-99
-        }
+            int o;
+            if (Math.random() < 0.15) {
+                o = (int) (Math.random() * 4 + 88);   // 88-91
+            } else {
+                o = (int) (Math.random() * 5 + 95);   // 95-99
+            }
 
-        int sis, dia;
-        if (Math.random() < 0.25) {
-            sis = (int) (Math.random() * 26 + 140); // 140-165
-            dia = (int) (Math.random() * 16 + 90);  // 90-105
-        } else {
-            sis = (int) (Math.random() * 25 + 110); // 110-134
-            dia = (int) (Math.random() * 15 + 70);  // 70-84
-        }
-        String presString = sis + "/" + dia;
+            int sis, dia;
+            if (Math.random() < 0.25) {
+                sis = (int) (Math.random() * 26 + 140); // 140-165
+                dia = (int) (Math.random() * 16 + 90);  // 90-105
+            } else {
+                sis = (int) (Math.random() * 25 + 110); // 110-134
+                dia = (int) (Math.random() * 15 + 70);  // 70-84
+            }
+            String presString = sis + "/" + dia;
 
-        repo.addEvent(new AlertEvent("SALUD", "Control: " + p + " LPM", "Casa", getTime()));
-        prefs.edit().putString("ultimos_vitals", "{\"pulso\":" + p + ",\"oxig\":" + o + ",\"pres\":\"" + presString + "\"}").apply();
+            repo.addEvent(new AlertEvent("SALUD", "Control: " + p + " LPM", "Casa", getTime()));
+            prefs.edit().putString("ultimos_vitals", "{\"pulso\":" + p + ",\"oxig\":" + o + ",\"pres\":\"" + presString + "\"}").apply();
 
-        refrescarSignos();
-        lastVitalsUpdate.setValue(new VitalsUpdate(p, o, presString));
+            // Sincronización en tiempo real de signos vitales en Cloud Firestore
+            try {
+                String abueloEmail = prefs.getString("email", "marta@vitalhome.com").replace(".", "_");
 
-        // Disparar notificaciones y eventos correspondientes
-        if (p > 100) {
-            NotificationHelper.pulsoElevado(getApplication(), p);
-            repo.addEvent(new AlertEvent("SALUD", "Pulso elevado: " + p + " LPM", "Casa", getTime()));
-        } else {
-            NotificationHelper.pulso(getApplication(), p);
-        }
+                java.util.Map<String, Object> vitalsData = new java.util.HashMap<>();
+                vitalsData.put("pulso", p);
+                vitalsData.put("oxigeno", o);
+                vitalsData.put("presion", presString);
+                vitalsData.put("updatedAt", new Date());
 
-        if (sis >= 140 || dia >= 90) {
-            NotificationHelper.presionElevada(getApplication(), sis, dia);
-            repo.addEvent(new AlertEvent("SALUD", "Presión elevada: " + presString, "Casa", getTime()));
-        }
+                com.google.firebase.firestore.FirebaseFirestore.getInstance("default")
+                    .collection("users")
+                    .document(abueloEmail)
+                    .set(java.util.Collections.singletonMap("ultimosSignosVitales", vitalsData), com.google.firebase.firestore.SetOptions.merge());
+            } catch (Exception ignored) {}
 
-        if (o < 92) {
-            NotificationHelper.oxigenoBajo(getApplication(), o);
-            repo.addEvent(new AlertEvent("SALUD", "Oxígeno bajo: " + o + "%", "Casa", getTime()));
-        }
+            refrescarSignos();
+            lastVitalsUpdate.postValue(new VitalsUpdate(p, o, presString));
+
+            if (p > 100) {
+                NotificationHelper.pulsoElevado(getApplication(), p);
+                repo.addEvent(new AlertEvent("SALUD", "Pulso elevado: " + p + " LPM", "Casa", getTime()));
+            } else {
+                NotificationHelper.pulso(getApplication(), p);
+            }
+
+            if (sis >= 140 || dia >= 90) {
+                NotificationHelper.presionElevada(getApplication(), sis, dia);
+                repo.addEvent(new AlertEvent("SALUD", "Presión elevada: " + presString, "Casa", getTime()));
+            }
+
+            if (o < 92) {
+                NotificationHelper.oxigenoBajo(getApplication(), o);
+                repo.addEvent(new AlertEvent("SALUD", "Oxígeno bajo: " + o + "%", "Casa", getTime()));
+            }
+        });
     }
 
     public void vitalsMostrado() {
         lastVitalsUpdate.setValue(null);
     }
 
-    // --- Bloque 7: Cambio de Rol y Cierre de Sesión ---
+    // --- Cambio de Rol y Cierre de Sesión ---
     public void switchRole() {
         prefs.edit().putString("rol", "cuidador").apply();
     }
@@ -180,7 +229,7 @@ public class DashboardClienteViewModel extends AndroidViewModel {
         prefs.edit().putBoolean("isLoggedIn", false).apply();
     }
 
-    // --- Bloque 8: Métodos Auxiliares y Getters ---
+    // --- Métodos Auxiliares y Getters ---
     private String getTime() {
         return new SimpleDateFormat("HH:mm", Locale.getDefault()).format(new Date());
     }

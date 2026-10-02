@@ -11,53 +11,64 @@ import com.example.vitalhome.utils.NotificationHelper;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+import java.util.Objects;
 
 /**
- * ViewModel encargado del monitoreo y control de sensores del hogar (puerta y detección de fuego).
+ * ViewModel para gestionar el estado simulado de los sensores del hogar (puerta principal y humo/fuego).
  */
 public class HogarViewModel extends AndroidViewModel {
 
-    // --- Bloque 1: Atributos y LiveData ---
+    // --- Atributos de estado y repositorio ---
     private final AppRepo repo;
     private final MutableLiveData<Boolean> puertaAbierta = new MutableLiveData<>(false);
     private final MutableLiveData<Boolean> fuegoDetectado = new MutableLiveData<>(false);
 
-    // --- Bloque 2: Constructor ---
+    /**
+     * Constructor del ViewModel del Hogar.
+     *
+     * @param application Contexto de la aplicación.
+     */
     public HogarViewModel(@NonNull Application application) {
         super(application);
         repo = new AppRepo(application);
     }
 
-    // --- Bloque 3: Accessores LiveData ---
-    public LiveData<Boolean> getPuertaAbierta() { return puertaAbierta; }
-    public LiveData<Boolean> getFuegoDetectado() { return fuegoDetectado; }
-
-    // --- Bloque 4: Control de estados de los sensores del hogar ---
+    // --- Métodos de alternancia de estado de sensores ---
     /**
-     * Alterna el estado del sensor de puerta y genera una alerta/notificación si se abre.
+     * Alterna el estado del sensor de la puerta principal (Abierta / Cerrada) y emite notificaciones.
      */
     public void togglePuerta() {
-        boolean nuevoEstado = !Boolean.TRUE.equals(puertaAbierta.getValue());
+        boolean nuevoEstado = !Objects.equals(Boolean.TRUE, puertaAbierta.getValue());
         puertaAbierta.setValue(nuevoEstado);
-        
+
+        String hora = new SimpleDateFormat("HH:mm", Locale.getDefault()).format(new Date());
         if (nuevoEstado) {
-            String hora = new SimpleDateFormat("HH:mm", Locale.getDefault()).format(new Date());
-            repo.addEvent(new AlertEvent("HOGAR", "Puerta principal abierta", "Casa", hora));
             NotificationHelper.puertaAbierta(getApplication());
+            repo.addEvent(new AlertEvent("HOGAR", "Puerta principal abierta", "Casa", hora));
+        } else {
+            NotificationHelper.puertaCerrada(getApplication());
+            repo.addEvent(new AlertEvent("HOGAR", "Puerta principal cerrada", "Casa", hora));
         }
     }
 
     /**
-     * Alterna el estado del sensor de fuego y desencadena una alerta SOS si se activa.
+     * Alterna la simulación de detección de fuego o humo en el domicilio.
      */
     public void toggleFuego() {
-        boolean nuevoEstado = !Boolean.TRUE.equals(fuegoDetectado.getValue());
+        boolean nuevoEstado = !Objects.equals(Boolean.TRUE, fuegoDetectado.getValue());
         fuegoDetectado.setValue(nuevoEstado);
-        
+
+        String hora = new SimpleDateFormat("HH:mm", Locale.getDefault()).format(new Date());
         if (nuevoEstado) {
-            String hora = new SimpleDateFormat("HH:mm", Locale.getDefault()).format(new Date());
-            repo.addEvent(new AlertEvent("SOS", "¡Fuego detectado!", "Casa", hora));
             NotificationHelper.fuego(getApplication());
+            repo.addEvent(new AlertEvent("HOGAR", "🔥 ¡Alerta de fuego!", "Casa", hora));
+        } else {
+            NotificationHelper.fuegoApagado(getApplication());
+            repo.addEvent(new AlertEvent("HOGAR", "Alarma de fuego apagada", "Casa", hora));
         }
     }
+
+    // --- Getters de LiveData ---
+    public LiveData<Boolean> getPuertaAbierta() { return puertaAbierta; }
+    public LiveData<Boolean> getFuegoDetectado() { return fuegoDetectado; }
 }

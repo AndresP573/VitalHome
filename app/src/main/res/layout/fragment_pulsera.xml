@@ -12,28 +12,26 @@
         android:orientation="vertical"
         android:padding="20dp">
 
-        <RelativeLayout
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="16dp"
             android:paddingBottom="16dp">
 
             <ImageButton
                 android:id="@+id/btnBackArrowPulsera"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
-                android:layout_alignParentStart="true"
-                android:layout_centerVertical="true"
-                android:background="?attr/selectableItemBackgroundBorderless"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
                 android:src="@drawable/ic_arrow_back"
                 app:tint="#0A2E73"
-                android:contentDescription="Volver" />
+                android:contentDescription="@string/btn_back_description" />
 
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_toEndOf="@id/btnBackArrowPulsera"
-                android:layout_centerVertical="true"
                 android:layout_marginStart="8dp"
                 android:orientation="vertical">
 
@@ -42,17 +40,18 @@
                     android:layout_height="wrap_content"
                     android:text="Signos Vitales"
                     android:textColor="#0A2E73"
-                    android:textSize="28sp"
+                    android:textSize="26sp"
                     android:textStyle="bold" />
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Datos en tiempo real de la pulsera."
-                android:textColor="#62708A"
-                android:textSize="17sp" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="@string/sub_vitals"
+                    android:textColor="#62708A"
+                    android:textSize="14sp" />
+            </LinearLayout>
         </LinearLayout>
-    </RelativeLayout>
 
         <!-- Card Frecuencia -->
         <com.google.android.material.card.MaterialCardView
@@ -161,17 +160,6 @@
                     android:textStyle="bold" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
-
-        <Button
-            android:id="@+id/btnVolverPulsera"
-            style="@style/Widget.Material3.Button.TextButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="32dp"
-            android:layout_marginBottom="100dp"
-            android:text="🔙 VOLVER AL INICIO"
-            android:textColor="#1457D9"
-            android:textStyle="bold" />
 
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>

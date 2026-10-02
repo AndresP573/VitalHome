@@ -1,35 +1,36 @@
 package com.example.vitalhome.data.modelo;
 
 /**
- * Clase de modelo que representa un medicamento dentro del plan de medicación del usuario.
- * Contiene identificador, nombre, hora programada y estado de toma.
+ * Modelo de datos para representar un medicamento dentro del plan de tomas diario.
+ * Administra el identificador único, nombre, horario de toma y estado de realización.
  */
 public class Medication {
-    // --- Bloque 1: Atributos de la clase ---
-    private String id;
-    private String nombre;
-    private String hora;
-    private boolean isTaken;
 
-    // --- Bloque 2: Constructor ---
+    // --- Atributos del medicamento ---
+    private final String id;
+    private final String nombre;
+    private final String hora;
+    private boolean taken;
+
     /**
-     * Constructor de Medication.
+     * Constructor completo para inicializar un medicamento.
      *
-     * @param id Identificador único de la medicación
-     * @param nombre Nombre de la medicina
-     * @param hora Hora asignada para el consumo
+     * @param id Identificador único del registro.
+     * @param nombre Nombre del fármaco o remedio.
+     * @param hora Horario programado para la toma (HH:mm).
+     * @param taken Estado que indica si ya fue ingerido.
      */
-    public Medication(String id, String nombre, String hora) {
+    public Medication(String id, String nombre, String hora, boolean taken) {
         this.id = id;
         this.nombre = nombre;
         this.hora = hora;
-        this.isTaken = false;
+        this.taken = taken;
     }
 
-    // --- Bloque 3: Métodos Getters y Setters ---
+    // --- Métodos Getters y Setters ---
     public String getId() { return id; }
     public String getNombre() { return nombre; }
     public String getHora() { return hora; }
-    public boolean isTaken() { return isTaken; }
-    public void setTaken(boolean taken) { isTaken = taken; }
+    public boolean isTaken() { return taken; }
+    public void setTaken(boolean taken) { this.taken = taken; }
 }

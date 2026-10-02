@@ -25,7 +25,7 @@
                 android:id="@+id/tvRecordTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Título del Estudio"
+                android:text="@string/label_record_title"
                 android:textColor="#0A2E73"
                 android:textSize="18sp"
                 android:textStyle="bold" />
@@ -35,7 +35,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentEnd="true"
-                android:text="01/01/2026"
+                android:text="@string/label_record_date"
                 android:textColor="#62708A"
                 android:textSize="13sp"
                 android:textStyle="bold" />
@@ -46,7 +46,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:text="Dr. Apellido"
+            android:text="@string/label_record_doctor"
             android:textColor="#1457D9"
             android:textSize="14sp"
             android:textStyle="bold" />
@@ -56,7 +56,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="Detalle del resultado o diagnóstico..."
+            android:text="@string/label_record_detail"
             android:textColor="#102040"
             android:textSize="15sp" />
 

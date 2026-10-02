@@ -27,6 +27,13 @@ public class NotificationHelper {
     private static void crearCanalSiFalta(Context ctx, String id, String nombre) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel c = new NotificationChannel(id, nombre, NotificationManager.IMPORTANCE_HIGH);
+            c.enableVibration(true);
+            c.setVibrationPattern(new long[]{0, 500, 250, 500});
+            android.media.AudioAttributes audioAttrs = new android.media.AudioAttributes.Builder()
+                    .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .setUsage(android.media.AudioAttributes.USAGE_ALARM)
+                    .build();
+            c.setSound(android.media.RingtoneManager.getDefaultUri(android.media.RingtoneManager.TYPE_ALARM), audioAttrs);
             NotificationManager m = ctx.getSystemService(NotificationManager.class);
             if (m != null) m.createNotificationChannel(c);
         }
@@ -139,6 +146,20 @@ public class NotificationHelper {
         } catch (SecurityException ignored) {}
     }
 
+    public static void fuegoApagado(Context ctx) {
+        crearCanalSiFalta(ctx, CANAL_HOGAR, "Hogar");
+        NotificationCompat.Builder n = new NotificationCompat.Builder(ctx, CANAL_HOGAR)
+                .setSmallIcon(R.drawable.ic_notif_check)
+                .setContentTitle("✅ Alarma de fuego apagada")
+                .setContentText("El detector de humo se desactivó. Estado normal.")
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setContentIntent(getPendingIntent(ctx, 110))
+                .setAutoCancel(true);
+        try {
+            NotificationManagerCompat.from(ctx).notify(6, n.build());
+        } catch (SecurityException ignored) {}
+    }
+
     public static void puertaAbierta(Context ctx) {
         crearCanalSiFalta(ctx, CANAL_HOGAR, "Hogar");
         NotificationCompat.Builder n = new NotificationCompat.Builder(ctx, CANAL_HOGAR)
@@ -153,6 +174,20 @@ public class NotificationHelper {
         } catch (SecurityException ignored) {}
     }
 
+    public static void puertaCerrada(Context ctx) {
+        crearCanalSiFalta(ctx, CANAL_HOGAR, "Hogar");
+        NotificationCompat.Builder n = new NotificationCompat.Builder(ctx, CANAL_HOGAR)
+                .setSmallIcon(R.drawable.ic_notif_check)
+                .setContentTitle("🚪 Puerta cerrada")
+                .setContentText("La puerta principal fue cerrada.")
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setContentIntent(getPendingIntent(ctx, 109))
+                .setAutoCancel(true);
+        try {
+            NotificationManagerCompat.from(ctx).notify(7, n.build());
+        } catch (SecurityException ignored) {}
+    }
+
     // --- Bloque 6: Notificaciones de Medicamentos ---
     public static void medicamento(Context ctx, int notifId, String nombre, String hora) {
         crearCanalSiFalta(ctx, CANAL_MEDICAMENTOS, "Medicamentos");
@@ -160,7 +195,10 @@ public class NotificationHelper {
                 .setSmallIcon(R.drawable.ic_notif_pill)
                 .setContentTitle("💊 Hora de tu medicamento")
                 .setContentText("Es hora de tomar " + nombre + " (" + hora + ").")
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setPriority(NotificationCompat.PRIORITY_MAX)
+                .setCategory(NotificationCompat.CATEGORY_ALARM)
+                .setDefaults(NotificationCompat.DEFAULT_ALL)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .setContentIntent(getPendingIntent(ctx, notifId))
                 .setAutoCancel(true);
         try {

@@ -6,6 +6,7 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application
         android:allowBackup="true"
@@ -18,22 +19,32 @@
         android:theme="@style/Theme.Vitalhome">
 
         <activity
-            android:name=".ui.controladores.LoginActivity"
-            android:exported="true">
+            android:name=".ui.controladores.RegisterActivity"
+            android:exported="true"
+            android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
-        <activity android:name=".ui.controladores.RegisterActivity" />
+        <activity
+            android:name=".ui.controladores.LoginActivity"
+            android:windowSoftInputMode="adjustResize" />
 
         <activity
             android:name=".ui.controladores.MainActivity"
             android:exported="true"
             android:windowSoftInputMode="adjustResize" />
 
-        <receiver android:name=".utils.MedicationAlarmReceiver" android:exported="false" />
+        <receiver
+            android:name=".utils.MedicationAlarmReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
 
     </application>
 

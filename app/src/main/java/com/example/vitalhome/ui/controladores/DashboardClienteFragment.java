@@ -42,8 +42,10 @@ public class DashboardClienteFragment extends Fragment implements MedicationAdap
     private LinearLayout layoutInicio, layoutMedicamentos, layoutContactos;
     private TextView tvTabInicioLabel, tvTabMedicamentosLabel, tvTabContactosLabel;
 
-    // Campos de contactos
+    // Campos y tarjetas de contactos
     private EditText etContactName1, etContactPhone1, etContactName2, etContactPhone2;
+    private LinearLayout cardFormContact1, cardSavedContact1, cardFormContact2, cardSavedContact2;
+    private TextView tvSavedName1, tvSavedPhone1, tvSavedName2, tvSavedPhone2;
 
     // --- Bloque 2: Creación e inicialización de la vista ---
     @Nullable
@@ -86,20 +88,115 @@ public class DashboardClienteFragment extends Fragment implements MedicationAdap
         etContactName2 = v.findViewById(R.id.etContactName2);
         etContactPhone2 = v.findViewById(R.id.etContactPhone2);
 
-        viewModel.getContactName1().observe(getViewLifecycleOwner(), etContactName1::setText);
-        viewModel.getContactPhone1().observe(getViewLifecycleOwner(), etContactPhone1::setText);
-        viewModel.getContactName2().observe(getViewLifecycleOwner(), etContactName2::setText);
-        viewModel.getContactPhone2().observe(getViewLifecycleOwner(), etContactPhone2::setText);
+        // Tarjetas guardadas vs formularios
+        cardFormContact1 = v.findViewById(R.id.cardFormContact1);
+        cardSavedContact1 = v.findViewById(R.id.cardSavedContact1);
+        tvSavedName1 = v.findViewById(R.id.tvSavedName1);
+        tvSavedPhone1 = v.findViewById(R.id.tvSavedPhone1);
+
+        cardFormContact2 = v.findViewById(R.id.cardFormContact2);
+        cardSavedContact2 = v.findViewById(R.id.cardSavedContact2);
+        tvSavedName2 = v.findViewById(R.id.tvSavedName2);
+        tvSavedPhone2 = v.findViewById(R.id.tvSavedPhone2);
+
+        viewModel.getContactName1().observe(getViewLifecycleOwner(), s -> {
+            if (etContactName1 != null) etContactName1.setText(s);
+            actualizarVistaContactos();
+        });
+        viewModel.getContactPhone1().observe(getViewLifecycleOwner(), s -> {
+            if (etContactPhone1 != null) etContactPhone1.setText(s);
+            actualizarVistaContactos();
+        });
+        viewModel.getContactName2().observe(getViewLifecycleOwner(), s -> {
+            if (etContactName2 != null) etContactName2.setText(s);
+            actualizarVistaContactos();
+        });
+        viewModel.getContactPhone2().observe(getViewLifecycleOwner(), s -> {
+            if (etContactPhone2 != null) etContactPhone2.setText(s);
+            actualizarVistaContactos();
+        });
+
+        // Botones de Editar y Eliminar Contacto 1
+        View btnEdit1 = v.findViewById(R.id.btnEditContact1);
+        if (btnEdit1 != null) {
+            btnEdit1.setOnClickListener(x -> {
+                if (cardFormContact1 != null) cardFormContact1.setVisibility(View.VISIBLE);
+                if (cardSavedContact1 != null) cardSavedContact1.setVisibility(View.GONE);
+            });
+        }
+        View btnDelete1 = v.findViewById(R.id.btnDeleteContact1);
+        if (btnDelete1 != null) {
+            btnDelete1.setOnClickListener(x -> {
+                if (etContactName1 != null) etContactName1.setText("");
+                if (etContactPhone1 != null) etContactPhone1.setText("");
+                String n2 = etContactName2 != null ? etContactName2.getText().toString().trim() : "";
+                String p2 = etContactPhone2 != null ? etContactPhone2.getText().toString().trim() : "";
+                viewModel.guardarContactos("", "", n2, p2);
+                Toast.makeText(requireContext(), "Contacto 1 eliminado", Toast.LENGTH_SHORT).show();
+            });
+        }
+
+        // Botones de Editar y Eliminar Contacto 2
+        View btnEdit2 = v.findViewById(R.id.btnEditContact2);
+        if (btnEdit2 != null) {
+            btnEdit2.setOnClickListener(x -> {
+                if (cardFormContact2 != null) cardFormContact2.setVisibility(View.VISIBLE);
+                if (cardSavedContact2 != null) cardSavedContact2.setVisibility(View.GONE);
+            });
+        }
+        View btnDelete2 = v.findViewById(R.id.btnDeleteContact2);
+        if (btnDelete2 != null) {
+            btnDelete2.setOnClickListener(x -> {
+                if (etContactName2 != null) etContactName2.setText("");
+                if (etContactPhone2 != null) etContactPhone2.setText("");
+                String n1 = etContactName1 != null ? etContactName1.getText().toString().trim() : "";
+                String p1 = etContactPhone1 != null ? etContactPhone1.getText().toString().trim() : "";
+                viewModel.guardarContactos(n1, p1, "", "");
+                Toast.makeText(requireContext(), "Contacto 2 eliminado", Toast.LENGTH_SHORT).show();
+            });
+        }
 
         // Configurar navegación de pestañas divididas llamando a viewModel.setTab()
         v.findViewById(R.id.btnTabInicio).setOnClickListener(view -> viewModel.setTab(1));
         v.findViewById(R.id.btnTabMedicamentos).setOnClickListener(view -> viewModel.setTab(2));
         v.findViewById(R.id.btnTabContactos).setOnClickListener(view -> viewModel.setTab(3));
 
+        // Flecha de navegación "volver atrás" en las cabeceras de Remedios y Contactos
+        View btnBackRemedios = v.findViewById(R.id.btnBackArrowRemedios);
+        if (btnBackRemedios != null) {
+            btnBackRemedios.setOnClickListener(view -> viewModel.setTab(1));
+        }
+
+        View btnLimpiarRemedios = v.findViewById(R.id.btnLimpiarRemediosCliente);
+        if (btnLimpiarRemedios != null) {
+            btnLimpiarRemedios.setOnClickListener(view -> {
+                viewModel.limpiarRemedios();
+                Toast.makeText(requireContext(), getString(R.string.msg_remedios_limpios), Toast.LENGTH_SHORT).show();
+            });
+        }
+
+        View btnBackContactos = v.findViewById(R.id.btnBackArrowContactos);
+        if (btnBackContactos != null) {
+            btnBackContactos.setOnClickListener(view -> viewModel.setTab(1));
+        }
+
+        // Intercepta botón atrás del sistema
+        requireActivity().getOnBackPressedDispatcher().addCallback(getViewLifecycleOwner(), new androidx.activity.OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (viewModel != null && viewModel.getTabIndex().getValue() != null && viewModel.getTabIndex().getValue() != 1) {
+                    viewModel.setTab(1);
+                } else {
+                    setEnabled(false);
+                    requireActivity().getOnBackPressedDispatcher().onBackPressed();
+                }
+            }
+        });
+
         // Guardar contactos
         v.findViewById(R.id.btnGuardarContactos).setOnClickListener(view -> guardarContactos());
 
-        // Botón ver perfil médico dentro de la pantalla de remedios
+        // Botón ver perfil médico
         v.findViewById(R.id.btnVerPerfilMedicoCliente).setOnClickListener(view -> 
             Navigation.findNavController(view).navigate(R.id.nav_profile_medico)
         );
@@ -112,6 +209,34 @@ public class DashboardClienteFragment extends Fragment implements MedicationAdap
         });
 
         return v;
+    }
+
+    private void actualizarVistaContactos() {
+        String n1 = (etContactName1 != null) ? etContactName1.getText().toString().trim() : "";
+        String p1 = (etContactPhone1 != null) ? etContactPhone1.getText().toString().trim() : "";
+
+        if (!n1.isEmpty() && !p1.isEmpty()) {
+            if (cardFormContact1 != null) cardFormContact1.setVisibility(View.GONE);
+            if (cardSavedContact1 != null) cardSavedContact1.setVisibility(View.VISIBLE);
+            if (tvSavedName1 != null) tvSavedName1.setText(n1);
+            if (tvSavedPhone1 != null) tvSavedPhone1.setText("📞 " + p1);
+        } else {
+            if (cardFormContact1 != null) cardFormContact1.setVisibility(View.VISIBLE);
+            if (cardSavedContact1 != null) cardSavedContact1.setVisibility(View.GONE);
+        }
+
+        String n2 = (etContactName2 != null) ? etContactName2.getText().toString().trim() : "";
+        String p2 = (etContactPhone2 != null) ? etContactPhone2.getText().toString().trim() : "";
+
+        if (!n2.isEmpty() && !p2.isEmpty()) {
+            if (cardFormContact2 != null) cardFormContact2.setVisibility(View.GONE);
+            if (cardSavedContact2 != null) cardSavedContact2.setVisibility(View.VISIBLE);
+            if (tvSavedName2 != null) tvSavedName2.setText(n2);
+            if (tvSavedPhone2 != null) tvSavedPhone2.setText("📞 " + p2);
+        } else {
+            if (cardFormContact2 != null) cardFormContact2.setVisibility(View.VISIBLE);
+            if (cardSavedContact2 != null) cardSavedContact2.setVisibility(View.GONE);
+        }
     }
 
     // --- Bloque 3: Alternancia de pestañas ---
@@ -127,12 +252,13 @@ public class DashboardClienteFragment extends Fragment implements MedicationAdap
 
     // --- Bloque 4: Guardado de contactos ---
     private void guardarContactos() {
-        String n1 = etContactName1.getText().toString().trim();
-        String p1 = etContactPhone1.getText().toString().trim();
-        String n2 = etContactName2.getText().toString().trim();
-        String p2 = etContactPhone2.getText().toString().trim();
+        String n1 = etContactName1 != null ? etContactName1.getText().toString().trim() : "";
+        String p1 = etContactPhone1 != null ? etContactPhone1.getText().toString().trim() : "";
+        String n2 = etContactName2 != null ? etContactName2.getText().toString().trim() : "";
+        String p2 = etContactPhone2 != null ? etContactPhone2.getText().toString().trim() : "";
 
         viewModel.guardarContactos(n1, p1, n2, p2);
+        actualizarVistaContactos();
         Toast.makeText(requireContext(), getString(R.string.msg_contactos_guardados), Toast.LENGTH_SHORT).show();
     }
 
@@ -140,7 +266,8 @@ public class DashboardClienteFragment extends Fragment implements MedicationAdap
     @Override
     public void onResume() {
         super.onResume();
-        viewModel.refreshData();
+        if (viewModel != null) viewModel.refreshData();
+        actualizarVistaContactos();
         if (getView() != null) {
             setOnClickListeners(getView());
         }
@@ -170,20 +297,35 @@ public class DashboardClienteFragment extends Fragment implements MedicationAdap
             viewModel.medirAhora();
         });
 
-        v.findViewById(R.id.btnSwitchRoleCliente).setOnClickListener(view -> {
-            viewModel.switchRole();
-            recargarApp();
-        });
+        View btnSwitch = v.findViewById(R.id.btnSwitchRoleCliente);
+        if (btnSwitch != null) {
+            btnSwitch.setOnClickListener(view -> {
+                viewModel.switchRole();
+                recargarApp();
+            });
+        }
 
         v.findViewById(R.id.btnLogoutCliente).setOnClickListener(view -> {
             viewModel.logout();
+            Intent intent = new Intent(requireContext(), LoginActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
             requireActivity().finish();
         });
 
+        View btnSalirApp = v.findViewById(R.id.btnSalirAppCliente);
+        if (btnSalirApp != null) {
+            btnSalirApp.setOnClickListener(view -> {
+                requireActivity().finishAffinity();
+            });
+        }
+
         v.findViewById(R.id.btnCallCaregiver).setOnClickListener(view -> {
-            String primaryContactPhone = etContactPhone1.getText().toString().trim();
+            String primaryContactPhone = etContactPhone1 != null ? etContactPhone1.getText().toString().trim() : "";
             if (!primaryContactPhone.isEmpty()) {
-                Toast.makeText(requireContext(), getString(R.string.msg_llamando_a, etContactName1.getText().toString(), primaryContactPhone), Toast.LENGTH_LONG).show();
+                Intent intent = new Intent(Intent.ACTION_DIAL);
+                intent.setData(android.net.Uri.parse("tel:" + primaryContactPhone));
+                startActivity(intent);
             } else {
                 Toast.makeText(requireContext(), getString(R.string.msg_llamando_cuidador), Toast.LENGTH_LONG).show();
             }
@@ -215,7 +357,7 @@ public class DashboardClienteFragment extends Fragment implements MedicationAdap
 
     // --- Bloque 10: Recarga de la actividad principal ---
     private void recargarApp() {
-        startActivity(new Intent(requireActivity(), MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
+        startActivity(new android.content.Intent(requireActivity(), MainActivity.class).addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP));
         requireActivity().finish();
     }
 
@@ -241,5 +383,13 @@ public class DashboardClienteFragment extends Fragment implements MedicationAdap
         etContactPhone1 = null;
         etContactName2 = null;
         etContactPhone2 = null;
+        cardFormContact1 = null;
+        cardSavedContact1 = null;
+        cardFormContact2 = null;
+        cardSavedContact2 = null;
+        tvSavedName1 = null;
+        tvSavedPhone1 = null;
+        tvSavedName2 = null;
+        tvSavedPhone2 = null;
     }
 }

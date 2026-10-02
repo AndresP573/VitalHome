@@ -26,7 +26,7 @@
                 android:id="@+id/tvAlertTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="TIPO"
+                android:text="@string/label_item_type"
                 android:textColor="#0A2E73"
                 android:textSize="20sp"
                 android:textStyle="bold" />
@@ -36,7 +36,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentEnd="true"
-                android:text="00:00"
+                android:text="@string/label_item_time"
                 android:textColor="#62708A"
                 android:textSize="15sp"
                 android:textStyle="bold" />
@@ -47,7 +47,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="Descripción del evento..."
+            android:text="@string/label_item_desc"
             android:textColor="#102040"
             android:textSize="17sp" />
 

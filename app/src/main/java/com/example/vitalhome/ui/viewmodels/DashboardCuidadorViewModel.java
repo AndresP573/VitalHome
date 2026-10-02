@@ -23,12 +23,15 @@ public class DashboardCuidadorViewModel extends AndroidViewModel {
     private final MutableLiveData<String> nombreAdultoMayor = new MutableLiveData<>();
     private final MutableLiveData<Integer> medicinasCount = new MutableLiveData<>();
 
+    private final MutableLiveData<String> vitalsSummary = new MutableLiveData<>("🔋 85% | 📍 En el hogar");
+
     // --- Bloque 2: Constructor e inicialización ---
     public DashboardCuidadorViewModel(@NonNull Application application) {
         super(application);
         repo = new AppRepo(application);
         prefs = application.getSharedPreferences("VitalHomePrefs", Context.MODE_PRIVATE);
         refreshData();
+        escucharSignosVitalesEnVivo();
     }
 
     // --- Bloque 3: Carga y actualización de datos ---
@@ -38,8 +41,33 @@ public class DashboardCuidadorViewModel extends AndroidViewModel {
         medicinasCount.setValue(repo.getMeds().size());
     }
 
+    // --- Escuchar Signos Vitales del Abuelo en vivo desde Cloud Firestore ---
+    public void escucharSignosVitalesEnVivo() {
+        try {
+            com.google.firebase.firestore.FirebaseFirestore.getInstance("default")
+                .collection("users")
+                .whereEqualTo("rol", "cliente")
+                .addSnapshotListener((snapshots, e) -> {
+                    if (e != null || snapshots == null) return;
+                    for (com.google.firebase.firestore.DocumentSnapshot doc : snapshots.getDocuments()) {
+                        if (doc.contains("ultimosSignosVitales")) {
+                            java.util.Map<String, Object> vitals = (java.util.Map<String, Object>) doc.get("ultimosSignosVitales");
+                            if (vitals != null) {
+                                Object p = vitals.get("pulso");
+                                Object o = vitals.get("oxigeno");
+                                Object pres = vitals.get("presion");
+                                String res = "Pulso: " + p + " LPM | O2: " + o + "% | Presión: " + pres;
+                                vitalsSummary.postValue(res);
+                            }
+                        }
+                    }
+                });
+        } catch (Exception ignored) {}
+    }
+
     // --- Bloque 4: Métodos Getters para LiveData ---
     public LiveData<String> getNombreUsuario() { return nombreUsuario; }
     public LiveData<String> getNombreAdultoMayor() { return nombreAdultoMayor; }
     public LiveData<Integer> getMedicinasCount() { return medicinasCount; }
+    public LiveData<String> getVitalsSummary() { return vitalsSummary; }
 }

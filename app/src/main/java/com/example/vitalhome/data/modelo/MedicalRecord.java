@@ -1,24 +1,24 @@
 package com.example.vitalhome.data.modelo;
 
 /**
- * Clase de modelo que representa un registro médico en el historial clínico del usuario.
- * Contiene información sobre la fecha, título, médico tratante y detalles de la consulta o diagnóstico.
+ * Modelo de datos que representa una entrada del historial clínico del paciente.
+ * Almacena información de consultas anteriores, diagnósticos y observaciones médicas.
  */
 public class MedicalRecord {
-    // --- Bloque 1: Atributos de la clase ---
-    private String fecha;
-    private String titulo;
-    private String doctor;
-    private String detalle;
 
-    // --- Bloque 2: Constructor ---
+    // --- Atributos inmutables del registro médico ---
+    private final String fecha;
+    private final String titulo;
+    private final String doctor;
+    private final String detalle;
+
     /**
-     * Constructor de MedicalRecord.
+     * Constructor para la creación de un registro médico.
      *
-     * @param fecha Fecha de la atención o registro médico
-     * @param titulo Título o diagnóstico principal
-     * @param doctor Nombre del médico responsable
-     * @param detalle Descripción detallada o indicaciones del registro
+     * @param fecha Fecha de la consulta o estudio realizado.
+     * @param titulo Título de la consulta o nombre de la especialidad.
+     * @param doctor Nombre del profesional o centro médico.
+     * @param detalle Diagnóstico, receta u observaciones registradas.
      */
     public MedicalRecord(String fecha, String titulo, String doctor, String detalle) {
         this.fecha = fecha;
@@ -27,7 +27,7 @@ public class MedicalRecord {
         this.detalle = detalle;
     }
 
-    // --- Bloque 3: Métodos Getters ---
+    // --- Métodos Getters ---
     public String getFecha() { return fecha; }
     public String getTitulo() { return titulo; }
     public String getDoctor() { return doctor; }

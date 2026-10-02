@@ -1,129 +1,459 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fillViewport="true"
+    android:isScrollContainer="true"
     android:background="#F7FAFF">
-
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:gravity="center"
-        android:padding="24dp">
+        android:gravity="center_horizontal"
+        android:clipToPadding="false"
+        android:paddingHorizontal="24dp"
+        android:paddingTop="24dp"
+        android:paddingBottom="120dp">
+
+        <ImageView
+            android:layout_width="160dp"
+            android:layout_height="90dp"
+            android:src="@drawable/ic_app_logo"
+            android:scaleType="fitCenter"
+            android:contentDescription="@string/vitalhome_title"
+            android:layout_marginBottom="12dp" />
 
         <TextView
+            android:id="@+id/tvTituloRegister"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/create_account"
             android:textSize="32sp"
             android:textStyle="bold"
             android:textColor="#0A2E73"
-            android:layout_marginBottom="32dp"/>
-
-
-        <EditText
-            android:id="@+id/etNombreRegister"
-            android:layout_width="match_parent"
-            android:layout_height="60dp"
-            android:hint="@string/name_hint"
-            android:inputType="textPersonName"
-            android:autofillHints="name"
-            android:padding="12dp"
-            android:background="#FFFFFF"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="16dp"/>
-
-        <EditText
-            android:id="@+id/etEmailRegister"
-            android:layout_width="match_parent"
-            android:layout_height="60dp"
-            android:hint="@string/email_hint"
-            android:inputType="textEmailAddress"
-            android:autofillHints="emailAddress"
-            android:padding="12dp"
-            android:background="#FFFFFF"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="16dp"/>
-
-        <EditText
-            android:id="@+id/etPasswordRegister"
-            android:layout_width="match_parent"
-            android:layout_height="60dp"
-            android:hint="@string/password_hint"
-            android:inputType="textPassword"
-            android:autofillHints="password"
-            android:padding="12dp"
-            android:background="#FFFFFF"
-            android:textSize="18sp"
-            android:textStyle="bold"
             android:layout_marginBottom="24dp"/>
 
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/who_uses_app"
-            android:textColor="#0A2E73"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:gravity="center"
-            android:layout_marginBottom="12dp"/>
-
-        <RadioGroup
-            android:id="@+id/rgRol"
+        <!-- ==================== PASO 1: SELECCIÓN DE ROL ==================== -->
+        <LinearLayout
+            android:id="@+id/layoutPaso1"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:gravity="start"
-            android:layout_marginBottom="24dp">
+            android:gravity="center_horizontal"
+            android:visibility="visible">
 
-            <RadioButton
-                android:id="@+id/rbCliente"
+            <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:minHeight="48dp"
-                android:text="@string/role_adulto_mayor"
+                android:text="@string/who_uses_app"
+                android:textColor="#0A2E73"
                 android:textSize="18sp"
                 android:textStyle="bold"
-                android:layout_marginBottom="8dp"/>
+                android:gravity="center"
+                android:layout_marginBottom="16dp"/>
 
-            <RadioButton
-                android:id="@+id/rbCuidador"
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvRolesRegister"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:minHeight="48dp"
-                android:text="@string/role_cuidador"
-                android:textSize="18sp"
+                android:nestedScrollingEnabled="false"
+                android:layout_marginBottom="24dp"/>
+
+            <Button
+                android:id="@+id/btnContinuarPaso1"
+                android:layout_width="match_parent"
+                android:layout_height="65dp"
+                android:text="@string/btn_continuar"
+                android:backgroundTint="#1457D9"
+                android:textColor="#FFFFFF"
+                android:textSize="20sp"
                 android:textStyle="bold"
-                android:checked="true"/>
-        </RadioGroup>
+                app:cornerRadius="18dp" />
 
+            <TextView
+                android:id="@+id/tvGoToLoginPaso1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
+                android:gravity="center"
+                android:text="@string/go_to_login"
+                android:textColor="#1457D9"
+                android:layout_marginTop="24dp"
+                android:textStyle="bold"
+                android:textSize="16sp"/>
+        </LinearLayout>
 
-        <Button
-            android:id="@+id/btnRegister"
+        <!-- ==================== PASO 2: FORMULARIO DE DATOS ==================== -->
+        <LinearLayout
+            android:id="@+id/layoutPaso2"
             android:layout_width="match_parent"
-            android:layout_height="65dp"
-            android:text="@string/register_button"
-            android:backgroundTint="#1457D9"
-            android:textColor="#FFFFFF"
-            android:textSize="20sp"
-            android:textStyle="bold"/>
-
-        <TextView
-            android:id="@+id/tvGoToLogin"
-            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:minHeight="48dp"
-            android:gravity="center"
-            android:text="@string/go_to_login"
-            android:textColor="#1457D9"
-            android:layout_marginTop="24dp"
-            android:textStyle="bold"
-            android:textSize="16sp"/>
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="16dp">
+
+                <ImageButton
+                    android:id="@+id/btnVolverPaso1"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/ic_arrow_back"
+                    app:tint="#0A2E73"
+                    android:contentDescription="@string/btn_back_description" />
+
+                <TextView
+                    android:id="@+id/tvSubtituloPaso2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="@string/sub_paso2_datos"
+                    android:textColor="#0A2E73"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <!-- Nombre y Apellido -->
+            <EditText
+                android:id="@+id/etNombreRegister"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:hint="@string/name_hint"
+                android:textColor="#102040"
+                android:textColorHint="#4A5568"
+                android:inputType="textPersonName"
+                android:autofillHints="name"
+                android:padding="12dp"
+                android:background="#FFFFFF"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="4dp"/>
+
+            <TextView
+                android:id="@+id/tvErrorNombre"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/error_invalid_name"
+                android:textColor="#EF4444"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:visibility="gone"
+                android:layout_marginBottom="12dp" />
+
+            <!-- CAMPOS ESPECÍFICOS CUIDADOR -->
+            <LinearLayout
+                android:id="@+id/layoutFormCuidador"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <EditText
+                    android:id="@+id/etEdadCuidador"
+                    android:layout_width="match_parent"
+                    android:layout_height="60dp"
+                    android:hint="@string/hint_edad"
+                    android:textColor="#102040"
+                    android:textColorHint="#4A5568"
+                    android:inputType="number"
+                    android:autofillHints="none"
+                    android:padding="12dp"
+                    android:background="#FFFFFF"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="4dp"/>
+
+                <TextView
+                    android:id="@+id/tvErrorEdadCuidador"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/error_invalid_age"
+                    android:textColor="#EF4444"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:visibility="gone"
+                    android:layout_marginBottom="12dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/label_genero_cuidador"
+                    android:textColor="#0A2E73"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="8dp"/>
+
+                <RadioGroup
+                    android:id="@+id/rgGeneroCuidador"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center"
+                    android:layout_marginBottom="16dp">
+
+                    <RadioButton
+                        android:id="@+id/rbGeneroCuidadorM"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/gender_masculino"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:paddingStart="0dp"
+                        android:paddingEnd="20dp"
+                        android:checked="true"/>
+
+                    <RadioButton
+                        android:id="@+id/rbGeneroCuidadorF"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/gender_femenino"
+                        android:textSize="16sp"
+                        android:textStyle="bold"/>
+                </RadioGroup>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/label_vinculo_caregiver"
+                    android:textColor="#0A2E73"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="8dp"/>
+
+                <EditText
+                    android:id="@+id/etVinculoRegister"
+                    android:layout_width="match_parent"
+                    android:layout_height="60dp"
+                    android:hint="@string/hint_vinculo"
+                    android:textColor="#102040"
+                    android:textColorHint="#4A5568"
+                    android:clickable="true"
+                    android:cursorVisible="false"
+                    android:inputType="none"
+                    android:autofillHints="none"
+                    android:padding="12dp"
+                    android:drawableEnd="@android:drawable/arrow_down_float"
+                    android:background="#FFFFFF"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:focusable="false"
+                    android:layout_marginBottom="4dp"/>
+
+                <TextView
+                    android:id="@+id/tvErrorVinculo"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/error_invalid_vinculo"
+                    android:textColor="#EF4444"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:visibility="gone"
+                    android:layout_marginBottom="12dp" />
+
+                <EditText
+                    android:id="@+id/etVinculoEspecifique"
+                    android:layout_width="match_parent"
+                    android:layout_height="60dp"
+                    android:hint="@string/hint_vinculo_especifique"
+                    android:textColor="#102040"
+                    android:textColorHint="#4A5568"
+                    android:inputType="text"
+                    android:autofillHints="none"
+                    android:padding="12dp"
+                    android:background="#FFFFFF"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:visibility="gone"
+                    android:layout_marginBottom="12dp"/>
+
+                <EditText
+                    android:id="@+id/etTelefonoRegister"
+                    android:layout_width="match_parent"
+                    android:layout_height="60dp"
+                    android:hint="@string/hint_contact_phone_caregiver"
+                    android:textColor="#102040"
+                    android:textColorHint="#4A5568"
+                    android:inputType="phone"
+                    android:autofillHints="phone"
+                    android:padding="12dp"
+                    android:background="#FFFFFF"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="4dp"/>
+
+                <TextView
+                    android:id="@+id/tvErrorTelefono"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/error_invalid_phone"
+                    android:textColor="#EF4444"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:visibility="gone"
+                    android:layout_marginBottom="12dp" />
+            </LinearLayout>
+
+            <!-- CAMPOS ESPECÍFICOS ADULTO MAYOR -->
+            <LinearLayout
+                android:id="@+id/layoutFormAdulto"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <EditText
+                    android:id="@+id/etEdadRegister"
+                    android:layout_width="match_parent"
+                    android:layout_height="60dp"
+                    android:hint="@string/hint_edad"
+                    android:textColor="#102040"
+                    android:textColorHint="#4A5568"
+                    android:inputType="number"
+                    android:autofillHints="none"
+                    android:padding="12dp"
+                    android:background="#FFFFFF"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="4dp"/>
+
+                <TextView
+                    android:id="@+id/tvErrorEdad"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/error_invalid_age"
+                    android:textColor="#EF4444"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:visibility="gone"
+                    android:layout_marginBottom="12dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/label_genero"
+                    android:textColor="#0A2E73"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="8dp"/>
+
+                <RadioGroup
+                    android:id="@+id/rgGeneroRegister"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center"
+                    android:layout_marginBottom="16dp">
+
+                    <RadioButton
+                        android:id="@+id/rbGeneroM"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/gender_masculino"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:paddingStart="0dp"
+                        android:paddingEnd="20dp"
+                        android:checked="true"/>
+
+                    <RadioButton
+                        android:id="@+id/rbGeneroF"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/gender_femenino"
+                        android:textSize="16sp"
+                        android:textStyle="bold"/>
+                </RadioGroup>
+            </LinearLayout>
+
+            <EditText
+                android:id="@+id/etEmailRegister"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:hint="@string/email_hint"
+                android:textColor="#102040"
+                android:textColorHint="#4A5568"
+                android:inputType="textEmailAddress"
+                android:autofillHints="emailAddress"
+                android:padding="12dp"
+                android:background="#FFFFFF"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="4dp"/>
+
+            <TextView
+                android:id="@+id/tvErrorEmail"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/error_invalid_email"
+                android:textColor="#EF4444"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:visibility="gone"
+                android:layout_marginBottom="12dp" />
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:hintEnabled="false"
+                app:endIconMode="password_toggle"
+                app:endIconTint="#0A2E73"
+                android:layout_marginBottom="4dp">
+
+                <EditText
+                    android:id="@+id/etPasswordRegister"
+                    android:layout_width="match_parent"
+                    android:layout_height="60dp"
+                    android:hint="@string/password_hint"
+                    android:textColor="#102040"
+                    android:textColorHint="#4A5568"
+                    android:inputType="textPassword"
+                    android:autofillHints="password"
+                    android:padding="12dp"
+                    android:background="#FFFFFF"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <TextView
+                android:id="@+id/tvErrorPassword"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/error_invalid_password"
+                android:textColor="#EF4444"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:visibility="gone"
+                android:layout_marginBottom="24dp" />
+
+            <Button
+                android:id="@+id/btnRegister"
+                android:layout_width="match_parent"
+                android:layout_height="65dp"
+                android:text="@string/register_button"
+                android:backgroundTint="#1457D9"
+                android:textColor="#FFFFFF"
+                android:textSize="20sp"
+                android:textStyle="bold"/>
+
+            <TextView
+                android:id="@+id/tvGoToLogin"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
+                android:gravity="center"
+                android:text="@string/go_to_login"
+                android:textColor="#1457D9"
+                android:layout_marginTop="24dp"
+                android:textStyle="bold"
+                android:textSize="16sp"/>
+        </LinearLayout>
 
     </LinearLayout>
 </ScrollView>

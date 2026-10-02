@@ -36,10 +36,6 @@ public class PulseraFragment extends Fragment {
         viewModel.getOxigeno().observe(getViewLifecycleOwner(), oxig::setText);
         viewModel.getPresion().observe(getViewLifecycleOwner(), pres::setText);
 
-        v.findViewById(R.id.btnVolverPulsera).setOnClickListener(view -> 
-            requireActivity().getOnBackPressedDispatcher().onBackPressed()
-        );
-
         View arrowBack = v.findViewById(R.id.btnBackArrowPulsera);
         if (arrowBack != null) {
             arrowBack.setOnClickListener(x -> requireActivity().getOnBackPressedDispatcher().onBackPressed());

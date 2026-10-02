@@ -50,10 +50,6 @@ public class MedicamentosFragment extends Fragment implements MedicationAdapter.
         txtHora.setOnClickListener(x -> pickTime());
         btnAdd.setOnClickListener(x -> addMed());
 
-        v.findViewById(R.id.btnVolverMeds).setOnClickListener(x ->
-                requireActivity().getOnBackPressedDispatcher().onBackPressed()
-        );
-
         View arrowBack = v.findViewById(R.id.btnBackArrowMeds);
         if (arrowBack != null) {
             arrowBack.setOnClickListener(x -> requireActivity().getOnBackPressedDispatcher().onBackPressed());
@@ -131,6 +127,7 @@ public class MedicamentosFragment extends Fragment implements MedicationAdapter.
             timePickerDialog.dismiss();
         }
         timePickerDialog = null;
+
         txtNombre = null;
         txtHora = null;
         adapter = null;

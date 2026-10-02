@@ -1,0 +1,29 @@
+
+<resources>
+    <!--  Superficies  -->
+    <color name="surface_page">#F1EFE8</color>
+    <color name="surface_card">#FFFFFF</color>
+    <color name="navbar_card">#2C2C2A</color>
+    <color name="surface_muted">#F5F4EF</color>
+    <!--  Texto  -->
+    <color name="text_primary">#2C2C2A</color>
+    <color name="text_secondary">#5F5E5A</color>
+    <color name="text_muted">#888780</color>
+    <color name="text_on_danger">#FCEBEB</color>
+    <color name="text_on_success">#173404</color>
+    <!--  Semánticos  -->
+    <color name="danger_fill">#E24B4A</color>
+    <color name="danger_bg">#FCEBEB</color>
+    <color name="danger_text">#A32D2D</color>
+    <color name="success_fill">#639922</color>
+    <color name="success_bright">#9CCC65</color>
+    <color name="success_bg">#EAF3DE</color>
+    <color name="success_text">#3B6D11</color>
+    <color name="warning_fill">#EF9F27</color>
+    <color name="warning_bg">#FAEEDA</color>
+    <color name="warning_text">#854F0B</color>
+    <color name="accent_fill">#378ADD</color>
+    <color name="accent_bg">#E6F1FB</color>
+    <color name="accent_text">#185FA5</color>
+    <color name="border">#D3D1C7</color>
+</resources>

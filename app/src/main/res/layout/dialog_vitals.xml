@@ -32,7 +32,7 @@
             android:id="@+id/tvPopPulso"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="72 LPM"
+            android:text="@string/vitals_default_pulse"
             android:textColor="#0A2E73"
             android:textSize="56sp"
             android:textStyle="bold" />
@@ -55,7 +55,7 @@
             android:id="@+id/tvPopOxigeno"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="98%"
+            android:text="@string/vitals_default_oxygen"
             android:textColor="#0A2E73"
             android:textSize="56sp"
             android:textStyle="bold" />
@@ -78,7 +78,7 @@
             android:id="@+id/tvPopPresion"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="120/80"
+            android:text="@string/vitals_default_pressure"
             android:textColor="#0A2E73"
             android:textSize="56sp"
             android:textStyle="bold" />
