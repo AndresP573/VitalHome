@@ -232,10 +232,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         if (btnSalirApp != null) {
-            btnSalirApp.setOnClickListener(v -> {
-                dialog.dismiss();
-                finishAffinity();
-            });
+            btnSalirApp.setOnClickListener(v -> finishAffinity());
         }
 
         if (btnCancelar != null) {

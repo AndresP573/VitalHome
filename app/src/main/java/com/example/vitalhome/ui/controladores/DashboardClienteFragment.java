@@ -289,13 +289,9 @@ public class DashboardClienteFragment extends Fragment implements MedicationAdap
 
     // --- Bloque 8: Configuración de los listeners de botones y acciones ---
     private void setOnClickListeners(View v) {
-        v.findViewById(R.id.btnSOS).setOnClickListener(view -> {
-            Navigation.findNavController(view).navigate(R.id.nav_sos_countdown);
-        });
+        v.findViewById(R.id.btnSOS).setOnClickListener(view -> Navigation.findNavController(view).navigate(R.id.nav_sos_countdown));
 
-        v.findViewById(R.id.btnMedirAhoraCliente).setOnClickListener(view -> {
-            viewModel.medirAhora();
-        });
+        v.findViewById(R.id.btnMedirAhoraCliente).setOnClickListener(view -> viewModel.medirAhora());
 
         View btnHogarCliente = v.findViewById(R.id.btnHogarCliente);
         if (btnHogarCliente != null) {
@@ -322,9 +318,7 @@ public class DashboardClienteFragment extends Fragment implements MedicationAdap
 
         View btnSalirApp = v.findViewById(R.id.btnSalirAppCliente);
         if (btnSalirApp != null) {
-            btnSalirApp.setOnClickListener(view -> {
-                requireActivity().finishAffinity();
-            });
+            btnSalirApp.setOnClickListener(view -> requireActivity().finishAffinity());
         }
 
         v.findViewById(R.id.btnCallCaregiver).setOnClickListener(view -> {

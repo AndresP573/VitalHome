@@ -136,9 +136,7 @@ public class LoginActivity extends AppCompatActivity {
                                         newUser.telefono = doc.getString("telefono");
                                         newUser.createdAt = System.currentTimeMillis();
 
-                                        AppExecutors.getInstance().diskIO().execute(() -> {
-                                            AppDatabase.getInstance(getApplicationContext()).userDao().insert(newUser);
-                                        });
+                                        AppExecutors.getInstance().diskIO().execute(() -> AppDatabase.getInstance(getApplicationContext()).userDao().insert(newUser));
 
                                         iniciarSesionExitosa(p, mail, pass, newUser.rol, tel);
                                     } else {
