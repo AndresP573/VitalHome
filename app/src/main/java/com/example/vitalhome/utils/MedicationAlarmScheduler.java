@@ -61,9 +61,11 @@ public class MedicationAlarmScheduler {
                 cal.add(Calendar.DAY_OF_YEAR, 1);
             }
 
-            // --- Bloque 3: Creación del Intent y PendingIntent para el Receiver ---
+            // --- Bloque 3: Creación del Intent y PendingIntent enviando los datos directamente ---
             Intent intent = new Intent(ctx, MedicationAlarmReceiver.class);
             intent.putExtra("med_id", m.getId());
+            intent.putExtra("med_nombre", m.getNombre());
+            intent.putExtra("med_hora", m.getHora());
 
             int requestCode = m.getId().hashCode();
             PendingIntent pi = PendingIntent.getBroadcast(
