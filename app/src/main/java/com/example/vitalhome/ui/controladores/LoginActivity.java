@@ -9,23 +9,34 @@ import android.widget.EditText;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.vitalhome.R;
 import com.example.vitalhome.data.local.AppDatabase;
 import com.example.vitalhome.data.local.UserEntity;
 import com.example.vitalhome.utils.AppExecutors;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 /**
  * Actividad responsable de gestionar el inicio de sesión de los usuarios (Cliente o Cuidador).
- * Implementa autenticación híbrida consultando Room (SQLite) y Firestore ("default").
+ * Implementa autenticación híbrida consultando Room (SQLite), Firestore ("default")
+ * y recuperación directa de contraseña por correo vía Firebase Authentication.
  */
 public class LoginActivity extends AppCompatActivity {
+
+    private FirebaseAuth auth;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
+
+        // Inicializar Firebase Auth
+        auth = FirebaseAuth.getInstance();
+        if (auth.getCurrentUser() == null) {
+            auth.signInAnonymously();
+        }
 
         SharedPreferences p = getSharedPreferences("VitalHomePrefs", MODE_PRIVATE);
 
@@ -48,6 +59,7 @@ public class LoginActivity extends AppCompatActivity {
         EditText inPhone = findViewById(R.id.etPhoneLogin);
         RadioGroup selPerfil = findViewById(R.id.rgLoginRole);
         Button btnEntrar = findViewById(R.id.btnLogin);
+        TextView tvForgot = findViewById(R.id.tvForgotPassword);
         TextView btnGoReg = findViewById(R.id.tvGoToRegister);
 
         // Carga inicial de datos según rol seleccionado
@@ -68,6 +80,11 @@ public class LoginActivity extends AppCompatActivity {
             }
         });
 
+        // --- Opción de Recuperación de Contraseña Real por Correo ---
+        if (tvForgot != null) {
+            tvForgot.setOnClickListener(v -> mostrarDialogoRecuperarPassword());
+        }
+
         // --- Validación e inicio de sesión híbrido (Room + Firestore "default") ---
         btnEntrar.setOnClickListener(v -> {
             String mail = inMail.getText().toString().trim();
@@ -81,6 +98,11 @@ public class LoginActivity extends AppCompatActivity {
             }
 
             btnEntrar.setEnabled(false);
+
+            // Intentar inicio de sesión con Firebase Auth si aplica
+            try {
+                auth.signInWithEmailAndPassword(mail, pass);
+            } catch (Exception ignored) {}
 
             // 1. Consultar la base de datos local SQLite (Room) en hilo secundario
             AppExecutors.getInstance().diskIO().execute(() -> {
@@ -98,7 +120,7 @@ public class LoginActivity extends AppCompatActivity {
                             Toast.makeText(this, getString(R.string.msg_pass_incorrecta), Toast.LENGTH_SHORT).show();
                         }
                     } else {
-                        // 2. Si no está localmente, verificar en la nube (Firestore "default")
+                        // 2. Si no está localmente, verificar en la nube (Firestore)
                         FirebaseFirestore db = FirebaseFirestore.getInstance("default");
                         String docId = mail.replace(".", "_");
 
@@ -148,6 +170,51 @@ public class LoginActivity extends AppCompatActivity {
             intent.putExtra("forceNewRegister", true);
             startActivity(intent);
         });
+    }
+
+    private void mostrarDialogoRecuperarPassword() {
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_recuperar_password, null);
+        EditText etMailRecovery = dialogView.findViewById(R.id.etMailRecovery);
+
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setView(dialogView)
+                .create();
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+
+        View btnSubmit = dialogView.findViewById(R.id.btnSubmitRecovery);
+        View btnCancel = dialogView.findViewById(R.id.btnCancelRecovery);
+
+        if (btnCancel != null) {
+            btnCancel.setOnClickListener(v -> dialog.dismiss());
+        }
+
+        if (btnSubmit != null) {
+            btnSubmit.setOnClickListener(v -> {
+                String mail = etMailRecovery != null ? etMailRecovery.getText().toString().trim() : "";
+                if (mail.isEmpty()) {
+                    Toast.makeText(this, "Por favor ingrese su correo electrónico", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                dialog.dismiss();
+
+                // Ejecución directa de sendPasswordResetEmail en Firebase Auth
+                FirebaseAuth.getInstance().sendPasswordResetEmail(mail)
+                    .addOnCompleteListener(task -> {
+                        if (task.isSuccessful()) {
+                            Toast.makeText(this, "✉️ Correo enviado a " + mail + ". Revise su casilla o Spam.", Toast.LENGTH_LONG).show();
+                        } else {
+                            String err = task.getException() != null ? task.getException().getMessage() : "Error al enviar correo";
+                            Toast.makeText(this, "⚠️ " + err, Toast.LENGTH_LONG).show();
+                        }
+                    });
+            });
+        }
+
+        dialog.show();
     }
 
     private void iniciarSesionExitosa(SharedPreferences p, String mail, String pass, String role, String tel) {

@@ -8,10 +8,13 @@ import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import com.example.vitalhome.data.repository.AppRepo;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+import java.util.Map;
 
 /**
  * ViewModel correspondiente al Dashboard del Cuidador.
- * Proporciona información general sobre el adulto mayor asignado y el estado de sus medicamentos.
+ * Proporciona información general sobre el adulto mayor asignado mediante escucha directa en Cloud Firestore sin índices requeridos.
  */
 public class DashboardCuidadorViewModel extends AndroidViewModel {
 
@@ -31,7 +34,7 @@ public class DashboardCuidadorViewModel extends AndroidViewModel {
         repo = new AppRepo(application);
         prefs = application.getSharedPreferences("VitalHomePrefs", Context.MODE_PRIVATE);
         refreshData();
-        escucharSignosVitalesEnVivo();
+        vincularYEscucharPacienteEspecifico();
     }
 
     // --- Bloque 3: Carga y actualización de datos ---
@@ -41,24 +44,51 @@ public class DashboardCuidadorViewModel extends AndroidViewModel {
         medicinasCount.setValue(repo.getMeds().size());
     }
 
-    // --- Escuchar Signos Vitales del Abuelo en vivo desde Cloud Firestore ---
-    public void escucharSignosVitalesEnVivo() {
+    // --- Vinculación y Escucha en Vivo de Signos Vitales y Perfil del Abuelo ---
+    public void vincularYEscucharPacienteEspecifico() {
         try {
-            com.google.firebase.firestore.FirebaseFirestore.getInstance("default")
-                .collection("users")
-                .whereEqualTo("rol", "cliente")
+            FirebaseFirestore db = FirebaseFirestore.getInstance("default");
+
+            // Escuchar todos los documentos en 'users' para evitar requerir índices compuestos en Firestore
+            db.collection("users")
                 .addSnapshotListener((snapshots, e) -> {
                     if (e != null || snapshots == null) return;
-                    for (com.google.firebase.firestore.DocumentSnapshot doc : snapshots.getDocuments()) {
-                        if (doc.contains("ultimosSignosVitales")) {
-                            java.util.Map<String, Object> vitals = (java.util.Map<String, Object>) doc.get("ultimosSignosVitales");
-                            if (vitals != null) {
-                                Object p = vitals.get("pulso");
-                                Object o = vitals.get("oxigeno");
-                                Object pres = vitals.get("presion");
-                                String res = "Pulso: " + p + " LPM | O2: " + o + "% | Presión: " + pres;
+                    for (DocumentSnapshot doc : snapshots.getDocuments()) {
+                        String docRol = doc.getString("rol");
+                        // Si es cliente o no es cuidador, lo consideramos el adulto mayor vinculado
+                        if ("cliente".equalsIgnoreCase(docRol) || (!"cuidador".equalsIgnoreCase(docRol) && doc.exists())) {
+
+                            String abueloNombre = doc.getString("nombre");
+                            if (abueloNombre != null && !abueloNombre.isEmpty()) {
+                                nombreAdultoMayor.postValue(abueloNombre);
+                                prefs.edit().putString("nombreAdultoMayor", abueloNombre).apply();
+                            }
+
+                            Object p = null, o = null, pres = null;
+
+                            if (doc.contains("ultimosSignosVitales")) {
+                                Object obj = doc.get("ultimosSignosVitales");
+                                if (obj instanceof Map) {
+                                    Map<?, ?> map = (Map<?, ?>) obj;
+                                    p = map.get("pulso");
+                                    o = map.get("oxigeno");
+                                    pres = map.get("presion");
+                                }
+                            }
+
+                            if (p == null) p = doc.get("pulso");
+                            if (o == null) o = doc.get("oxigeno");
+                            if (pres == null) pres = doc.get("presion");
+
+                            if (p != null || o != null || pres != null) {
+                                String pStr = (p != null) ? (p.toString().contains("LPM") ? p.toString() : p + " LPM") : "-- LPM";
+                                String oStr = (o != null) ? (o.toString().contains("%") ? o.toString() : o + "%") : "--%";
+                                String presStr = (pres != null) ? String.valueOf(pres) : "--/--";
+
+                                String res = "Pulso: " + pStr + " | O2: " + oStr + " | Presión: " + presStr;
                                 vitalsSummary.postValue(res);
                             }
+                            break;
                         }
                     }
                 });

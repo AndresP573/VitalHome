@@ -160,6 +160,23 @@
                         android:textStyle="bold" />
                 </FrameLayout>
 
+                <!-- Botón Actividad en Casa para el Adulto Mayor -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnHogarCliente"
+                    android:layout_width="match_parent"
+                    android:layout_height="60dp"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginBottom="8dp"
+                    android:backgroundTint="#2F7CF6"
+                    android:text="@string/btn_home_activity"
+                    android:textColor="#FFFFFF"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    app:cornerRadius="18dp"
+                    app:icon="@android:drawable/ic_menu_myplaces"
+                    app:iconGravity="textStart"
+                    app:iconTint="#FFFFFF" />
+
                 <!-- TARJETA DE OPCIONES Y SESIÓN -->
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"

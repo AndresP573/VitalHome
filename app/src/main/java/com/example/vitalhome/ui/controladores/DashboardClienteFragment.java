@@ -297,6 +297,13 @@ public class DashboardClienteFragment extends Fragment implements MedicationAdap
             viewModel.medirAhora();
         });
 
+        View btnHogarCliente = v.findViewById(R.id.btnHogarCliente);
+        if (btnHogarCliente != null) {
+            btnHogarCliente.setOnClickListener(view -> 
+                Navigation.findNavController(view).navigate(R.id.nav_hogar)
+            );
+        }
+
         View btnSwitch = v.findViewById(R.id.btnSwitchRoleCliente);
         if (btnSwitch != null) {
             btnSwitch.setOnClickListener(view -> {

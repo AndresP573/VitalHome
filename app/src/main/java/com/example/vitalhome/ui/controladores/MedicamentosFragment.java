@@ -55,6 +55,14 @@ public class MedicamentosFragment extends Fragment implements MedicationAdapter.
             arrowBack.setOnClickListener(x -> requireActivity().getOnBackPressedDispatcher().onBackPressed());
         }
 
+        View btnLimpiar = v.findViewById(R.id.btnLimpiarRemedios);
+        if (btnLimpiar != null) {
+            btnLimpiar.setOnClickListener(x -> {
+                viewModel.limpiarPlanYArchivarEnNube();
+                Toast.makeText(requireContext(), getString(R.string.msg_remedios_limpios), Toast.LENGTH_SHORT).show();
+            });
+        }
+
         initList(v);
 
         return v;
@@ -64,7 +72,11 @@ public class MedicamentosFragment extends Fragment implements MedicationAdapter.
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        viewModel.getPlan().observe(getViewLifecycleOwner(), lista -> adapter.notifyDataSetChanged());
+        viewModel.getPlan().observe(getViewLifecycleOwner(), lista -> {
+            if (adapter != null && lista != null) {
+                adapter.updateList(lista);
+            }
+        });
     }
 
     // --- Bloque 4: Inicialización del RecyclerView ---

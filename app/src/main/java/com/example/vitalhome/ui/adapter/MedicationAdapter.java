@@ -12,9 +12,11 @@ import com.example.vitalhome.R;
 import com.example.vitalhome.data.modelo.Medication;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Adaptador de RecyclerView para administrar la visualización y acciones del plan diario de medicamentos.
+ * Diferencia la vista entre el Adulto Mayor y el Cuidador (incluyendo el formato de toma en verde para el cuidador).
  */
 public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.MedViewHolder> {
 
@@ -38,7 +40,7 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
      * @param listener Interfaz de callback para ejecutar las acciones.
      */
     public MedicationAdapter(List<Medication> items, boolean esAbuelo, AccionesMed listener) {
-        this.items = items != null ? items : new ArrayList<>();
+        this.items = Objects.requireNonNullElseGet(items, ArrayList::new);
         this.esAbuelo = esAbuelo;
         this.listener = listener;
     }
@@ -49,7 +51,7 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
      * @param newItems Lista actualizada de remedios.
      */
     public void updateList(List<Medication> newItems) {
-        this.items = newItems != null ? newItems : new ArrayList<>();
+        this.items = Objects.requireNonNullElseGet(newItems, ArrayList::new);
         notifyDataSetChanged();
     }
 
@@ -67,9 +69,17 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
         holder.tvNombre.setText(m.getNombre());
 
         if (m.isTaken()) {
-            holder.tvBadge.setText(holder.itemView.getContext().getString(R.string.status_tomado));
             holder.tvBadge.setBackgroundColor(Color.parseColor("#E6F4EA"));
-            holder.tvBadge.setTextColor(Color.parseColor("#137333"));
+            if (esAbuelo) {
+                // Adulto Mayor: Muestra "Tomado" en verde oscuro
+                holder.tvBadge.setText(holder.itemView.getContext().getString(R.string.status_tomado));
+                holder.tvBadge.setTextColor(Color.parseColor("#137333"));
+            } else {
+                // Cuidador: Muestra la hora cargada junto con "✓ Tomado" (ej. "10:49  ✓ Tomado") en verde
+                String tagTomado = (m.getHora() != null ? m.getHora() + "  ✓ Tomado" : "✓ Tomado");
+                holder.tvBadge.setText(tagTomado);
+                holder.tvBadge.setTextColor(Color.parseColor("#10B981"));
+            }
             holder.btnTomar.setVisibility(View.GONE);
         } else {
             holder.tvBadge.setText(m.getHora());
