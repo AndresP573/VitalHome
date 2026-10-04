@@ -21,6 +21,7 @@
     <string name="forgot_password_prompt">¿Olvidó su contraseña?</string>
     <string name="title_session_options">🔒 Opciones de Sesión</string>
     <string name="sub_session_options">¿Qué deseas hacer a continuación?</string>
+    <string name="sub_my_remedies">Tus tomas programadas para hoy</string>
     <string name="title_recovery_password">🔑 Recuperar Contraseña</string>
     <string name="sub_recovery_password">Ingrese su correo registrado para recibir el enlace de restablecimiento.</string>
     <string name="btn_submit_recovery">Enviar enlace de recuperación</string>

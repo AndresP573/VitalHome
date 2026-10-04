@@ -167,14 +167,6 @@ public class DashboardClienteFragment extends Fragment implements MedicationAdap
             btnBackRemedios.setOnClickListener(view -> viewModel.setTab(1));
         }
 
-        View btnLimpiarRemedios = v.findViewById(R.id.btnLimpiarRemediosCliente);
-        if (btnLimpiarRemedios != null) {
-            btnLimpiarRemedios.setOnClickListener(view -> {
-                viewModel.limpiarRemedios();
-                Toast.makeText(requireContext(), getString(R.string.msg_remedios_limpios), Toast.LENGTH_SHORT).show();
-            });
-        }
-
         View btnBackContactos = v.findViewById(R.id.btnBackArrowContactos);
         if (btnBackContactos != null) {
             btnBackContactos.setOnClickListener(view -> viewModel.setTab(1));

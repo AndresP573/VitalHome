@@ -221,8 +221,8 @@ public class RegisterActivity extends AppCompatActivity {
                 if (errEmail != null) errEmail.setVisibility(View.GONE);
                 if (errPassword != null) errPassword.setVisibility(View.GONE);
 
-                String n = inNombre != null ? inNombre.getText().toString().trim() : "";
-                String e = inEmail != null ? inEmail.getText().toString().trim() : "";
+                String n = inNombre != null ? com.example.vitalhome.utils.SecurityUtils.sanitizeString(inNombre.getText().toString()) : "";
+                String e = inEmail != null ? com.example.vitalhome.utils.SecurityUtils.sanitizeString(inEmail.getText().toString()) : "";
                 String p = inPass != null ? inPass.getText().toString().trim() : "";
 
                 boolean isAdulto = (roleAdapter != null) && roleAdapter.isSelectedAdulto();

@@ -87,9 +87,9 @@ public class LoginActivity extends AppCompatActivity {
 
         // --- Validación e inicio de sesión híbrido (Room + Firestore "default") ---
         btnEntrar.setOnClickListener(v -> {
-            String mail = inMail.getText().toString().trim();
-            String pass = inPass.getText().toString().trim();
-            String tel = (inPhone != null) ? inPhone.getText().toString().trim() : "";
+            String mail = inMail != null ? com.example.vitalhome.utils.SecurityUtils.sanitizeString(inMail.getText().toString()) : "";
+            String pass = inPass != null ? inPass.getText().toString().trim() : "";
+            String tel = inPhone != null ? com.example.vitalhome.utils.SecurityUtils.sanitizePhone(inPhone.getText().toString()) : "";
             String selectedRole = (selPerfil.getCheckedRadioButtonId() == R.id.rbLoginAdulto) ? "cliente" : "cuidador";
 
             if (mail.isEmpty() || pass.isEmpty()) {
