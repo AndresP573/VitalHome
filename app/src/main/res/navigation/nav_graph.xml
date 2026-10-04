@@ -65,4 +65,9 @@
         android:label="Perfil Medico"
         tools:layout="@layout/fragment_profile_medico" />
 
+    <fragment
+        android:id="@+id/nav_asistente"
+        android:name="com.example.vitalhome.ui.controladores.AsistenteFragment"
+        android:label="Asistente IA"
+        tools:layout="@layout/fragment_asistente" />
 </navigation>

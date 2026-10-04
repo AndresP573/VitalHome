@@ -20,7 +20,9 @@ import com.example.vitalhome.utils.NotificationHelper;
 import com.google.firebase.firestore.DocumentChange;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
-
+//testeo de la IA
+import com.example.vitalhome.service.GeminiService;
+import android.util.Log;
 /**
  * Actividad principal de la aplicación VitalHome.
  * Controla la navegación general mediante Jetpack Navigation, la verificación de permisos y la inicialización de alarmas.
@@ -53,13 +55,9 @@ public class MainActivity extends AppCompatActivity {
         if (host != null) {
             NavController controller = host.getNavController();
 
-            // Configuración de barra de navegación según el rol
-            if ("cliente".equals(rol)) {
-                if (nav != null) nav.setVisibility(View.GONE);
-            } else {
-                if (nav != null) nav.setVisibility(View.VISIBLE);
-                configurarNav(controller, p);
-            }
+            // Configuración de barra de navegación para ambos roles
+            if (nav != null) nav.setVisibility(View.VISIBLE);
+            configurarNav(controller, p);
 
             // Armado del grafo de navegación
             if (savedInstanceState == null) {
@@ -95,6 +93,21 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
         }
+        // --- PRUEBA DE GEMINI IA ---
+        GeminiService geminiService = new GeminiService();
+        geminiService.sendMessage("Hola, responde en una frase corta confirmando que estas funcionando.", new GeminiService.GeminiCallback() {
+            @Override
+            public void onSuccess(String responseText) {
+                Log.d("GEMINI_TEST", "¡ÉXITO! Respuesta: " + responseText);
+                Toast.makeText(MainActivity.this, "IA: " + responseText, Toast.LENGTH_LONG).show();
+            }
+
+            @Override
+            public void onError(String error) {
+                Log.e("GEMINI_TEST", "ERROR: " + error);
+                Toast.makeText(MainActivity.this, "Error IA: " + error, Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
     // --- Escuchador de Alertas en Tiempo Real entre Celulares vía Cloud Firestore ---
@@ -130,6 +143,8 @@ public class MainActivity extends AppCompatActivity {
     private void configurarNav(NavController controller, SharedPreferences p) {
         findViewById(R.id.btnNavInicio).setOnClickListener(v -> controller.navigate(R.id.nav_dashboard));
         findViewById(R.id.btnNavAlertas).setOnClickListener(v -> controller.navigate(R.id.nav_alertas));
+
+        findViewById(R.id.btnNavAsistente).setOnClickListener(v -> controller.navigate(R.id.nav_asistente));
 
         View btnCambiar = findViewById(R.id.btnNavCambiar);
         if (btnCambiar != null) {

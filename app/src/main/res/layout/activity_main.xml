@@ -17,7 +17,6 @@
         app:layout_constraintTop_toTopOf="parent"
         app:navGraph="@navigation/nav_graph" />
 
-
     <LinearLayout
         android:id="@+id/nav_container"
         android:layout_width="match_parent"
@@ -37,9 +36,8 @@
             app:strokeColor="#D8E3F5"
             app:strokeWidth="1dp">
 
-
             <LinearLayout
-                android:layout_width="320dp"
+                android:layout_width="360dp"
                 android:layout_height="match_parent"
                 android:orientation="horizontal"
                 android:gravity="center"
@@ -64,6 +62,16 @@
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:scaleType="centerInside"
                     android:contentDescription="Alertas" />
+
+                <ImageButton
+                    android:id="@+id/btnNavAsistente"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:src="@drawable/ic_robot"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:scaleType="centerInside"
+                    android:contentDescription="Asistente IA" />
 
                 <ImageButton
                     android:id="@+id/btnNavCambiar"
