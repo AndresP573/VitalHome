@@ -14,6 +14,7 @@ import com.example.vitalhome.utils.MedicationAlarmScheduler;
 import com.example.vitalhome.utils.NotificationHelper;
 import org.json.JSONObject;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -22,7 +23,7 @@ import java.util.Objects;
 /**
  * ViewModel para el Dashboard del usuario (Cliente / Adulto Mayor).
  * Administra los signos vitales con tasa de refresco instantánea, medicamentos del día,
- * contactos de emergencia y mediciones de salud en tiempo real.
+ * contactos de emergencia y mediciones de salud agregadas en un único evento clínico por medición.
  */
 public class DashboardClienteViewModel extends AndroidViewModel {
 
@@ -33,7 +34,7 @@ public class DashboardClienteViewModel extends AndroidViewModel {
     private final MutableLiveData<String> nombreUsuario = new MutableLiveData<>();
     private final MutableLiveData<String> pulso = new MutableLiveData<>("-- LPM");
     private final MutableLiveData<String> oxigeno = new MutableLiveData<>("--%");
-    private final MutableLiveData<List<Medication>> medicamentos = new MutableLiveData<>(new java.util.ArrayList<>());
+    private final MutableLiveData<List<Medication>> medicamentos = new MutableLiveData<>(new ArrayList<>());
 
     private final MutableLiveData<String> contactName1 = new MutableLiveData<>();
     private final MutableLiveData<String> contactPhone1 = new MutableLiveData<>();
@@ -71,7 +72,7 @@ public class DashboardClienteViewModel extends AndroidViewModel {
                 .collection("medications")
                 .addSnapshotListener((snapshots, e) -> {
                     if (e != null || snapshots == null) return;
-                    List<Medication> listaMeds = new java.util.ArrayList<>();
+                    List<Medication> listaMeds = new ArrayList<>();
                     for (com.google.firebase.firestore.DocumentSnapshot doc : snapshots.getDocuments()) {
                         String id = doc.getString("id");
                         if (id == null) id = doc.getId();
@@ -112,7 +113,7 @@ public class DashboardClienteViewModel extends AndroidViewModel {
 
     private void refrescarMeds() {
         List<Medication> items = repo.getMeds();
-        List<Medication> sinTomar = new java.util.ArrayList<>();
+        List<Medication> sinTomar = new ArrayList<>();
         if (items != null) {
             for (Medication m : items) {
                 if (m != null && !m.isTaken()) {
@@ -151,7 +152,7 @@ public class DashboardClienteViewModel extends AndroidViewModel {
 
         // 2. Ocultar el medicamento de la lista diaria local del abuelo
         List<Medication> items = repo.getMeds();
-        List<Medication> nuevaLista = new java.util.ArrayList<>();
+        List<Medication> nuevaLista = new ArrayList<>();
         if (items != null) {
             for (Medication item : items) {
                 if (item != null && !Objects.equals(item.getId(), m.getId()) && !item.isTaken()) {
@@ -181,35 +182,35 @@ public class DashboardClienteViewModel extends AndroidViewModel {
                 }
             }
         }
-        repo.saveMeds(new java.util.ArrayList<>());
+        repo.saveMeds(new ArrayList<>());
         prefs.edit().putBoolean("plan_limpiado_localmente", true).apply();
-        medicamentos.setValue(new java.util.ArrayList<>());
+        medicamentos.setValue(new ArrayList<>());
     }
 
-    // --- Medición y Simulación de Signos Vitales con Refresco Instantáneo (0ms) ---
+    // --- Medición y Simulación de Signos Vitales Agregados en 1 Sola Alerta ---
     public void medirAhora() {
         com.example.vitalhome.utils.AppExecutors.getInstance().diskIO().execute(() -> {
             int p;
             if (Math.random() < 0.25) {
-                p = (int) (Math.random() * 30 + 101); // 101-130
+                p = (int) (Math.random() * 30 + 101); // 101-130 (Elevado)
             } else {
-                p = (int) (Math.random() * 36 + 60);  // 60-95
+                p = (int) (Math.random() * 31 + 60);  // 60-90 (Normal)
             }
 
             int o;
             if (Math.random() < 0.15) {
-                o = (int) (Math.random() * 4 + 88);   // 88-91
+                o = (int) (Math.random() * 4 + 88);   // 88-91 (Bajo)
             } else {
-                o = (int) (Math.random() * 5 + 95);   // 95-99
+                o = (int) (Math.random() * 5 + 95);   // 95-99 (Normal)
             }
 
             int sis, dia;
             if (Math.random() < 0.25) {
-                sis = (int) (Math.random() * 26 + 140); // 140-165
-                dia = (int) (Math.random() * 16 + 90);  // 90-105
+                sis = (int) (Math.random() * 26 + 140); // 140-165 (Elevada)
+                dia = (int) (Math.random() * 16 + 90);  // 90-105 (Elevada)
             } else {
-                sis = (int) (Math.random() * 25 + 110); // 110-134
-                dia = (int) (Math.random() * 15 + 70);  // 70-84
+                sis = (int) (Math.random() * 20 + 110); // 110-129 (Normal)
+                dia = (int) (Math.random() * 11 + 70);  // 70-80 (Normal)
             }
             String presString = sis + "/" + dia;
 
@@ -219,7 +220,33 @@ public class DashboardClienteViewModel extends AndroidViewModel {
             lastVitalsUpdate.postValue(new VitalsUpdate(p, o, presString));
 
             prefs.edit().putString("ultimos_vitals", "{\"pulso\":" + p + ",\"oxig\":" + o + ",\"pres\":\"" + presString + "\"}").apply();
-            repo.addEvent(new AlertEvent("SALUD", "Control: " + p + " LPM", "Casa", getTime()));
+
+            String horaStr = getTime();
+            List<String> anomalias = new ArrayList<>();
+
+            if (com.example.vitalhome.utils.VitalSignsThresholds.isPulsoAnomalo(p)) {
+                String msg = p > com.example.vitalhome.utils.VitalSignsThresholds.PULSO_MAX_NORMAL ? ("Pulso elevado: " + p + " LPM") : ("Pulso bajo: " + p + " LPM");
+                anomalias.add(msg);
+            }
+
+            if (com.example.vitalhome.utils.VitalSignsThresholds.isPresionAnomala(sis, dia)) {
+                anomalias.add("Presión elevada: " + presString + " mmHg");
+            }
+
+            if (com.example.vitalhome.utils.VitalSignsThresholds.isOxigenoAnomalo(o)) {
+                anomalias.add("Oxígeno bajo: " + o + "%");
+            }
+
+            if (!anomalias.isEmpty()) {
+                // ANÓMALO: Generar UNA sola alerta agregada detallando todos los valores elevados/bajos
+                String resumenAnomalias = String.join(" | ", anomalias);
+                NotificationHelper.notificarAlertaCuidador(getApplication(), "SALUD", "⚠️ Alerta de Salud", resumenAnomalias);
+                repo.addEvent(new AlertEvent("SALUD", resumenAnomalias, "Casa", horaStr));
+            } else {
+                // NORMAL: Registrar un único evento de control rutinario completo
+                NotificationHelper.pulso(getApplication(), p);
+                repo.addEvent(new AlertEvent("SALUD", "Control: " + p + " LPM | O2: " + o + "% | Presión: " + presString, "Casa", horaStr));
+            }
 
             // Sincronización en tiempo real con Cloud Firestore
             try {
@@ -242,33 +269,11 @@ public class DashboardClienteViewModel extends AndroidViewModel {
                     .document("latest")
                     .set(vitalsData);
             } catch (Exception ignored) {}
-
-            if (p > 100) {
-                NotificationHelper.pulsoElevado(getApplication(), p);
-                repo.addEvent(new AlertEvent("SALUD", "Pulso elevado: " + p + " LPM", "Casa", getTime()));
-            } else {
-                NotificationHelper.pulso(getApplication(), p);
-            }
-
-            if (sis >= 140 || dia >= 90) {
-                NotificationHelper.presionElevada(getApplication(), sis, dia);
-                repo.addEvent(new AlertEvent("SALUD", "Presión elevada: " + presString, "Casa", getTime()));
-            }
-
-            if (o < 92) {
-                NotificationHelper.oxigenoBajo(getApplication(), o);
-                repo.addEvent(new AlertEvent("SALUD", "Oxígeno bajo: " + o + "%", "Casa", getTime()));
-            }
         });
     }
 
     public void vitalsMostrado() {
         lastVitalsUpdate.setValue(null);
-    }
-
-    // --- Cambio de Rol y Cierre de Sesión ---
-    public void switchRole() {
-        prefs.edit().putString("rol", "cuidador").apply();
     }
 
     public void logout() {

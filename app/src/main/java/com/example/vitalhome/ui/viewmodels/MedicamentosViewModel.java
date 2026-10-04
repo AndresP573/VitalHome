@@ -24,7 +24,7 @@ import java.util.UUID;
 
 /**
  * ViewModel encargado del mantenimiento y registro de medicamentos dentro del plan diario.
- * Limpia la vista de medicamentos de forma exclusivamente local sin borrar los registros de la nube.
+ * Filtra los medicamentos según el timestamp de limpieza para evitar que reaparezcan al cargar nuevos.
  */
 public class MedicamentosViewModel extends AndroidViewModel {
 
@@ -53,6 +53,7 @@ public class MedicamentosViewModel extends AndroidViewModel {
                         medData.put("nombre", m.getNombre());
                         medData.put("hora", m.getHora());
                         medData.put("taken", m.isTaken());
+                        medData.put("createdAt", System.currentTimeMillis());
 
                         db.collection("medications")
                             .document(m.getId())
@@ -65,18 +66,18 @@ public class MedicamentosViewModel extends AndroidViewModel {
 
     private void cargarPlan() {
         try {
-            SharedPreferences p = getApplication().getSharedPreferences("VitalHomePrefs", Context.MODE_PRIVATE);
-            boolean limpiadoLocal = p.getBoolean("plan_limpiado_localmente", false);
-
             List<Medication> listaBase = repo.getMeds();
-            if (limpiadoLocal && (listaBase == null || listaBase.isEmpty())) {
-                plan.setValue(new ArrayList<>());
-                return;
+            List<Medication> listaFiltrada = new ArrayList<>();
+            if (listaBase != null) {
+                for (Medication m : listaBase) {
+                    if (m != null) {
+                        listaFiltrada.add(m);
+                    }
+                }
             }
 
-            List<Medication> listaModificable = new ArrayList<>(Objects.requireNonNullElseGet(listaBase, ArrayList::new));
-            ordenar(listaModificable);
-            plan.setValue(listaModificable);
+            ordenar(listaFiltrada);
+            plan.setValue(listaFiltrada);
         } catch (Exception e) {
             Log.e("MedicamentosVM", "Error cargando plan local", e);
         }
@@ -90,13 +91,8 @@ public class MedicamentosViewModel extends AndroidViewModel {
                     if (e != null || snapshots == null) return;
                     
                     SharedPreferences p = getApplication().getSharedPreferences("VitalHomePrefs", Context.MODE_PRIVATE);
-                    boolean limpiadoLocal = p.getBoolean("plan_limpiado_localmente", false);
+                    long limpiezaTs = p.getLong("limpieza_timestamp", 0L);
                     List<Medication> localMeds = repo.getMeds();
-
-                    if (limpiadoLocal && (localMeds == null || localMeds.isEmpty())) {
-                        plan.postValue(new ArrayList<>());
-                        return;
-                    }
 
                     Map<String, Boolean> localTakenMap = new HashMap<>();
                     if (localMeds != null) {
@@ -114,6 +110,12 @@ public class MedicamentosViewModel extends AndroidViewModel {
                         String nombre = doc.getString("nombre");
                         String hora = doc.getString("hora");
                         Boolean takenNube = doc.getBoolean("taken");
+                        Long createdAt = doc.getLong("createdAt");
+
+                        // Si fue creado antes de la última limpieza, se omite de la vista activa
+                        if (createdAt != null && createdAt <= limpiezaTs) {
+                            continue;
+                        }
 
                         boolean isTaken = Objects.equals(takenNube, Boolean.TRUE) || Objects.equals(localTakenMap.get(medDocId), Boolean.TRUE);
 
@@ -146,9 +148,6 @@ public class MedicamentosViewModel extends AndroidViewModel {
 
     public void agregar(String nombre, String hora) {
         try {
-            SharedPreferences p = getApplication().getSharedPreferences("VitalHomePrefs", Context.MODE_PRIVATE);
-            p.edit().putBoolean("plan_limpiado_localmente", false).apply();
-
             String id = UUID.randomUUID().toString();
             Medication nuevoMed = new Medication(id, nombre, hora, false);
 
@@ -157,13 +156,14 @@ public class MedicamentosViewModel extends AndroidViewModel {
             lista.add(0, nuevoMed);
             repo.saveMeds(lista);
 
-            // Guardar y sincronizar en Firestore
+            // Guardar y sincronizar en Firestore con timestamp actual
             try {
                 Map<String, Object> medData = new HashMap<>();
                 medData.put("id", nuevoMed.getId());
                 medData.put("nombre", nuevoMed.getNombre());
                 medData.put("hora", nuevoMed.getHora());
                 medData.put("taken", false);
+                medData.put("createdAt", System.currentTimeMillis());
 
                 FirebaseFirestore.getInstance("default")
                     .collection("medications")
@@ -172,6 +172,7 @@ public class MedicamentosViewModel extends AndroidViewModel {
             } catch (Exception ignored) {}
 
             try {
+                SharedPreferences p = getApplication().getSharedPreferences("VitalHomePrefs", Context.MODE_PRIVATE);
                 if ("cliente".equals(p.getString("rol", "cuidador"))) {
                     MedicationAlarmScheduler.programar(getApplication(), nuevoMed);
                 }
@@ -201,6 +202,13 @@ public class MedicamentosViewModel extends AndroidViewModel {
                 MedicationAlarmScheduler.cancelar(getApplication(), m.getId());
             } catch (Exception ignored) {}
 
+            try {
+                FirebaseFirestore.getInstance("default")
+                    .collection("medications")
+                    .document(m.getId())
+                    .delete();
+            } catch (Exception ignored) {}
+
             cargarPlan();
         } catch (Exception e) {
             Log.e("MedicamentosVM", "Error eliminando medicamento tomado", e);
@@ -208,8 +216,8 @@ public class MedicamentosViewModel extends AndroidViewModel {
     }
 
     /**
-     * Limpia la lista de medicamentos de forma exclusivamente local en el teléfono
-     * preservando el 100% de los datos en la base de datos de Cloud Firestore.
+     * Limpia la lista de medicamentos localmente y actualiza el timestamp de limpieza
+     * para que los remedios anteriores queden archivados y no reaparezcan al cargar nuevos.
      */
     public void limpiarPlanYArchivarEnNube() {
         try {
@@ -217,7 +225,7 @@ public class MedicamentosViewModel extends AndroidViewModel {
             plan.postValue(new ArrayList<>());
 
             SharedPreferences p = getApplication().getSharedPreferences("VitalHomePrefs", Context.MODE_PRIVATE);
-            p.edit().putBoolean("plan_limpiado_localmente", true).apply();
+            p.edit().putLong("limpieza_timestamp", System.currentTimeMillis()).apply();
         } catch (Exception e) {
             Log.e("MedicamentosVM", "Error limpiando plan localmente", e);
         }

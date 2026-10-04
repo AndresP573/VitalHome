@@ -177,99 +177,59 @@
                     app:iconGravity="textStart"
                     app:iconTint="#FFFFFF" />
 
-                <!-- TARJETA DE OPCIONES Y SESIÓN -->
-                <com.google.android.material.card.MaterialCardView
+                <!-- Botón Independiente de Llamada Rápida al Cuidador -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnCallCaregiver"
+                    android:layout_width="match_parent"
+                    android:layout_height="66dp"
+                    android:layout_marginTop="16dp"
+                    android:layout_marginBottom="8dp"
+                    android:backgroundTint="#10B981"
+                    android:text="@string/btn_call_caregiver"
+                    android:textColor="#FFFFFF"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    app:cornerRadius="20dp"
+                    app:icon="@android:drawable/ic_menu_call"
+                    app:iconGravity="textStart"
+                    app:iconSize="24dp"
+                    app:iconTint="#FFFFFF"
+                    app:elevation="4dp" />
+
+                <!-- Fila con Botones de Sesión fuera de tarjeta -->
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:layout_marginBottom="24dp"
-                    app:cardBackgroundColor="#FFFFFF"
-                    app:cardCornerRadius="22dp"
-                    app:cardElevation="1dp"
-                    app:strokeColor="#D8E3F5"
-                    app:strokeWidth="1dp">
+                    android:orientation="horizontal"
+                    android:gravity="center"
+                    android:layout_marginTop="24dp"
+                    android:layout_marginBottom="32dp">
 
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:padding="20dp">
+                    <!-- Botón 1: Cerrar Sesión -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnLogoutCliente"
+                        style="@style/Widget.Material3.Button.TextButton"
+                        android:layout_width="0dp"
+                        android:layout_height="52dp"
+                        android:layout_weight="1"
+                        android:text="@string/btn_cerrar_sesion"
+                        android:textColor="#D97706"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/label_options_session"
-                            android:textColor="#62708A"
-                            android:textSize="14sp"
-                            android:textStyle="bold" />
+                    <!-- Botón 2: Salir de la App -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnSalirAppCliente"
+                        style="@style/Widget.Material3.Button.TextButton"
+                        android:layout_width="0dp"
+                        android:layout_height="52dp"
+                        android:layout_weight="1"
+                        android:text="@string/btn_salir_app"
+                        android:textColor="#EF4444"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
 
-                        <!-- Botón de Llamada Rápida (Toque Humano) -->
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnCallCaregiver"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="12dp"
-                            android:backgroundTint="#10B981"
-                            android:paddingVertical="14dp"
-                            android:text="@string/btn_call_caregiver"
-                            android:textColor="#FFFFFF"
-                            android:textSize="16sp"
-                            android:textStyle="bold"
-                            app:cornerRadius="14dp"
-                            app:icon="@android:drawable/ic_menu_call"
-                            app:iconGravity="textStart"
-                            app:iconTint="#FFFFFF" />
-
-                        <!-- Botón Cambiar a Perfil Cuidador (Oculto para entorno real) -->
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnSwitchRoleCliente"
-                            style="@style/Widget.Material3.Button.OutlinedButton"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="10dp"
-                            android:paddingVertical="12dp"
-                            android:text="@string/btn_switch_to_caregiver"
-                            android:textColor="#1457D9"
-                            android:textSize="15sp"
-                            android:textStyle="bold"
-                            android:visibility="gone"
-                            app:cornerRadius="14dp"
-                            app:strokeColor="#1457D9" />
-
-                        <!-- Fila con Botones Diferenciados: Cerrar Sesión y Salir de la App -->
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="horizontal"
-                            android:layout_marginTop="12dp">
-
-                            <!-- Botón 1: Cerrar Sesión -->
-                            <com.google.android.material.button.MaterialButton
-                                android:id="@+id/btnLogoutCliente"
-                                style="@style/Widget.Material3.Button.TextButton"
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:text="@string/btn_cerrar_sesion"
-                                android:textColor="#D97706"
-                                android:textSize="13sp"
-                                android:textStyle="bold" />
-
-                            <!-- Botón 2: Salir de la App -->
-                            <com.google.android.material.button.MaterialButton
-                                android:id="@+id/btnSalirAppCliente"
-                                style="@style/Widget.Material3.Button.TextButton"
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:text="@string/btn_salir_app"
-                                android:textColor="#EF4444"
-                                android:textSize="13sp"
-                                android:textStyle="bold" />
-
-                        </LinearLayout>
-                    </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
+                </LinearLayout>
             </LinearLayout>
 
             <!-- SECCIÓN 2: MEDICAMENTOS -->

@@ -292,14 +292,6 @@ public class DashboardClienteFragment extends Fragment implements MedicationAdap
             );
         }
 
-        View btnSwitch = v.findViewById(R.id.btnSwitchRoleCliente);
-        if (btnSwitch != null) {
-            btnSwitch.setOnClickListener(view -> {
-                viewModel.switchRole();
-                recargarApp();
-            });
-        }
-
         v.findViewById(R.id.btnLogoutCliente).setOnClickListener(view -> {
             viewModel.logout();
             Intent intent = new Intent(requireContext(), LoginActivity.class);
@@ -348,13 +340,7 @@ public class DashboardClienteFragment extends Fragment implements MedicationAdap
         activeVitalsDialog.show();
     }
 
-    // --- Bloque 10: Recarga de la actividad principal ---
-    private void recargarApp() {
-        startActivity(new android.content.Intent(requireActivity(), MainActivity.class).addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP));
-        requireActivity().finish();
-    }
-
-    // --- Bloque 11: Limpieza del ciclo de vida ---
+    // --- Bloque 10: Limpieza del ciclo de vida ---
     @Override
     public void onDestroyView() {
         super.onDestroyView();

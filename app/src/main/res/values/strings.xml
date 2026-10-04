@@ -70,7 +70,7 @@
     <string name="label_oxigeno">Oxígeno</string>
     <string name="btn_medir_ahora">MEDIR AHORA</string>
     <string name="btn_sos">SOS</string>
-    <string name="btn_call_caregiver">📞 LLAMAR A MI CUIDADOR</string>
+    <string name="btn_call_caregiver">LLAMAR A MI CUIDADOR</string>
     <string name="btn_switch_to_caregiver">CAMBIAR A CUIDADOR</string>
     <string name="btn_logout">CERRAR SESIÓN</string>
     <string name="btn_cerrar_sesion">CERRAR SESIÓN</string>
