@@ -144,7 +144,7 @@ public class LoginActivity extends AppCompatActivity {
                                     } else {
                                         // Verificación fallback con SharedPreferences
                                         String passOk = p.getString("password", "");
-                                        if (!passOk.isEmpty() && pass.equals(passOk)) {
+                                        if (!passOk.isEmpty() && java.util.Objects.equals(pass, passOk)) {
                                             iniciarSesionExitosa(p, mail, pass, selectedRole, tel);
                                         } else {
                                             Toast.makeText(this, getString(R.string.msg_pass_incorrecta), Toast.LENGTH_SHORT).show();

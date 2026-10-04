@@ -3,7 +3,6 @@ package com.example.vitalhome.ui.controladores;
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.os.Build;
 import android.os.Bundle;
 import android.util.Patterns;
 import android.view.LayoutInflater;
@@ -145,16 +144,12 @@ public class RegisterActivity extends AppCompatActivity {
 
         if (inEdadCuidador != null) {
             inEdadCuidador.addTextChangedListener(ageGuardWatcher);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                inEdadCuidador.setImportantForAutofill(View.IMPORTANT_FOR_AUTOFILL_NO);
-            }
+            inEdadCuidador.setImportantForAutofill(View.IMPORTANT_FOR_AUTOFILL_NO);
         }
 
         if (inEdad != null) {
             inEdad.addTextChangedListener(ageGuardWatcher);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                inEdad.setImportantForAutofill(View.IMPORTANT_FOR_AUTOFILL_NO);
-            }
+            inEdad.setImportantForAutofill(View.IMPORTANT_FOR_AUTOFILL_NO);
         }
 
         // Limpiar el campo vínculo si el Cuidador cambia su género
