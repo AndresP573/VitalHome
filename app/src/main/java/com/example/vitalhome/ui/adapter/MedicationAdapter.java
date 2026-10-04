@@ -16,7 +16,7 @@ import java.util.Objects;
 
 /**
  * Adaptador de RecyclerView para administrar la visualización y acciones del plan diario de medicamentos.
- * Diferencia la vista entre el Adulto Mayor y el Cuidador (incluyendo el formato de toma en verde para el cuidador).
+ * En la vista del Cuidador, al tomarse el remedio, muestra la hora cargada en color verde con fondo verde suave.
  */
 public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.MedViewHolder> {
 
@@ -75,9 +75,8 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
                 holder.tvBadge.setText(holder.itemView.getContext().getString(R.string.status_tomado));
                 holder.tvBadge.setTextColor(Color.parseColor("#137333"));
             } else {
-                // Cuidador: Muestra la hora cargada junto con "✓ Tomado" (ej. "10:49  ✓ Tomado") en verde
-                String tagTomado = (m.getHora() != null ? m.getHora() + "  ✓ Tomado" : "✓ Tomado");
-                holder.tvBadge.setText(tagTomado);
+                // Cuidador: Muestra la hora programada (ej. "10:49") en color VERDE con fondo verde suave
+                holder.tvBadge.setText(m.getHora());
                 holder.tvBadge.setTextColor(Color.parseColor("#10B981"));
             }
             holder.btnTomar.setVisibility(View.GONE);

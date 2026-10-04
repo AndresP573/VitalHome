@@ -68,7 +68,8 @@ public class AppRepo {
 
     /**
      * Registra un nuevo evento al inicio del historial local y lo sincroniza
-     * automáticamente en vivo a Cloud Firestore para TODAS las alertas de la aplicación.
+     * automáticamente en vivo a Cloud Firestore SOLO para acciones de usuario y emergencias reales
+     * (omitiendo los recordatorios automáticos de alarma local "Hora de tomar...").
      *
      * @param ev Objeto AlertEvent a agregar.
      */
@@ -77,9 +78,20 @@ public class AppRepo {
         list.add(0, ev);
         saveEvents(list);
 
-        // --- Sincronización Global en Tiempo Real de TODAS las Alertas en Firestore ---
+        if (p != null) {
+            p.edit().putBoolean("alertas_limpiadas_localmente", false).apply();
+        }
+
+        // --- Sincronización Global en Tiempo Real: SOLO para acciones reales de usuario / emergencias ---
         try {
-            if (p != null) {
+            if (p != null && ev != null) {
+                String detalle = ev.getData() != null ? ev.getData() : "";
+                // Los recordatorios automáticos "Hora de tomar..." son exclusivamente locales del abuelo.
+                // El cuidador SOLO recibe la confirmación cuando el abuelo presiona "YA LO TOMÉ" ("Tomó ...").
+                if (detalle.startsWith("Hora de tomar")) {
+                    return;
+                }
+
                 String abueloEmail = p.getString("email", "marta@vitalhome.com");
                 String abueloNombre = p.getString("nombreAdultoMayor", p.getString("nombre", "Familiar"));
 
@@ -97,7 +109,7 @@ public class AppRepo {
                 alertData.put("pacienteNombre", abueloNombre);
                 alertData.put("tipo", ev.getTipo() != null ? ev.getTipo() : "ALERTA");
                 alertData.put("titulo", tituloVal);
-                alertData.put("descripcion", ev.getData() != null ? ev.getData() : "Evento detectado");
+                alertData.put("descripcion", detalle);
                 alertData.put("timestamp", new Date());
                 alertData.put("resuelto", false);
 

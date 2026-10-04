@@ -16,7 +16,6 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.SetOptions;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,7 +24,7 @@ import java.util.UUID;
 
 /**
  * ViewModel encargado del mantenimiento y registro de medicamentos dentro del plan diario.
- * Sincroniza en tiempo real los medicamentos desde Cloud Firestore y sube datos locales existentes.
+ * Filtra los medicamentos según el timestamp de limpieza para evitar que reaparezcan al cargar nuevos.
  */
 public class MedicamentosViewModel extends AndroidViewModel {
 
@@ -54,6 +53,7 @@ public class MedicamentosViewModel extends AndroidViewModel {
                         medData.put("nombre", m.getNombre());
                         medData.put("hora", m.getHora());
                         medData.put("taken", m.isTaken());
+                        medData.put("createdAt", System.currentTimeMillis());
 
                         db.collection("medications")
                             .document(m.getId())
@@ -67,9 +67,17 @@ public class MedicamentosViewModel extends AndroidViewModel {
     private void cargarPlan() {
         try {
             List<Medication> listaBase = repo.getMeds();
-            List<Medication> listaModificable = new ArrayList<>(Objects.requireNonNullElseGet(listaBase, ArrayList::new));
-            ordenar(listaModificable);
-            plan.setValue(listaModificable);
+            List<Medication> listaFiltrada = new ArrayList<>();
+            if (listaBase != null) {
+                for (Medication m : listaBase) {
+                    if (m != null) {
+                        listaFiltrada.add(m);
+                    }
+                }
+            }
+
+            ordenar(listaFiltrada);
+            plan.setValue(listaFiltrada);
         } catch (Exception e) {
             Log.e("MedicamentosVM", "Error cargando plan local", e);
         }
@@ -82,7 +90,10 @@ public class MedicamentosViewModel extends AndroidViewModel {
                 .addSnapshotListener((snapshots, e) -> {
                     if (e != null || snapshots == null) return;
                     
+                    SharedPreferences p = getApplication().getSharedPreferences("VitalHomePrefs", Context.MODE_PRIVATE);
+                    long limpiezaTs = p.getLong("limpieza_timestamp", 0L);
                     List<Medication> localMeds = repo.getMeds();
+
                     Map<String, Boolean> localTakenMap = new HashMap<>();
                     if (localMeds != null) {
                         for (Medication lm : localMeds) {
@@ -99,6 +110,12 @@ public class MedicamentosViewModel extends AndroidViewModel {
                         String nombre = doc.getString("nombre");
                         String hora = doc.getString("hora");
                         Boolean takenNube = doc.getBoolean("taken");
+                        Long createdAt = doc.getLong("createdAt");
+
+                        // Si fue creado antes de la última limpieza, se omite de la vista activa
+                        if (createdAt != null && createdAt <= limpiezaTs) {
+                            continue;
+                        }
 
                         boolean isTaken = Objects.equals(takenNube, Boolean.TRUE) || Objects.equals(localTakenMap.get(medDocId), Boolean.TRUE);
 
@@ -139,13 +156,14 @@ public class MedicamentosViewModel extends AndroidViewModel {
             lista.add(0, nuevoMed);
             repo.saveMeds(lista);
 
-            // Guardar y sincronizar en Firestore
+            // Guardar y sincronizar en Firestore con timestamp actual
             try {
                 Map<String, Object> medData = new HashMap<>();
                 medData.put("id", nuevoMed.getId());
                 medData.put("nombre", nuevoMed.getNombre());
                 medData.put("hora", nuevoMed.getHora());
                 medData.put("taken", false);
+                medData.put("createdAt", System.currentTimeMillis());
 
                 FirebaseFirestore.getInstance("default")
                     .collection("medications")
@@ -153,10 +171,9 @@ public class MedicamentosViewModel extends AndroidViewModel {
                     .set(medData, SetOptions.merge());
             } catch (Exception ignored) {}
 
-            // Programar alarma local únicamente si la cuenta es del Adulto Mayor
             try {
-                SharedPreferences prefs = getApplication().getSharedPreferences("VitalHomePrefs", Context.MODE_PRIVATE);
-                if ("cliente".equals(prefs.getString("rol", "cuidador"))) {
+                SharedPreferences p = getApplication().getSharedPreferences("VitalHomePrefs", Context.MODE_PRIVATE);
+                if ("cliente".equals(p.getString("rol", "cuidador"))) {
                     MedicationAlarmScheduler.programar(getApplication(), nuevoMed);
                 }
             } catch (Exception ignored) {}
@@ -185,7 +202,6 @@ public class MedicamentosViewModel extends AndroidViewModel {
                 MedicationAlarmScheduler.cancelar(getApplication(), m.getId());
             } catch (Exception ignored) {}
 
-            // Eliminar documento de la colección 'medications' en Cloud Firestore para borrarlo de ambas pantallas
             try {
                 FirebaseFirestore.getInstance("default")
                     .collection("medications")
@@ -200,32 +216,18 @@ public class MedicamentosViewModel extends AndroidViewModel {
     }
 
     /**
-     * Limpia la lista de medicamentos activa localmente y respalda todos los documentos
-     * en la colección 'archive_medications' de Cloud Firestore para análisis futuro.
+     * Limpia la lista de medicamentos localmente y actualiza el timestamp de limpieza
+     * para que los remedios anteriores queden archivados y no reaparezcan al cargar nuevos.
      */
     public void limpiarPlanYArchivarEnNube() {
         try {
             repo.saveMeds(new ArrayList<>());
             plan.postValue(new ArrayList<>());
 
-            FirebaseFirestore db = FirebaseFirestore.getInstance("default");
-            db.collection("medications").get()
-                .addOnSuccessListener(queryDocumentSnapshots -> {
-                    if (queryDocumentSnapshots != null) {
-                        for (DocumentSnapshot doc : queryDocumentSnapshots.getDocuments()) {
-                            Map<String, Object> data = doc.getData();
-                            if (data != null) {
-                                data.put("archivedAt", new Date());
-                                db.collection("archive_medications")
-                                    .document(doc.getId())
-                                    .set(data, SetOptions.merge());
-                            }
-                            doc.getReference().delete();
-                        }
-                    }
-                });
+            SharedPreferences p = getApplication().getSharedPreferences("VitalHomePrefs", Context.MODE_PRIVATE);
+            p.edit().putLong("limpieza_timestamp", System.currentTimeMillis()).apply();
         } catch (Exception e) {
-            Log.e("MedicamentosVM", "Error archivando plan en la nube", e);
+            Log.e("MedicamentosVM", "Error limpiando plan localmente", e);
         }
     }
 

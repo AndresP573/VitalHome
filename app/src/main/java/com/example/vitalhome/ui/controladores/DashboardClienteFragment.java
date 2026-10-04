@@ -167,14 +167,6 @@ public class DashboardClienteFragment extends Fragment implements MedicationAdap
             btnBackRemedios.setOnClickListener(view -> viewModel.setTab(1));
         }
 
-        View btnLimpiarRemedios = v.findViewById(R.id.btnLimpiarRemediosCliente);
-        if (btnLimpiarRemedios != null) {
-            btnLimpiarRemedios.setOnClickListener(view -> {
-                viewModel.limpiarRemedios();
-                Toast.makeText(requireContext(), getString(R.string.msg_remedios_limpios), Toast.LENGTH_SHORT).show();
-            });
-        }
-
         View btnBackContactos = v.findViewById(R.id.btnBackArrowContactos);
         if (btnBackContactos != null) {
             btnBackContactos.setOnClickListener(view -> viewModel.setTab(1));
@@ -289,27 +281,15 @@ public class DashboardClienteFragment extends Fragment implements MedicationAdap
 
     // --- Bloque 8: Configuración de los listeners de botones y acciones ---
     private void setOnClickListeners(View v) {
-        v.findViewById(R.id.btnSOS).setOnClickListener(view -> {
-            Navigation.findNavController(view).navigate(R.id.nav_sos_countdown);
-        });
+        v.findViewById(R.id.btnSOS).setOnClickListener(view -> Navigation.findNavController(view).navigate(R.id.nav_sos_countdown));
 
-        v.findViewById(R.id.btnMedirAhoraCliente).setOnClickListener(view -> {
-            viewModel.medirAhora();
-        });
+        v.findViewById(R.id.btnMedirAhoraCliente).setOnClickListener(view -> viewModel.medirAhora());
 
         View btnHogarCliente = v.findViewById(R.id.btnHogarCliente);
         if (btnHogarCliente != null) {
             btnHogarCliente.setOnClickListener(view -> 
                 Navigation.findNavController(view).navigate(R.id.nav_hogar)
             );
-        }
-
-        View btnSwitch = v.findViewById(R.id.btnSwitchRoleCliente);
-        if (btnSwitch != null) {
-            btnSwitch.setOnClickListener(view -> {
-                viewModel.switchRole();
-                recargarApp();
-            });
         }
 
         v.findViewById(R.id.btnLogoutCliente).setOnClickListener(view -> {
@@ -322,9 +302,7 @@ public class DashboardClienteFragment extends Fragment implements MedicationAdap
 
         View btnSalirApp = v.findViewById(R.id.btnSalirAppCliente);
         if (btnSalirApp != null) {
-            btnSalirApp.setOnClickListener(view -> {
-                requireActivity().finishAffinity();
-            });
+            btnSalirApp.setOnClickListener(view -> requireActivity().finishAffinity());
         }
 
         v.findViewById(R.id.btnCallCaregiver).setOnClickListener(view -> {
@@ -362,13 +340,7 @@ public class DashboardClienteFragment extends Fragment implements MedicationAdap
         activeVitalsDialog.show();
     }
 
-    // --- Bloque 10: Recarga de la actividad principal ---
-    private void recargarApp() {
-        startActivity(new android.content.Intent(requireActivity(), MainActivity.class).addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP));
-        requireActivity().finish();
-    }
-
-    // --- Bloque 11: Limpieza del ciclo de vida ---
+    // --- Bloque 10: Limpieza del ciclo de vida ---
     @Override
     public void onDestroyView() {
         super.onDestroyView();

@@ -156,7 +156,7 @@ public class MainActivity extends AppCompatActivity {
                         String tituloDoc = dc.getDocument().getString("titulo");
                         String desc = dc.getDocument().getString("descripcion");
                         String abuelo = dc.getDocument().getString("pacienteNombre");
-                        String abueloNombre = abuelo != null ? abuelo : "Tu familiar";
+                        String abueloNombre = java.util.Objects.requireNonNullElse(abuelo, "Tu familiar");
                         Date ts = dc.getDocument().getDate("timestamp");
 
                         // Solo mostrar Toast y sonido para emergencias recientes creadas en el último minuto
@@ -247,10 +247,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         if (btnSalirApp != null) {
-            btnSalirApp.setOnClickListener(v -> {
-                dialog.dismiss();
-                finishAffinity();
-            });
+            btnSalirApp.setOnClickListener(v -> finishAffinity());
         }
 
         if (btnCancelar != null) {

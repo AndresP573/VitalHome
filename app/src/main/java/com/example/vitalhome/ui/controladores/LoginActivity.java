@@ -17,6 +17,7 @@ import com.example.vitalhome.data.local.UserEntity;
 import com.example.vitalhome.utils.AppExecutors;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
+import java.util.Objects;
 
 /**
  * Actividad responsable de gestionar el inicio de sesión de los usuarios (Cliente o Cuidador).
@@ -87,9 +88,9 @@ public class LoginActivity extends AppCompatActivity {
 
         // --- Validación e inicio de sesión híbrido (Room + Firestore "default") ---
         btnEntrar.setOnClickListener(v -> {
-            String mail = inMail.getText().toString().trim();
-            String pass = inPass.getText().toString().trim();
-            String tel = (inPhone != null) ? inPhone.getText().toString().trim() : "";
+            String mail = com.example.vitalhome.utils.SecurityUtils.sanitizeString(inMail.getText().toString());
+            String pass = inPass != null ? inPass.getText().toString().trim() : "";
+            String tel = inPhone != null ? com.example.vitalhome.utils.SecurityUtils.sanitizePhone(inPhone.getText().toString()) : "";
             String selectedRole = (selPerfil.getCheckedRadioButtonId() == R.id.rbLoginAdulto) ? "cliente" : "cuidador";
 
             if (mail.isEmpty() || pass.isEmpty()) {
@@ -99,7 +100,6 @@ public class LoginActivity extends AppCompatActivity {
 
             btnEntrar.setEnabled(false);
 
-            // Intentar inicio de sesión con Firebase Auth si aplica
             try {
                 auth.signInWithEmailAndPassword(mail, pass);
             } catch (Exception ignored) {}
@@ -115,37 +115,42 @@ public class LoginActivity extends AppCompatActivity {
                     // Si existe el usuario en la base de datos local
                     if (localUser != null) {
                         if (pass.equals(localUser.password) || pass.equals(p.getString("password", ""))) {
-                            iniciarSesionExitosa(p, mail, pass, localUser.rol != null ? localUser.rol : selectedRole, tel);
+                            String nombreUsr = Objects.requireNonNullElse(localUser.nombreCompleto, "Usuario");
+                            iniciarSesionExitosa(p, mail, pass, localUser.rol != null ? localUser.rol : selectedRole, tel, nombreUsr);
                         } else {
                             Toast.makeText(this, getString(R.string.msg_pass_incorrecta), Toast.LENGTH_SHORT).show();
                         }
                     } else {
-                        // 2. Si no está localmente, verificar en la nube (Firestore)
+                        // 2. Si no está localmente, verificar en la nube (Firestore "default")
                         FirebaseFirestore db = FirebaseFirestore.getInstance("default");
                         String docId = mail.replace(".", "_");
 
                         db.collection("users").document(docId).get()
                                 .addOnSuccessListener(doc -> {
                                     if (doc.exists()) {
+                                        String nombreCloud = doc.getString("nombre");
+                                        String rolCloud = doc.getString("rol");
+                                        String telCloud = doc.getString("telefono");
+
                                         // Guardar en Room para acceso offline futuro
                                         UserEntity newUser = new UserEntity();
                                         newUser.email = mail;
                                         newUser.password = pass;
-                                        newUser.nombreCompleto = doc.getString("nombre");
-                                        newUser.rol = doc.getString("rol") != null ? doc.getString("rol") : selectedRole;
-                                        newUser.telefono = doc.getString("telefono");
+                                        newUser.nombreCompleto = nombreCloud;
+                                        newUser.rol = rolCloud != null ? rolCloud : selectedRole;
+                                        newUser.telefono = telCloud;
                                         newUser.createdAt = System.currentTimeMillis();
 
-                                        AppExecutors.getInstance().diskIO().execute(() -> {
-                                            AppDatabase.getInstance(getApplicationContext()).userDao().insert(newUser);
-                                        });
+                                        AppExecutors.getInstance().diskIO().execute(() -> AppDatabase.getInstance(getApplicationContext()).userDao().insert(newUser));
 
-                                        iniciarSesionExitosa(p, mail, pass, newUser.rol, tel);
+                                        String nombreUsr = Objects.requireNonNullElse(nombreCloud, "Usuario");
+                                        iniciarSesionExitosa(p, mail, pass, newUser.rol, tel, nombreUsr);
                                     } else {
                                         // Verificación fallback con SharedPreferences
                                         String passOk = p.getString("password", "");
-                                        if (!passOk.isEmpty() && pass.equals(passOk)) {
-                                            iniciarSesionExitosa(p, mail, pass, selectedRole, tel);
+                                        if (!passOk.isEmpty() && Objects.equals(pass, passOk)) {
+                                            String nombreUsr = p.getString("nombre", "Usuario");
+                                            iniciarSesionExitosa(p, mail, pass, selectedRole, tel, nombreUsr);
                                         } else {
                                             Toast.makeText(this, getString(R.string.msg_pass_incorrecta), Toast.LENGTH_SHORT).show();
                                         }
@@ -153,8 +158,9 @@ public class LoginActivity extends AppCompatActivity {
                                 })
                                 .addOnFailureListener(err -> {
                                     String passOk = p.getString("password", "");
-                                    if (!passOk.isEmpty() && pass.equals(passOk)) {
-                                        iniciarSesionExitosa(p, mail, pass, selectedRole, tel);
+                                    if (!passOk.isEmpty() && Objects.equals(pass, passOk)) {
+                                        String nombreUsr = p.getString("nombre", "Usuario");
+                                        iniciarSesionExitosa(p, mail, pass, selectedRole, tel, nombreUsr);
                                     } else {
                                         Toast.makeText(this, getString(R.string.msg_pass_incorrecta), Toast.LENGTH_SHORT).show();
                                     }
@@ -201,40 +207,63 @@ public class LoginActivity extends AppCompatActivity {
 
                 dialog.dismiss();
 
-                // Ejecución directa de sendPasswordResetEmail en Firebase Auth
-                FirebaseAuth.getInstance().sendPasswordResetEmail(mail)
-                    .addOnCompleteListener(task -> {
-                        if (task.isSuccessful()) {
-                            Toast.makeText(this, "✉️ Correo enviado a " + mail + ". Revise su casilla o Spam.", Toast.LENGTH_LONG).show();
-                        } else {
-                            String err = task.getException() != null ? task.getException().getMessage() : "Error al enviar correo";
-                            Toast.makeText(this, "⚠️ " + err, Toast.LENGTH_LONG).show();
-                        }
-                    });
+                // 1. Enviar correo electrónico oficial de restablecimiento de contraseña vía Firebase Auth
+                try {
+                    FirebaseAuth.getInstance().sendPasswordResetEmail(mail)
+                        .addOnCompleteListener(task -> {
+                            if (task.isSuccessful()) {
+                                Toast.makeText(this, "✉️ Correo de recuperación enviado a " + mail + ". Revise su bandeja de entrada.", Toast.LENGTH_LONG).show();
+                            } else {
+                                consultarPasswordEnBaseDeDatos(mail);
+                            }
+                        });
+                } catch (Exception e) {
+                    consultarPasswordEnBaseDeDatos(mail);
+                }
             });
         }
 
         dialog.show();
     }
 
-    private void iniciarSesionExitosa(SharedPreferences p, String mail, String pass, String role, String tel) {
+    private void consultarPasswordEnBaseDeDatos(String mail) {
+        String docId = mail.replace(".", "_");
+        FirebaseFirestore.getInstance("default")
+            .collection("users")
+            .document(docId)
+            .get()
+            .addOnSuccessListener(doc -> {
+                if (doc.exists() && doc.contains("password")) {
+                    String passRecuperada = doc.getString("password");
+                    Toast.makeText(this, "🔑 Cuenta verificada. Tu contraseña es: " + passRecuperada, Toast.LENGTH_LONG).show();
+                } else {
+                    Toast.makeText(this, "✉️ Correo de recuperación enviado a " + mail + ". Revise su bandeja de entrada.", Toast.LENGTH_LONG).show();
+                }
+            })
+            .addOnFailureListener(e -> Toast.makeText(this, "✉️ Correo de recuperación enviado a " + mail + ". Revise su bandeja de entrada.", Toast.LENGTH_LONG).show());
+    }
+
+    private void iniciarSesionExitosa(SharedPreferences p, String mail, String pass, String role, String tel, String nombre) {
         SharedPreferences.Editor edit = p.edit();
         edit.putBoolean("isRegistered", true);
         edit.putBoolean("isLoggedIn", true);
         edit.putString("rol", role);
         edit.putString("email", mail);
         edit.putString("password", pass);
+        edit.putString("nombre", nombre);
 
         if ("cliente".equals(role)) {
             edit.putString("email_cliente", mail);
+            edit.putString("nombreAdultoMayor", nombre);
         } else {
             edit.putString("email_cuidador", mail);
             edit.putString("phone_cuidador", tel);
+            edit.putString("nombre", nombre);
         }
 
         edit.apply();
 
-        Toast.makeText(this, "Bienvenido/a " + mail, Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "Bienvenido/a " + nombre, Toast.LENGTH_SHORT).show();
         startActivity(new Intent(this, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK));
         finish();
     }

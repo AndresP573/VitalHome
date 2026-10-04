@@ -3,7 +3,6 @@ package com.example.vitalhome.ui.controladores;
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.os.Build;
 import android.os.Bundle;
 import android.util.Patterns;
 import android.view.LayoutInflater;
@@ -145,16 +144,12 @@ public class RegisterActivity extends AppCompatActivity {
 
         if (inEdadCuidador != null) {
             inEdadCuidador.addTextChangedListener(ageGuardWatcher);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                inEdadCuidador.setImportantForAutofill(View.IMPORTANT_FOR_AUTOFILL_NO);
-            }
+            inEdadCuidador.setImportantForAutofill(View.IMPORTANT_FOR_AUTOFILL_NO);
         }
 
         if (inEdad != null) {
             inEdad.addTextChangedListener(ageGuardWatcher);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                inEdad.setImportantForAutofill(View.IMPORTANT_FOR_AUTOFILL_NO);
-            }
+            inEdad.setImportantForAutofill(View.IMPORTANT_FOR_AUTOFILL_NO);
         }
 
         // Limpiar el campo vínculo si el Cuidador cambia su género
@@ -226,8 +221,8 @@ public class RegisterActivity extends AppCompatActivity {
                 if (errEmail != null) errEmail.setVisibility(View.GONE);
                 if (errPassword != null) errPassword.setVisibility(View.GONE);
 
-                String n = inNombre != null ? inNombre.getText().toString().trim() : "";
-                String e = inEmail != null ? inEmail.getText().toString().trim() : "";
+                String n = inNombre != null ? com.example.vitalhome.utils.SecurityUtils.sanitizeString(inNombre.getText().toString()) : "";
+                String e = inEmail != null ? com.example.vitalhome.utils.SecurityUtils.sanitizeString(inEmail.getText().toString()) : "";
                 String p = inPass != null ? inPass.getText().toString().trim() : "";
 
                 boolean isAdulto = (roleAdapter != null) && roleAdapter.isSelectedAdulto();
@@ -389,23 +384,10 @@ public class RegisterActivity extends AppCompatActivity {
         // 2. Autenticar previamente en Firebase Auth para cumplir con las reglas de seguridad de Firestore
         FirebaseAuth auth = FirebaseAuth.getInstance();
         auth.createUserWithEmailAndPassword(e, p)
-            .addOnCompleteListener(task -> {
-                UserRepository userRepository = new UserRepository();
-                userRepository.syncUserToFirestore(userEntity);
-            })
-            .addOnFailureListener(ex -> {
-                auth.signInWithEmailAndPassword(e, p)
-                    .addOnCompleteListener(signInTask -> {
-                        UserRepository userRepository = new UserRepository();
-                        userRepository.syncUserToFirestore(userEntity);
-                    })
-                    .addOnFailureListener(err -> {
-                        auth.signInAnonymously().addOnCompleteListener(anonTask -> {
-                            UserRepository userRepository = new UserRepository();
-                            userRepository.syncUserToFirestore(userEntity);
-                        });
-                    });
-            });
+            .addOnCompleteListener(task -> new UserRepository().syncUserToFirestore(userEntity))
+            .addOnFailureListener(ex -> auth.signInWithEmailAndPassword(e, p)
+                .addOnCompleteListener(signInTask -> new UserRepository().syncUserToFirestore(userEntity))
+                .addOnFailureListener(err -> auth.signInAnonymously().addOnCompleteListener(anonTask -> new UserRepository().syncUserToFirestore(userEntity))));
 
         SharedPreferences prefs = getSharedPreferences("VitalHomePrefs", MODE_PRIVATE);
         SharedPreferences.Editor edit = prefs.edit();

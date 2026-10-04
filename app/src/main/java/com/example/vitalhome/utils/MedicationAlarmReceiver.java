@@ -3,6 +3,8 @@ package com.example.vitalhome.utils;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.os.PowerManager;
 import android.util.Log;
 import com.example.vitalhome.data.modelo.AlertEvent;
 import com.example.vitalhome.data.modelo.Medication;
@@ -13,64 +15,82 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * Receptor de difusiones (BroadcastReceiver) para el manejo de alarmas de medicamentos.
- * Se activa cuando expira la alarma programada, emitiendo notificaciones y registrando el evento.
+ * Receptor de difusiones (BroadcastReceiver) para el manejo infalible de alarmas de medicamentos.
+ * Se ejecuta EXCLUSIVAMENTE en el dispositivo del Adulto Mayor; ignora las alarmas si el rol es Cuidador.
  */
 public class MedicationAlarmReceiver extends BroadcastReceiver {
 
-    // --- Bloque 1: Recepción del intent de alarma o reinicio ---
     @Override
     public void onReceive(Context context, Intent intent) {
         if (intent == null) return;
+
+        // Verificar el rol actual en SharedPreferences: El cuidador NUNCA debe recibir alarmas locales de medicamentos
+        SharedPreferences prefs = context.getSharedPreferences("VitalHomePrefs", Context.MODE_PRIVATE);
+        String rol = prefs.getString("rol", "cliente");
+        if ("cuidador".equals(rol)) {
+            Log.d("AlarmDebug", "Alarma de medicamento ignorada en dispositivo del Cuidador.");
+            return;
+        }
+
+        // Despertar la CPU temporalmente para reproducir la alarma de reloj
+        PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
+        PowerManager.WakeLock wakeLock = (pm != null) ? pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "VitalHome:MedAlarmWakeLock") : null;
+        if (wakeLock != null) {
+            try {
+                wakeLock.acquire(10000); // 10 segundos de WakeLock
+            } catch (Exception ignored) {}
+        }
 
         // Reprogramación automática tras reinicio del dispositivo o actualización
         if (Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction()) || 
             "android.intent.action.MY_PACKAGE_REPLACED".equals(intent.getAction())) {
             Log.d("AlarmDebug", "Reinicio detectado. Reprogramando alarmas...");
             MedicationAlarmScheduler.reprogramarTodas(context);
+            if (wakeLock != null && wakeLock.isHeld()) wakeLock.release();
             return;
         }
 
         String medId = intent.getStringExtra("med_id");
-        Log.d("AlarmDebug", "onReceive llegó con med_id: " + medId);
-        if (medId == null) return;
+        String medNombre = intent.getStringExtra("med_nombre");
+        String medHora = intent.getStringExtra("med_hora");
 
-        // --- Bloque 2: Consulta del medicamento en repositorio ---
-        AppRepo repo = new AppRepo(context);
-        List<Medication> meds = repo.getMeds();
-        if (meds == null) {
-            Log.d("AlarmDebug", "Medicamento no encontrado: lista es null");
+        Log.d("AlarmDebug", "onReceive llegó con med_id: " + medId + ", nombre: " + medNombre);
+
+        // Si la información viene directamente en los extras del intent
+        if (medNombre != null && !medNombre.isEmpty()) {
+            int notifId = (medId != null) ? Math.abs(medId.hashCode()) : (int) (System.currentTimeMillis() % Integer.MAX_VALUE);
+            NotificationHelper.medicamento(context, notifId, medNombre, medHora != null ? medHora : "");
+
+            String horaActual = new SimpleDateFormat("HH:mm", Locale.getDefault()).format(new Date());
+            AppRepo repo = new AppRepo(context);
+            repo.addEvent(new AlertEvent("MEDICINA", "Hora de tomar " + medNombre, "Casa", horaActual));
+            
+            if (wakeLock != null && wakeLock.isHeld()) wakeLock.release();
             return;
         }
 
-        Medication targetMed = null;
-        for (Medication m : meds) {
-            if (java.util.Objects.equals(medId, m.getId())) {
-                targetMed = m;
-                break;
+        // Fallback: consulta en repositorio
+        if (medId != null) {
+            AppRepo repo = new AppRepo(context);
+            List<Medication> meds = repo.getMeds();
+            if (meds != null) {
+                for (Medication m : meds) {
+                    if (java.util.Objects.equals(medId, m.getId())) {
+                        if (!m.isTaken()) {
+                            int notifId = Math.abs(m.getId().hashCode());
+                            NotificationHelper.medicamento(context, notifId, m.getNombre(), m.getHora());
+
+                            String horaActual = new SimpleDateFormat("HH:mm", Locale.getDefault()).format(new Date());
+                            repo.addEvent(new AlertEvent("MEDICINA", "Hora de tomar " + m.getNombre(), "Casa", horaActual));
+                        }
+                        break;
+                    }
+                }
             }
         }
 
-        if (targetMed == null) {
-            Log.d("AlarmDebug", "Medicamento no encontrado en la lista");
-            return;
+        if (wakeLock != null && wakeLock.isHeld()) {
+            wakeLock.release();
         }
-
-        Log.d("AlarmDebug", "Medicamento encontrado: " + targetMed.getNombre() + ", tomado: " + targetMed.isTaken());
-
-        // --- Bloque 3: Verificación de estado de toma ---
-        if (targetMed.isTaken()) {
-            return;
-        }
-
-        // --- Bloque 4: Generación de notificación y registro de evento ---
-        int notifId = medId.hashCode();
-        NotificationHelper.medicamento(context, notifId, targetMed.getNombre(), targetMed.getHora());
-
-        String horaActual = new SimpleDateFormat("HH:mm", Locale.getDefault()).format(new Date());
-        repo.addEvent(new AlertEvent("MEDICINA", "Hora de tomar " + targetMed.getNombre(), "Casa", horaActual));
-
-        // --- Bloque 5: Reprogramación para el día siguiente ---
-        MedicationAlarmScheduler.programar(context, targetMed);
     }
 }

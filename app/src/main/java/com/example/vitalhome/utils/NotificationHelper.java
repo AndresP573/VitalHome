@@ -12,6 +12,7 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import com.example.vitalhome.R;
 import com.example.vitalhome.ui.controladores.MainActivity;
+import java.util.Objects;
 
 /**
  * Clase utilitaria encargada de la creación de canales de notificación y la emisión
@@ -20,16 +21,14 @@ import com.example.vitalhome.ui.controladores.MainActivity;
  */
 public class NotificationHelper {
 
-    // --- Bloque 1: Constantes de canales de notificación ---
+    // --- Constantes de canales de notificación ---
     private static final String CANAL_EMERGENCIAS = "EMERGENCIAS_CHANNEL";
-    private static final String CANAL_SALUD = "SALUD_CHANNEL";
-    private static final String CANAL_HOGAR = "HOGAR_CHANNEL";
     private static final String CANAL_MEDICAMENTOS = "MEDICAMENTOS_CHANNEL";
 
-    // --- Bloque 2: Métodos auxiliares para canales con sonido de Alarma o Notificación ---
-    private static void crearCanalAlarma(Context ctx, String id, String nombre) {
+    // --- Métodos auxiliares para canales con sonido de Alarma o Notificación ---
+    private static void crearCanalAlarma(Context ctx) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel c = new NotificationChannel(id, nombre, NotificationManager.IMPORTANCE_HIGH);
+            NotificationChannel c = new NotificationChannel(CANAL_MEDICAMENTOS, "Medicamentos", NotificationManager.IMPORTANCE_HIGH);
             c.enableVibration(true);
             c.setVibrationPattern(new long[]{0, 500, 250, 500});
             AudioAttributes audioAttrs = new AudioAttributes.Builder()
@@ -42,9 +41,9 @@ public class NotificationHelper {
         }
     }
 
-    private static void crearCanalNotificacion(Context ctx, String id, String nombre) {
+    private static void crearCanalNotificacion(Context ctx) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel c = new NotificationChannel(id, nombre, NotificationManager.IMPORTANCE_HIGH);
+            NotificationChannel c = new NotificationChannel(CANAL_EMERGENCIAS, "Emergencias y Alertas", NotificationManager.IMPORTANCE_HIGH);
             c.enableVibration(true);
             c.setVibrationPattern(new long[]{0, 300, 150, 300});
             AudioAttributes audioAttrs = new AudioAttributes.Builder()
@@ -63,22 +62,22 @@ public class NotificationHelper {
         return PendingIntent.getActivity(ctx, requestCode, i, PendingIntent.FLAG_IMMUTABLE);
     }
 
-    // --- Bloque 3: Notificaciones de Alertas y Emergencias para el Cuidador con Deduplicación ---
+    // --- Notificaciones de Alertas y Emergencias para el Cuidador con Deduplicación ---
     public static void notificarAlertaCuidadorConId(Context ctx, String docId, String tipo, String tituloPersonalizado, String mensaje) {
-        crearCanalNotificacion(ctx, CANAL_EMERGENCIAS, "Emergencias y Alertas");
-        String titulo = tituloPersonalizado != null ? tituloPersonalizado : "⚠️ Alerta VitalHome";
+        crearCanalNotificacion(ctx);
+        String titulo = Objects.requireNonNullElse(tituloPersonalizado, "⚠️ Alerta VitalHome");
         
-        int icon = R.drawable.ic_notif_warning;
+        int iconResource = R.drawable.ic_notif_warning;
         if ("MEDICINA".equalsIgnoreCase(tipo)) {
-            icon = R.drawable.ic_notif_pill;
+            iconResource = R.drawable.ic_notif_pill;
         } else if ("HOGAR".equalsIgnoreCase(tipo)) {
-            icon = R.drawable.ic_notif_door;
+            iconResource = R.drawable.ic_notif_door;
         } else if ("SALUD".equalsIgnoreCase(tipo)) {
-            icon = R.drawable.ic_notif_heart;
+            iconResource = R.drawable.ic_notif_heart;
         }
 
         NotificationCompat.Builder n = new NotificationCompat.Builder(ctx, CANAL_EMERGENCIAS)
-                .setSmallIcon(icon)
+                .setSmallIcon(iconResource)
                 .setContentTitle(titulo)
                 .setContentText(mensaje)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
@@ -102,7 +101,7 @@ public class NotificationHelper {
         notificarAlertaCuidadorConId(ctx, "sos_estoy_bien", "SOS", "✅ Estoy bien", quien + " canceló la alerta: se encuentra bien.");
     }
 
-    // --- Bloque 4: Notificaciones de Salud y Signos Vitales ---
+    // --- Notificaciones de Salud y Signos Vitales ---
     public static void pulso(Context ctx, int lpm) {
         notificarAlertaCuidador(ctx, "SALUD", "❤️ Pulso registrado", "Tu pulso es de " + lpm + " LPM.");
     }
@@ -119,7 +118,7 @@ public class NotificationHelper {
         notificarAlertaCuidador(ctx, "SALUD", "⚠️ Oxígeno bajo", "Saturación de " + pct + "%, por debajo de lo normal.");
     }
 
-    // --- Bloque 5: Notificaciones de Eventos del Hogar ---
+    // --- Notificaciones de Eventos del Hogar ---
     public static void fuego(Context ctx) {
         notificarAlertaCuidador(ctx, "HOGAR", "🔥 ¡Fuego detectado!", "El detector de humo se activó en el hogar.");
     }
@@ -136,9 +135,9 @@ public class NotificationHelper {
         notificarAlertaCuidador(ctx, "HOGAR", "🚪 Puerta cerrada", "La puerta principal fue cerrada.");
     }
 
-    // --- Bloque 6: Notificaciones de Medicamentos (Usa sonido de Alarma configurado en el reloj del Adulto Mayor) ---
+    // --- Notificaciones de Medicamentos ---
     public static void medicamento(Context ctx, int notifId, String nombre, String hora) {
-        crearCanalAlarma(ctx, CANAL_MEDICAMENTOS, "Medicamentos");
+        crearCanalAlarma(ctx);
         NotificationCompat.Builder n = new NotificationCompat.Builder(ctx, CANAL_MEDICAMENTOS)
                 .setSmallIcon(R.drawable.ic_notif_pill)
                 .setContentTitle("💊 Hora de tu medicamento")
