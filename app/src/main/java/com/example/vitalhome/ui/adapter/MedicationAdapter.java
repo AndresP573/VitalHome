@@ -16,7 +16,7 @@ import java.util.Objects;
 
 /**
  * Adaptador de RecyclerView para administrar la visualización y acciones del plan diario de medicamentos.
- * Diferencia la vista entre el Adulto Mayor y el Cuidador (incluyendo el formato de toma en verde para el cuidador).
+ * Muestra el horario del medicamento en verde al ser tomado sin texto adicional.
  */
 public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.MedViewHolder> {
 
@@ -67,22 +67,17 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
         Medication m = items.get(position);
 
         holder.tvNombre.setText(m.getNombre());
+        
+        // Muestra exclusivamente la hora cargada (ej. "10:49") sin ticks ni palabras agregadas
+        holder.tvBadge.setText(m.getHora());
 
         if (m.isTaken()) {
+            // Remedio tomado: Texto de la hora en color verde con fondo verde suave
             holder.tvBadge.setBackgroundColor(Color.parseColor("#E6F4EA"));
-            if (esAbuelo) {
-                // Adulto Mayor: Muestra "Tomado" en verde oscuro
-                holder.tvBadge.setText(holder.itemView.getContext().getString(R.string.status_tomado));
-                holder.tvBadge.setTextColor(Color.parseColor("#137333"));
-            } else {
-                // Cuidador: Muestra la hora cargada junto con "✓ Tomado" (ej. "10:49  ✓ Tomado") en verde
-                String tagTomado = (m.getHora() != null ? m.getHora() + "  ✓ Tomado" : "✓ Tomado");
-                holder.tvBadge.setText(tagTomado);
-                holder.tvBadge.setTextColor(Color.parseColor("#10B981"));
-            }
+            holder.tvBadge.setTextColor(Color.parseColor("#10B981"));
             holder.btnTomar.setVisibility(View.GONE);
         } else {
-            holder.tvBadge.setText(m.getHora());
+            // Remedio pendiente: Texto de la hora en color naranja/ámbar
             holder.tvBadge.setBackgroundColor(Color.parseColor("#FFF9E6"));
             holder.tvBadge.setTextColor(Color.parseColor("#D97706"));
 

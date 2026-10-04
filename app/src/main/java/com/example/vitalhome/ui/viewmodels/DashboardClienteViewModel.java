@@ -141,15 +141,15 @@ public class DashboardClienteViewModel extends AndroidViewModel {
         cargarContactos();
     }
 
-    // --- Gestión de Medicamentos con Desaparición Instantánea al 1er Clic ---
+    // --- Gestión de Medicamentos ---
     public void tomar(Medication m) {
         if (m == null) return;
 
-        // 1. Registrar el evento de toma en el Registro de Eventos (permanece en el historial)
+        // 1. Registrar el evento de toma en el Registro de Eventos
         String horaStr = getTime();
         repo.addEvent(new AlertEvent("MEDICINA", "Tomó " + m.getNombre(), "Casa", horaStr));
 
-        // 2. Remover el medicamento de la lista diaria local e INMEDIATAMENTE en LiveData para desaparecer al 1er clic
+        // 2. Ocultar el medicamento de la lista diaria local del abuelo
         List<Medication> items = repo.getMeds();
         List<Medication> nuevaLista = new java.util.ArrayList<>();
         if (items != null) {
@@ -160,15 +160,15 @@ public class DashboardClienteViewModel extends AndroidViewModel {
             }
         }
         repo.saveMeds(nuevaLista);
-        medicamentos.setValue(nuevaLista); // <-- MUESTRA INMEDIATAMENTE EL CAMBIO
+        medicamentos.setValue(nuevaLista);
         MedicationAlarmScheduler.cancelar(getApplication(), m.getId());
 
-        // 3. Eliminar el documento de Cloud Firestore para removerlo de ambas pantallas
+        // 3. Actualizar taken: true en Cloud Firestore (SIN borrar el documento) para que la pantalla del Cuidador pase a VERDE
         try {
             com.google.firebase.firestore.FirebaseFirestore.getInstance("default")
                 .collection("medications")
                 .document(m.getId())
-                .delete();
+                .set(java.util.Collections.singletonMap("taken", true), com.google.firebase.firestore.SetOptions.merge());
         } catch (Exception ignored) {}
     }
 
@@ -182,26 +182,8 @@ public class DashboardClienteViewModel extends AndroidViewModel {
             }
         }
         repo.saveMeds(new java.util.ArrayList<>());
+        prefs.edit().putBoolean("plan_limpiado_localmente", true).apply();
         medicamentos.setValue(new java.util.ArrayList<>());
-
-        try {
-            com.google.firebase.firestore.FirebaseFirestore db = com.google.firebase.firestore.FirebaseFirestore.getInstance("default");
-            db.collection("medications").get()
-                .addOnSuccessListener(queryDocumentSnapshots -> {
-                    if (queryDocumentSnapshots != null) {
-                        for (com.google.firebase.firestore.DocumentSnapshot doc : queryDocumentSnapshots.getDocuments()) {
-                            java.util.Map<String, Object> data = doc.getData();
-                            if (data != null) {
-                                data.put("archivedAt", new Date());
-                                db.collection("archive_medications")
-                                    .document(doc.getId())
-                                    .set(data, com.google.firebase.firestore.SetOptions.merge());
-                            }
-                            doc.getReference().delete();
-                        }
-                    }
-                });
-        } catch (Exception ignored) {}
     }
 
     // --- Medición y Simulación de Signos Vitales con Refresco Instantáneo (0ms) ---

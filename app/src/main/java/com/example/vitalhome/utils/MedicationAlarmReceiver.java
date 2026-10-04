@@ -3,6 +3,7 @@ package com.example.vitalhome.utils;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.PowerManager;
 import android.util.Log;
 import com.example.vitalhome.data.modelo.AlertEvent;
@@ -15,13 +16,21 @@ import java.util.Locale;
 
 /**
  * Receptor de difusiones (BroadcastReceiver) para el manejo infalible de alarmas de medicamentos.
- * Adquiere un WakeLock temporal para despertar la CPU y emitir la alarma sonora aunque el teléfono esté dormido/bloqueado.
+ * Se ejecuta EXCLUSIVAMENTE en el dispositivo del Adulto Mayor; ignora las alarmas si el rol es Cuidador.
  */
 public class MedicationAlarmReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
         if (intent == null) return;
+
+        // Verificar el rol actual en SharedPreferences: El cuidador NUNCA debe recibir alarmas locales de medicamentos
+        SharedPreferences prefs = context.getSharedPreferences("VitalHomePrefs", Context.MODE_PRIVATE);
+        String rol = prefs.getString("rol", "cliente");
+        if ("cuidador".equals(rol)) {
+            Log.d("AlarmDebug", "Alarma de medicamento ignorada en dispositivo del Cuidador.");
+            return;
+        }
 
         // Despertar la CPU temporalmente para reproducir la alarma de reloj
         PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);

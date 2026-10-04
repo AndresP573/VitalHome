@@ -16,7 +16,6 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.SetOptions;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,7 +24,7 @@ import java.util.UUID;
 
 /**
  * ViewModel encargado del mantenimiento y registro de medicamentos dentro del plan diario.
- * Sincroniza en tiempo real los medicamentos desde Cloud Firestore y sube datos locales existentes.
+ * Limpia la vista de medicamentos de forma exclusivamente local sin borrar los registros de la nube.
  */
 public class MedicamentosViewModel extends AndroidViewModel {
 
@@ -66,7 +65,15 @@ public class MedicamentosViewModel extends AndroidViewModel {
 
     private void cargarPlan() {
         try {
+            SharedPreferences p = getApplication().getSharedPreferences("VitalHomePrefs", Context.MODE_PRIVATE);
+            boolean limpiadoLocal = p.getBoolean("plan_limpiado_localmente", false);
+
             List<Medication> listaBase = repo.getMeds();
+            if (limpiadoLocal && (listaBase == null || listaBase.isEmpty())) {
+                plan.setValue(new ArrayList<>());
+                return;
+            }
+
             List<Medication> listaModificable = new ArrayList<>(Objects.requireNonNullElseGet(listaBase, ArrayList::new));
             ordenar(listaModificable);
             plan.setValue(listaModificable);
@@ -82,7 +89,15 @@ public class MedicamentosViewModel extends AndroidViewModel {
                 .addSnapshotListener((snapshots, e) -> {
                     if (e != null || snapshots == null) return;
                     
+                    SharedPreferences p = getApplication().getSharedPreferences("VitalHomePrefs", Context.MODE_PRIVATE);
+                    boolean limpiadoLocal = p.getBoolean("plan_limpiado_localmente", false);
                     List<Medication> localMeds = repo.getMeds();
+
+                    if (limpiadoLocal && (localMeds == null || localMeds.isEmpty())) {
+                        plan.postValue(new ArrayList<>());
+                        return;
+                    }
+
                     Map<String, Boolean> localTakenMap = new HashMap<>();
                     if (localMeds != null) {
                         for (Medication lm : localMeds) {
@@ -131,6 +146,9 @@ public class MedicamentosViewModel extends AndroidViewModel {
 
     public void agregar(String nombre, String hora) {
         try {
+            SharedPreferences p = getApplication().getSharedPreferences("VitalHomePrefs", Context.MODE_PRIVATE);
+            p.edit().putBoolean("plan_limpiado_localmente", false).apply();
+
             String id = UUID.randomUUID().toString();
             Medication nuevoMed = new Medication(id, nombre, hora, false);
 
@@ -153,10 +171,8 @@ public class MedicamentosViewModel extends AndroidViewModel {
                     .set(medData, SetOptions.merge());
             } catch (Exception ignored) {}
 
-            // Programar alarma local únicamente si la cuenta es del Adulto Mayor
             try {
-                SharedPreferences prefs = getApplication().getSharedPreferences("VitalHomePrefs", Context.MODE_PRIVATE);
-                if ("cliente".equals(prefs.getString("rol", "cuidador"))) {
+                if ("cliente".equals(p.getString("rol", "cuidador"))) {
                     MedicationAlarmScheduler.programar(getApplication(), nuevoMed);
                 }
             } catch (Exception ignored) {}
@@ -185,14 +201,6 @@ public class MedicamentosViewModel extends AndroidViewModel {
                 MedicationAlarmScheduler.cancelar(getApplication(), m.getId());
             } catch (Exception ignored) {}
 
-            // Eliminar documento de la colección 'medications' en Cloud Firestore para borrarlo de ambas pantallas
-            try {
-                FirebaseFirestore.getInstance("default")
-                    .collection("medications")
-                    .document(m.getId())
-                    .delete();
-            } catch (Exception ignored) {}
-
             cargarPlan();
         } catch (Exception e) {
             Log.e("MedicamentosVM", "Error eliminando medicamento tomado", e);
@@ -200,32 +208,18 @@ public class MedicamentosViewModel extends AndroidViewModel {
     }
 
     /**
-     * Limpia la lista de medicamentos activa localmente y respalda todos los documentos
-     * en la colección 'archive_medications' de Cloud Firestore para análisis futuro.
+     * Limpia la lista de medicamentos de forma exclusivamente local en el teléfono
+     * preservando el 100% de los datos en la base de datos de Cloud Firestore.
      */
     public void limpiarPlanYArchivarEnNube() {
         try {
             repo.saveMeds(new ArrayList<>());
             plan.postValue(new ArrayList<>());
 
-            FirebaseFirestore db = FirebaseFirestore.getInstance("default");
-            db.collection("medications").get()
-                .addOnSuccessListener(queryDocumentSnapshots -> {
-                    if (queryDocumentSnapshots != null) {
-                        for (DocumentSnapshot doc : queryDocumentSnapshots.getDocuments()) {
-                            Map<String, Object> data = doc.getData();
-                            if (data != null) {
-                                data.put("archivedAt", new Date());
-                                db.collection("archive_medications")
-                                    .document(doc.getId())
-                                    .set(data, SetOptions.merge());
-                            }
-                            doc.getReference().delete();
-                        }
-                    }
-                });
+            SharedPreferences p = getApplication().getSharedPreferences("VitalHomePrefs", Context.MODE_PRIVATE);
+            p.edit().putBoolean("plan_limpiado_localmente", true).apply();
         } catch (Exception e) {
-            Log.e("MedicamentosVM", "Error archivando plan en la nube", e);
+            Log.e("MedicamentosVM", "Error limpiando plan localmente", e);
         }
     }
 

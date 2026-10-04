@@ -77,6 +77,10 @@ public class AppRepo {
         list.add(0, ev);
         saveEvents(list);
 
+        if (p != null) {
+            p.edit().putBoolean("alertas_limpiadas_localmente", false).apply();
+        }
+
         // --- Sincronización Global en Tiempo Real de TODAS las Alertas en Firestore ---
         try {
             if (p != null) {

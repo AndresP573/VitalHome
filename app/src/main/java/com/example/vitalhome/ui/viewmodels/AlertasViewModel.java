@@ -1,6 +1,9 @@
 package com.example.vitalhome.ui.viewmodels;
 
 import android.app.Application;
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
@@ -16,11 +19,10 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
 /**
  * ViewModel encargado de la gestión de la lista de eventos de alerta en la aplicación.
- * Sincroniza en tiempo real y borra de forma atómica los eventos de alerta desde Cloud Firestore.
+ * Limpia la vista de alertas de forma exclusivamente local sin borrar los registros de Cloud Firestore.
  */
 public class AlertasViewModel extends AndroidViewModel {
 
@@ -33,8 +35,25 @@ public class AlertasViewModel extends AndroidViewModel {
     public AlertasViewModel(@NonNull Application application) {
         super(application);
         repo = new AppRepo(application);
-        events.setValue(repo.getEvents());
+        cargarEventosLocales();
         iniciarEscuchaFirestore();
+    }
+
+    private void cargarEventosLocales() {
+        try {
+            SharedPreferences p = getApplication().getSharedPreferences("VitalHomePrefs", Context.MODE_PRIVATE);
+            boolean limpiadoLocal = p.getBoolean("alertas_limpiadas_localmente", false);
+
+            List<AlertEvent> listaBase = repo.getEvents();
+            if (limpiadoLocal && (listaBase == null || listaBase.isEmpty())) {
+                events.setValue(new ArrayList<>());
+                return;
+            }
+
+            events.setValue(listaBase != null ? listaBase : new ArrayList<>());
+        } catch (Exception e) {
+            Log.e("AlertasVM", "Error cargando eventos locales", e);
+        }
     }
 
     private void iniciarEscuchaFirestore() {
@@ -44,6 +63,16 @@ public class AlertasViewModel extends AndroidViewModel {
                 .orderBy("timestamp", Query.Direction.DESCENDING)
                 .addSnapshotListener((snapshots, e) -> {
                     if (e != null || snapshots == null) return;
+
+                    SharedPreferences p = getApplication().getSharedPreferences("VitalHomePrefs", Context.MODE_PRIVATE);
+                    boolean limpiadoLocal = p.getBoolean("alertas_limpiadas_localmente", false);
+                    List<AlertEvent> localEvents = repo.getEvents();
+
+                    if (limpiadoLocal && (localEvents == null || localEvents.isEmpty())) {
+                        events.postValue(new ArrayList<>());
+                        return;
+                    }
+
                     List<AlertEvent> listaAlertas = new ArrayList<>();
                     for (DocumentSnapshot doc : snapshots.getDocuments()) {
                         String tipo = doc.getString("tipo");
@@ -66,38 +95,31 @@ public class AlertasViewModel extends AndroidViewModel {
         return events;
     }
 
-    // --- Bloque 4: Operaciones de actualización y limpieza atómica de eventos ---
+    // --- Bloque 4: Operaciones de actualización y limpieza local de eventos ---
     public void refresh() {
+        SharedPreferences p = getApplication().getSharedPreferences("VitalHomePrefs", Context.MODE_PRIVATE);
+        boolean limpiadoLocal = p.getBoolean("alertas_limpiadas_localmente", false);
+        if (limpiadoLocal && (repo.getEvents() == null || repo.getEvents().isEmpty())) {
+            events.setValue(new ArrayList<>());
+            return;
+        }
+
         if (events.getValue() == null || events.getValue().isEmpty()) {
             events.setValue(repo.getEvents());
         }
     }
 
     /**
-     * Limpia completamente el historial de eventos localmente y elimina todos
-     * los documentos de la colección 'alerts' en Cloud Firestore para evitar la reaparición de datos.
+     * Limpia completamente el historial de eventos localmente en el dispositivo
+     * reservando el 100% de los documentos en la colección 'alerts' de Cloud Firestore para análisis futuro.
      */
     public void clearAll() {
         repo.saveEvents(new ArrayList<>());
         events.postValue(new ArrayList<>());
 
         try {
-            FirebaseFirestore db = FirebaseFirestore.getInstance("default");
-            db.collection("alerts").get()
-                .addOnSuccessListener(queryDocumentSnapshots -> {
-                    if (queryDocumentSnapshots != null) {
-                        for (DocumentSnapshot doc : queryDocumentSnapshots.getDocuments()) {
-                            Map<String, Object> data = doc.getData();
-                            if (data != null) {
-                                data.put("archivedAt", new Date());
-                                db.collection("archive_alerts")
-                                    .document(doc.getId())
-                                    .set(data, com.google.firebase.firestore.SetOptions.merge());
-                            }
-                            doc.getReference().delete();
-                        }
-                    }
-                });
+            SharedPreferences p = getApplication().getSharedPreferences("VitalHomePrefs", Context.MODE_PRIVATE);
+            p.edit().putBoolean("alertas_limpiadas_localmente", true).apply();
         } catch (Exception ignored) {}
     }
 
