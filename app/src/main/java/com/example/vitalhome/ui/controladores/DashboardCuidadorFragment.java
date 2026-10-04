@@ -120,16 +120,8 @@ public class DashboardCuidadorFragment extends Fragment {
 
     // --- Bloque 5: Configuración de navegación por tarjetas ---
     private void setClickListeners(View v) {
-        v.findViewById(R.id.cardVitals).setOnClickListener(x -> 
-            Navigation.findNavController(x).navigate(R.id.nav_pulsera)
-        );
-
-        v.findViewById(R.id.cardMeds).setOnClickListener(x -> 
-            Navigation.findNavController(x).navigate(R.id.nav_medicamentos)
-        );
-
-        v.findViewById(R.id.btnHistorialMedico).setOnClickListener(x -> 
-            Navigation.findNavController(x).navigate(R.id.nav_historial_medico)
-        );
+        v.findViewById(R.id.cardVitals).setOnClickListener(x -> Navigation.findNavController(x).navigate(R.id.nav_pulsera));
+        v.findViewById(R.id.cardMeds).setOnClickListener(x -> Navigation.findNavController(x).navigate(R.id.nav_medicamentos));
+        v.findViewById(R.id.btnHistorialMedico).setOnClickListener(x -> Navigation.findNavController(x).navigate(R.id.nav_historial_medico));
     }
 }

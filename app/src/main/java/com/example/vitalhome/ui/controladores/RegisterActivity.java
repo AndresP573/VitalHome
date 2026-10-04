@@ -384,23 +384,10 @@ public class RegisterActivity extends AppCompatActivity {
         // 2. Autenticar previamente en Firebase Auth para cumplir con las reglas de seguridad de Firestore
         FirebaseAuth auth = FirebaseAuth.getInstance();
         auth.createUserWithEmailAndPassword(e, p)
-            .addOnCompleteListener(task -> {
-                UserRepository userRepository = new UserRepository();
-                userRepository.syncUserToFirestore(userEntity);
-            })
-            .addOnFailureListener(ex -> {
-                auth.signInWithEmailAndPassword(e, p)
-                    .addOnCompleteListener(signInTask -> {
-                        UserRepository userRepository = new UserRepository();
-                        userRepository.syncUserToFirestore(userEntity);
-                    })
-                    .addOnFailureListener(err -> {
-                        auth.signInAnonymously().addOnCompleteListener(anonTask -> {
-                            UserRepository userRepository = new UserRepository();
-                            userRepository.syncUserToFirestore(userEntity);
-                        });
-                    });
-            });
+            .addOnCompleteListener(task -> new UserRepository().syncUserToFirestore(userEntity))
+            .addOnFailureListener(ex -> auth.signInWithEmailAndPassword(e, p)
+                .addOnCompleteListener(signInTask -> new UserRepository().syncUserToFirestore(userEntity))
+                .addOnFailureListener(err -> auth.signInAnonymously().addOnCompleteListener(anonTask -> new UserRepository().syncUserToFirestore(userEntity))));
 
         SharedPreferences prefs = getSharedPreferences("VitalHomePrefs", MODE_PRIVATE);
         SharedPreferences.Editor edit = prefs.edit();
