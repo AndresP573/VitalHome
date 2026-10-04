@@ -83,18 +83,31 @@ public class AppRepo {
                 String abueloEmail = p.getString("email", "marta@vitalhome.com");
                 String abueloNombre = p.getString("nombreAdultoMayor", p.getString("nombre", "Familiar"));
 
+                String tituloVal;
+                if ("MEDICINA".equalsIgnoreCase(ev.getTipo())) {
+                    tituloVal = "✅ Medicamento Tomado";
+                } else if ("HOGAR".equalsIgnoreCase(ev.getTipo())) {
+                    tituloVal = "🏠 ¡Alerta en el Hogar!";
+                } else {
+                    tituloVal = "¡ALERTA " + (ev.getTipo() != null ? ev.getTipo().toUpperCase() : "") + "!";
+                }
+
                 Map<String, Object> alertData = new HashMap<>();
                 alertData.put("pacienteEmail", abueloEmail);
                 alertData.put("pacienteNombre", abueloNombre);
                 alertData.put("tipo", ev.getTipo() != null ? ev.getTipo() : "ALERTA");
-                alertData.put("titulo", "¡ALERTA " + (ev.getTipo() != null ? ev.getTipo().toUpperCase() : "") + "!");
+                alertData.put("titulo", tituloVal);
                 alertData.put("descripcion", ev.getData() != null ? ev.getData() : "Evento detectado");
                 alertData.put("timestamp", new Date());
                 alertData.put("resuelto", false);
 
+                String tipoCleano = ev.getTipo() != null ? ev.getTipo().toLowerCase().trim() : "evento";
+                String customDocId = "alerta_" + tipoCleano + "_" + System.currentTimeMillis();
+
                 FirebaseFirestore.getInstance("default")
                     .collection("alerts")
-                    .add(alertData);
+                    .document(customDocId)
+                    .set(alertData);
             }
         } catch (Exception ignored) {}
     }

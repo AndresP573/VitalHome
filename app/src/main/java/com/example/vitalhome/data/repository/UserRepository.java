@@ -6,12 +6,16 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Repositorio de datos para la sincronización de usuarios entre SQLite local y Cloud Firestore.
+ * Omite campos innecesarios (teléfono propio, vínculo y contraseña) para el perfil del Adulto Mayor.
+ */
 public class UserRepository {
 
     private final FirebaseFirestore db;
 
     public UserRepository() {
-        // Conectamos apuntando específicamente a tu base de datos "default"
+        // Conectamos a la base de datos predeterminada de Firestore
         this.db = FirebaseFirestore.getInstance("default");
     }
 
@@ -26,13 +30,21 @@ public class UserRepository {
         userData.put("nombre", user.nombreCompleto);
         userData.put("email", user.email);
         userData.put("rol", user.rol);
-        userData.put("telefono", user.telefono);
-        if (user.vinculo != null) {
-            userData.put("vinculo", user.vinculo);
-        }
         userData.put("edad", user.edad);
         userData.put("genero", user.genero);
         userData.put("createdAt", user.createdAt);
+
+        if ("cliente".equals(user.rol)) {
+            // Adulto Mayor: Sin teléfono propio, sin vínculo y sin contraseña en la BD
+            userData.put("telefono", null);
+            userData.put("vinculo", null);
+            userData.put("password", null);
+        } else {
+            // Cuidador: Con teléfono, vínculo y contraseña registrados
+            userData.put("telefono", user.telefono);
+            userData.put("vinculo", user.vinculo);
+            userData.put("password", user.password);
+        }
 
         // ID del documento en Firestore usando el correo modificado
         String docId = user.email.replace(".", "_");

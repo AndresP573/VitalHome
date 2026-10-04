@@ -61,6 +61,35 @@ public class DashboardClienteViewModel extends AndroidViewModel {
         repo = new AppRepo(application);
         prefs = application.getSharedPreferences("VitalHomePrefs", Context.MODE_PRIVATE);
         refreshData();
+        iniciarEscuchaMedsFirestore();
+    }
+
+    public void iniciarEscuchaMedsFirestore() {
+        try {
+            com.google.firebase.firestore.FirebaseFirestore.getInstance("default")
+                .collection("medications")
+                .addSnapshotListener((snapshots, e) -> {
+                    if (e != null || snapshots == null) return;
+                    List<Medication> listaMeds = new java.util.ArrayList<>();
+                    for (com.google.firebase.firestore.DocumentSnapshot doc : snapshots.getDocuments()) {
+                        String id = doc.getString("id");
+                        if (id == null) id = doc.getId();
+                        String nombre = doc.getString("nombre");
+                        String hora = doc.getString("hora");
+                        Boolean taken = doc.getBoolean("taken");
+
+                        if (nombre != null && hora != null) {
+                            Medication m = new Medication(id, nombre, hora, Boolean.TRUE.equals(taken));
+                            listaMeds.add(m);
+                            try {
+                                MedicationAlarmScheduler.programar(getApplication(), m);
+                            } catch (Exception ignored) {}
+                        }
+                    }
+                    repo.saveMeds(listaMeds);
+                    medicamentos.postValue(listaMeds);
+                });
+        } catch (Exception ignored) {}
     }
 
     // --- Métodos para refrescar datos desde preferencias y repositorio ---
@@ -85,8 +114,15 @@ public class DashboardClienteViewModel extends AndroidViewModel {
 
     private void refrescarMeds() {
         List<Medication> items = repo.getMeds();
-        items.sort((m1, m2) -> Boolean.compare(m2.isTaken(), m1.isTaken()));
-        medicamentos.setValue(items);
+        List<Medication> sinTomar = new java.util.ArrayList<>();
+        if (items != null) {
+            for (Medication m : items) {
+                if (m != null && !m.isTaken()) {
+                    sinTomar.add(m);
+                }
+            }
+        }
+        medicamentos.setValue(sinTomar);
     }
 
     private void cargarContactos() {
@@ -117,18 +153,33 @@ public class DashboardClienteViewModel extends AndroidViewModel {
      * @param m Instancia del medicamento ingerido.
      */
     public void tomar(Medication m) {
+        if (m == null) return;
+
+        // 1. Registrar el evento de toma en el Registro de Eventos (permanece en el historial local y de la nube)
+        String horaStr = getTime();
+        repo.addEvent(new AlertEvent("MEDICINA", "Tomó " + m.getNombre(), "Casa", horaStr));
+
+        // 2. Remover el medicamento de la lista diaria local
         List<Medication> items = repo.getMeds();
-        for (Medication item : items) {
-            if (Objects.equals(item.getId(), m.getId())) {
-                item.setTaken(true);
-                break;
+        List<Medication> nuevaLista = new java.util.ArrayList<>();
+        if (items != null) {
+            for (Medication item : items) {
+                if (item != null && !Objects.equals(item.getId(), m.getId())) {
+                    nuevaLista.add(item);
+                }
             }
         }
-        repo.saveMeds(items);
-        repo.addEvent(new AlertEvent("MEDICINA", "Tomó " + m.getNombre(), "Casa", getTime()));
+        repo.saveMeds(nuevaLista);
         refrescarMeds();
         MedicationAlarmScheduler.cancelar(getApplication(), m.getId());
-        NotificationHelper.medicamentoTomado(getApplication(), m.getNombre(), getTime());
+
+        // 3. Eliminar el documento de la colección 'medications' en Cloud Firestore para removerlo de ambas pantallas
+        try {
+            com.google.firebase.firestore.FirebaseFirestore.getInstance("default")
+                .collection("medications")
+                .document(m.getId())
+                .delete();
+        } catch (Exception ignored) {}
     }
 
     /**
@@ -138,11 +189,32 @@ public class DashboardClienteViewModel extends AndroidViewModel {
         List<Medication> items = repo.getMeds();
         if (items != null) {
             for (Medication m : items) {
-                MedicationAlarmScheduler.cancelar(getApplication(), m.getId());
+                if (m != null) {
+                    MedicationAlarmScheduler.cancelar(getApplication(), m.getId());
+                }
             }
         }
         repo.saveMeds(new java.util.ArrayList<>());
         refrescarMeds();
+
+        try {
+            com.google.firebase.firestore.FirebaseFirestore db = com.google.firebase.firestore.FirebaseFirestore.getInstance("default");
+            db.collection("medications").get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    if (queryDocumentSnapshots != null) {
+                        for (com.google.firebase.firestore.DocumentSnapshot doc : queryDocumentSnapshots.getDocuments()) {
+                            java.util.Map<String, Object> data = doc.getData();
+                            if (data != null) {
+                                data.put("archivedAt", new Date());
+                                db.collection("archive_medications")
+                                    .document(doc.getId())
+                                    .set(data, com.google.firebase.firestore.SetOptions.merge());
+                            }
+                            doc.getReference().delete();
+                        }
+                    }
+                });
+        } catch (Exception ignored) {}
     }
 
     // --- Medición y Simulación de Signos Vitales ---

@@ -3,6 +3,7 @@ package com.example.vitalhome.ui.controladores;
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Patterns;
 import android.view.LayoutInflater;
@@ -24,11 +25,13 @@ import com.example.vitalhome.data.repository.UserRepository;
 import com.example.vitalhome.ui.adapter.RoleAdapter;
 import com.example.vitalhome.ui.adapter.VinculoAdapter;
 import com.example.vitalhome.utils.AppExecutors;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 /**
  * Actividad encargada del registro inicial personalizado por pasos (Wizard Paso a Paso).
  * Paso 1: Selección de Perfil/Rol. Paso 2: Carga de datos específica según el rol.
+ * Realiza autenticación previa en Firebase Auth y sincronización en Cloud Firestore.
  */
 public class RegisterActivity extends AppCompatActivity {
 
@@ -83,7 +86,7 @@ public class RegisterActivity extends AppCompatActivity {
         setContentView(R.layout.activity_register);
 
         // Inicializar Firestore para verificación y registro
-        db = FirebaseFirestore.getInstance("default");
+        db = FirebaseFirestore.getInstance();
 
         // --- Bindeo de contenedores del Wizard por pasos ---
         LinearLayout layoutPaso1 = findViewById(R.id.layoutPaso1);
@@ -127,6 +130,32 @@ public class RegisterActivity extends AppCompatActivity {
 
         Button btnOk = findViewById(R.id.btnRegister);
         TextView btnLogin = findViewById(R.id.tvGoToLogin);
+
+        // --- Bloqueo de Autofill para evitar que el teléfono se copie en la Edad ---
+        android.text.TextWatcher ageGuardWatcher = new android.text.TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
+            @Override
+            public void afterTextChanged(android.text.Editable s) {
+                if (s != null && s.length() > 3) {
+                    s.clear();
+                }
+            }
+        };
+
+        if (inEdadCuidador != null) {
+            inEdadCuidador.addTextChangedListener(ageGuardWatcher);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                inEdadCuidador.setImportantForAutofill(View.IMPORTANT_FOR_AUTOFILL_NO);
+            }
+        }
+
+        if (inEdad != null) {
+            inEdad.addTextChangedListener(ageGuardWatcher);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                inEdad.setImportantForAutofill(View.IMPORTANT_FOR_AUTOFILL_NO);
+            }
+        }
 
         // Limpiar el campo vínculo si el Cuidador cambia su género
         if (rgGeneroCuidador != null) {
@@ -185,135 +214,137 @@ public class RegisterActivity extends AppCompatActivity {
         }
 
         // --- Evento de registro final con verificación previa en BD ---
-        btnOk.setOnClickListener(v -> {
-            boolean esValido = true;
+        if (btnOk != null) {
+            btnOk.setOnClickListener(v -> {
+                boolean esValido = true;
 
-            if (errNombre != null) errNombre.setVisibility(View.GONE);
-            if (errVinculo != null) errVinculo.setVisibility(View.GONE);
-            if (errTelefono != null) errTelefono.setVisibility(View.GONE);
-            if (errEdad != null) errEdad.setVisibility(View.GONE);
-            if (errEdadCuidador != null) errEdadCuidador.setVisibility(View.GONE);
-            if (errEmail != null) errEmail.setVisibility(View.GONE);
-            if (errPassword != null) errPassword.setVisibility(View.GONE);
+                if (errNombre != null) errNombre.setVisibility(View.GONE);
+                if (errVinculo != null) errVinculo.setVisibility(View.GONE);
+                if (errTelefono != null) errTelefono.setVisibility(View.GONE);
+                if (errEdad != null) errEdad.setVisibility(View.GONE);
+                if (errEdadCuidador != null) errEdadCuidador.setVisibility(View.GONE);
+                if (errEmail != null) errEmail.setVisibility(View.GONE);
+                if (errPassword != null) errPassword.setVisibility(View.GONE);
 
-            String n = inNombre.getText().toString().trim();
-            String e = inEmail.getText().toString().trim();
-            String p = inPass.getText().toString().trim();
+                String n = inNombre != null ? inNombre.getText().toString().trim() : "";
+                String e = inEmail != null ? inEmail.getText().toString().trim() : "";
+                String p = inPass != null ? inPass.getText().toString().trim() : "";
 
-            boolean isAdulto = (roleAdapter != null) && roleAdapter.isSelectedAdulto();
-            String role = isAdulto ? "cliente" : "cuidador";
+                boolean isAdulto = (roleAdapter != null) && roleAdapter.isSelectedAdulto();
+                String role = isAdulto ? "cliente" : "cuidador";
 
-            if (n.length() < 3) {
-                if (errNombre != null) errNombre.setVisibility(View.VISIBLE);
-                esValido = false;
-            }
+                if (n.length() < 3) {
+                    if (errNombre != null) errNombre.setVisibility(View.VISIBLE);
+                    esValido = false;
+                }
 
-            if (e.isEmpty() || !Patterns.EMAIL_ADDRESS.matcher(e).matches()) {
-                if (errEmail != null) errEmail.setVisibility(View.VISIBLE);
-                esValido = false;
-            }
+                if (e.isEmpty() || !Patterns.EMAIL_ADDRESS.matcher(e).matches()) {
+                    if (errEmail != null) errEmail.setVisibility(View.VISIBLE);
+                    esValido = false;
+                }
 
-            if (p.length() < 4) {
-                if (errPassword != null) errPassword.setVisibility(View.VISIBLE);
-                esValido = false;
-            }
+                if (p.length() < 4) {
+                    if (errPassword != null) errPassword.setVisibility(View.VISIBLE);
+                    esValido = false;
+                }
 
-            String edadStr;
-            String generoStr;
-            String vinculoTexto = "";
-            String telStr = "";
+                String edadStr;
+                String generoStr;
+                String vinculoTexto = "";
+                String telStr = "";
 
-            if (isAdulto) {
-                edadStr = inEdad.getText().toString().trim();
-                generoStr = (rgGenero.getCheckedRadioButtonId() == R.id.rbGeneroM) ? "M" : "F";
+                if (isAdulto) {
+                    edadStr = (inEdad != null) ? inEdad.getText().toString().trim() : "";
+                    generoStr = (rgGenero != null && rgGenero.getCheckedRadioButtonId() == R.id.rbGeneroM) ? "M" : "F";
 
-                try {
-                    int edadNum = Integer.parseInt(edadStr);
-                    if (edadNum <= 0 || edadNum > 120) {
+                    try {
+                        int edadNum = Integer.parseInt(edadStr);
+                        if (edadNum <= 0 || edadNum > 120) {
+                            if (errEdad != null) errEdad.setVisibility(View.VISIBLE);
+                            esValido = false;
+                        }
+                    } catch (Exception ex) {
                         if (errEdad != null) errEdad.setVisibility(View.VISIBLE);
                         esValido = false;
                     }
-                } catch (Exception ex) {
-                    if (errEdad != null) errEdad.setVisibility(View.VISIBLE);
-                    esValido = false;
-                }
-            } else {
-                edadStr = (inEdadCuidador != null) ? inEdadCuidador.getText().toString().trim() : "";
-                generoStr = (rgGeneroCuidador != null && rgGeneroCuidador.getCheckedRadioButtonId() == R.id.rbGeneroCuidadorM) ? "M" : "F";
+                } else {
+                    edadStr = (inEdadCuidador != null) ? inEdadCuidador.getText().toString().trim() : "";
+                    generoStr = (rgGeneroCuidador != null && rgGeneroCuidador.getCheckedRadioButtonId() == R.id.rbGeneroCuidadorM) ? "M" : "F";
 
-                try {
-                    int edadCuidadorNum = Integer.parseInt(edadStr);
-                    if (edadCuidadorNum <= 0 || edadCuidadorNum > 120) {
+                    try {
+                        int edadCuidadorNum = Integer.parseInt(edadStr);
+                        if (edadCuidadorNum <= 0 || edadCuidadorNum > 120) {
+                            if (errEdadCuidador != null) errEdadCuidador.setVisibility(View.VISIBLE);
+                            esValido = false;
+                        }
+                    } catch (Exception ex) {
                         if (errEdadCuidador != null) errEdadCuidador.setVisibility(View.VISIBLE);
                         esValido = false;
                     }
-                } catch (Exception ex) {
-                    if (errEdadCuidador != null) errEdadCuidador.setVisibility(View.VISIBLE);
-                    esValido = false;
-                }
 
-                vinculoTexto = (inVinculo != null) ? inVinculo.getText().toString().trim() : "";
-                if ("Otro...".equals(vinculoTexto) || vinculoTexto.isEmpty()) {
-                    if (inVinculoEspecifique != null && inVinculoEspecifique.getVisibility() == View.VISIBLE) {
-                        String esp = inVinculoEspecifique.getText().toString().trim();
-                        vinculoTexto = esp.isEmpty() ? "Otro vínculo" : esp;
-                    } else if (vinculoTexto.isEmpty()) {
-                        vinculoTexto = ("M".equals(generoStr)) ? "Cuidador" : "Cuidadora";
+                    vinculoTexto = (inVinculo != null) ? inVinculo.getText().toString().trim() : "";
+                    if ("Otro...".equals(vinculoTexto) || vinculoTexto.isEmpty()) {
+                        if (inVinculoEspecifique != null && inVinculoEspecifique.getVisibility() == View.VISIBLE) {
+                            String esp = inVinculoEspecifique.getText().toString().trim();
+                            vinculoTexto = esp.isEmpty() ? "Otro vínculo" : esp;
+                        } else if (vinculoTexto.isEmpty()) {
+                            vinculoTexto = ("M".equals(generoStr)) ? "Cuidador" : "Cuidadora";
+                        }
+                    }
+
+                    if (vinculoTexto.length() < 2) {
+                        if (errVinculo != null) errVinculo.setVisibility(View.VISIBLE);
+                        esValido = false;
+                    }
+
+                    telStr = (inTelefono != null) ? inTelefono.getText().toString().trim() : "";
+                    if (telStr.length() < 6) {
+                        if (errTelefono != null) errTelefono.setVisibility(View.VISIBLE);
+                        esValido = false;
                     }
                 }
 
-                if (vinculoTexto.length() < 2) {
-                    if (errVinculo != null) errVinculo.setVisibility(View.VISIBLE);
-                    esValido = false;
+                if (!esValido) {
+                    Toast.makeText(this, getString(R.string.msg_faltan_datos), Toast.LENGTH_SHORT).show();
+                    return;
                 }
 
-                telStr = inTelefono.getText().toString().trim();
-                if (telStr.length() < 6) {
-                    if (errTelefono != null) errTelefono.setVisibility(View.VISIBLE);
-                    esValido = false;
-                }
-            }
+                btnOk.setEnabled(false);
 
-            if (!esValido) {
-                Toast.makeText(this, getString(R.string.msg_faltan_datos), Toast.LENGTH_SHORT).show();
-                return;
-            }
+                // --- Verificación de Usuario Existente en BD (Room + Firestore) ---
+                String finalEdadStr = edadStr;
+                String finalGeneroStr = generoStr;
+                String finalVinculoTexto = vinculoTexto;
+                String finalTelStr = telStr;
 
-            btnOk.setEnabled(false);
+                AppExecutors.getInstance().diskIO().execute(() -> {
+                    UserEntity userLocal = AppDatabase.getInstance(getApplicationContext()).userDao().getUserByEmail(e);
 
-            // --- Verificación de Usuario Existente en BD (Room + Firestore "default") ---
-            String finalEdadStr = edadStr;
-            String finalGeneroStr = generoStr;
-            String finalVinculoTexto = vinculoTexto;
-            String finalTelStr = telStr;
-
-            AppExecutors.getInstance().diskIO().execute(() -> {
-                UserEntity userLocal = AppDatabase.getInstance(getApplicationContext()).userDao().getUserByEmail(e);
-
-                AppExecutors.getInstance().mainThread().execute(() -> {
-                    if (userLocal != null) {
-                        btnOk.setEnabled(true);
-                        Toast.makeText(this, getString(R.string.msg_user_already_registered), Toast.LENGTH_LONG).show();
-                        startActivity(new Intent(this, LoginActivity.class));
-                        finish();
-                    } else {
-                        // Verificar también en Firestore en la nube
-                        String docId = e.replace(".", "_");
-                        db.collection("users").document(docId).get().addOnCompleteListener(task -> {
+                    AppExecutors.getInstance().mainThread().execute(() -> {
+                        if (userLocal != null) {
                             btnOk.setEnabled(true);
-                            if (task.isSuccessful() && task.getResult() != null && task.getResult().exists()) {
-                                Toast.makeText(this, getString(R.string.msg_user_already_registered), Toast.LENGTH_LONG).show();
-                                startActivity(new Intent(this, LoginActivity.class));
-                                finish();
-                            } else {
-                                // Usuario nuevo: Registrar en Room y Firestore
-                                realizarRegistroNuevo(n, e, p, role, isAdulto, finalEdadStr, finalGeneroStr, finalVinculoTexto, finalTelStr);
-                            }
-                        });
-                    }
+                            Toast.makeText(this, getString(R.string.msg_user_already_registered), Toast.LENGTH_LONG).show();
+                            startActivity(new Intent(this, LoginActivity.class));
+                            finish();
+                        } else {
+                            // Verificar también en Firestore en la nube
+                            String docId = e.replace(".", "_");
+                            db.collection("users").document(docId).get().addOnCompleteListener(task -> {
+                                btnOk.setEnabled(true);
+                                if (task.isSuccessful() && task.getResult() != null && task.getResult().exists()) {
+                                    Toast.makeText(this, getString(R.string.msg_user_already_registered), Toast.LENGTH_LONG).show();
+                                    startActivity(new Intent(this, LoginActivity.class));
+                                    finish();
+                                } else {
+                                    // Usuario nuevo: Registrar en Room y Firestore con Autenticación previa
+                                    realizarRegistroNuevo(n, e, p, role, isAdulto, finalEdadStr, finalGeneroStr, finalVinculoTexto, finalTelStr);
+                                }
+                            });
+                        }
+                    });
                 });
             });
-        });
+        }
 
         // --- Redirección al Login ---
         View.OnClickListener irALogin = v -> {
@@ -343,19 +374,38 @@ public class RegisterActivity extends AppCompatActivity {
         userEntity.genero = generoStr;
 
         if (isAdulto) {
-            userEntity.telefono = "";
-            userEntity.vinculo = "";
+            userEntity.telefono = null;
+            userEntity.vinculo = null;
+            userEntity.password = null;
         } else {
             userEntity.telefono = telStr;
             userEntity.vinculo = vinculoTexto;
+            userEntity.password = p;
         }
 
         // 1. Guardar localmente en Room (SQLite)
         AppExecutors.getInstance().diskIO().execute(() -> AppDatabase.getInstance(getApplicationContext()).userDao().insert(userEntity));
 
-        // 2. Sincronizar en Firestore
-        UserRepository userRepository = new UserRepository();
-        userRepository.syncUserToFirestore(userEntity);
+        // 2. Autenticar previamente en Firebase Auth para cumplir con las reglas de seguridad de Firestore
+        FirebaseAuth auth = FirebaseAuth.getInstance();
+        auth.createUserWithEmailAndPassword(e, p)
+            .addOnCompleteListener(task -> {
+                UserRepository userRepository = new UserRepository();
+                userRepository.syncUserToFirestore(userEntity);
+            })
+            .addOnFailureListener(ex -> {
+                auth.signInWithEmailAndPassword(e, p)
+                    .addOnCompleteListener(signInTask -> {
+                        UserRepository userRepository = new UserRepository();
+                        userRepository.syncUserToFirestore(userEntity);
+                    })
+                    .addOnFailureListener(err -> {
+                        auth.signInAnonymously().addOnCompleteListener(anonTask -> {
+                            UserRepository userRepository = new UserRepository();
+                            userRepository.syncUserToFirestore(userEntity);
+                        });
+                    });
+            });
 
         SharedPreferences prefs = getSharedPreferences("VitalHomePrefs", MODE_PRIVATE);
         SharedPreferences.Editor edit = prefs.edit();
@@ -382,6 +432,7 @@ public class RegisterActivity extends AppCompatActivity {
 
         edit.apply();
 
+        Toast.makeText(this, "✓ Registro exitoso de " + n, Toast.LENGTH_SHORT).show();
         startActivity(new Intent(this, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK));
         finish();
     }
@@ -408,6 +459,7 @@ public class RegisterActivity extends AppCompatActivity {
         if (rvDialog != null) {
             rvDialog.setLayoutManager(new LinearLayoutManager(this));
             VinculoAdapter adapter = new VinculoAdapter(itemsSegunGenero, (vinculo, isOtro) -> {
+                // Sincronización del vínculo seleccionado
                 if (inVinculo != null) {
                     inVinculo.setText(vinculo);
                 }

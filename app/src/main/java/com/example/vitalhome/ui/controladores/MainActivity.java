@@ -17,14 +17,18 @@ import androidx.navigation.fragment.NavHostFragment;
 import com.example.vitalhome.R;
 import com.example.vitalhome.utils.MedicationAlarmScheduler;
 import com.example.vitalhome.utils.NotificationHelper;
+import com.example.vitalhome.utils.VitalHomeBackgroundService;
 import com.google.firebase.firestore.DocumentChange;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Actividad principal de la aplicación VitalHome.
  * Controla la navegación general mediante Jetpack Navigation, la verificación de permisos y la inicialización de alarmas.
- * Implementa la escucha de alertas de emergencia en tiempo real entre celulares desde Cloud Firestore.
+ * Escucha las alertas críticas y de tomas de medicamentos en tiempo real entre celulares desde Cloud Firestore sin duplicaciones.
  */
 public class MainActivity extends AppCompatActivity {
 
@@ -82,6 +86,9 @@ public class MainActivity extends AppCompatActivity {
             // Iniciar la escucha en tiempo real de alertas SOS enviadas por otros celulares
             iniciarEscuchadorAlertasGlobales(rol);
 
+            // Iniciar servicio en segundo plano continuo para el cuidador
+            iniciarServicioSegundoPlano(rol);
+
             // Callback del botón Atrás del sistema
             getOnBackPressedDispatcher().addCallback(this, new androidx.activity.OnBackPressedCallback(true) {
                 @Override
@@ -97,7 +104,20 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // --- Escuchador de Alertas en Tiempo Real entre Celulares vía Cloud Firestore ---
+    private void iniciarServicioSegundoPlano(String rol) {
+        if ("cuidador".equals(rol)) {
+            try {
+                Intent serviceIntent = new Intent(this, VitalHomeBackgroundService.class);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    startForegroundService(serviceIntent);
+                } else {
+                    startService(serviceIntent);
+                }
+            } catch (Exception ignored) {}
+        }
+    }
+
+    // --- Escuchador de Alertas Críticas en Tiempo Real entre Celulares vía Cloud Firestore ---
     private void iniciarEscuchadorAlertasGlobales(String rol) {
         if (!"cuidador".equals(rol)) return;
 
@@ -108,18 +128,60 @@ public class MainActivity extends AppCompatActivity {
             .addSnapshotListener((snapshots, e) -> {
                 if (e != null || snapshots == null) return;
 
+                SharedPreferences p = getSharedPreferences("VitalHomePrefs", MODE_PRIVATE);
+                Set<String> yaNotificadas = new HashSet<>(p.getStringSet("alertas_notificadas_ids", new HashSet<>()));
+
                 for (DocumentChange dc : snapshots.getDocumentChanges()) {
                     if (dc.getType() == DocumentChange.Type.ADDED) {
+                        String docId = dc.getDocument().getId();
                         boolean isLocal = dc.getDocument().getMetadata().hasPendingWrites();
-                        // Solo reaccionar si la alerta proviene de OTRO dispositivo en la nube
-                        if (!isLocal) {
-                            String tipo = dc.getDocument().getString("tipo");
-                            String desc = dc.getDocument().getString("descripcion");
-                            String abuelo = dc.getDocument().getString("pacienteNombre");
-                            if (abuelo == null) abuelo = "Tu familiar";
 
-                            NotificationHelper.sendSOS(this, abuelo + ": " + desc);
-                            Toast.makeText(this, "🚨 ¡ALERTA " + tipo + " EN VIVO DE " + abuelo + "!", Toast.LENGTH_LONG).show();
+                        // Marcar inmediatamente como resuelto en Firestore para descartar duplicados y registros antiguos
+                        db.collection("alerts").document(docId).update("resuelto", true);
+
+                        String tipo = dc.getDocument().getString("tipo");
+                        String tituloDoc = dc.getDocument().getString("titulo");
+                        String desc = dc.getDocument().getString("descripcion");
+                        String abuelo = dc.getDocument().getString("pacienteNombre");
+                        String abueloNombre = abuelo != null ? abuelo : "Tu familiar";
+                        Date ts = dc.getDocument().getDate("timestamp");
+
+                        // Solo mostrar Toast y sonido para emergencias recientes creadas en el último minuto
+                        boolean esCritica = "SOS".equalsIgnoreCase(tipo) || "CAIDA".equalsIgnoreCase(tipo) || "FUEGO".equalsIgnoreCase(tipo) || "HOGAR".equalsIgnoreCase(tipo) || "MEDICINA".equalsIgnoreCase(tipo);
+                        boolean esReciente = ts != null && (System.currentTimeMillis() - ts.getTime() < 60000);
+
+                        if (!isLocal && !yaNotificadas.contains(docId) && esCritica && esReciente) {
+                            yaNotificadas.add(docId);
+                            p.edit().putStringSet("alertas_notificadas_ids", yaNotificadas).apply();
+
+                            String tituloFinal;
+                            String toastText;
+                            String mensajeText;
+
+                            if ("MEDICINA".equalsIgnoreCase(tipo)) {
+                                tituloFinal = "✅ Medicamento Tomado";
+                                toastText = "✅ Medicamento Tomado";
+                                mensajeText = desc != null ? desc : "Medicamento tomado";
+                            } else if ("SOS".equalsIgnoreCase(tipo)) {
+                                tituloFinal = "🚨 ALERTA SOS";
+                                toastText = "🚨 ¡ALERTA SOS DE " + abueloNombre + "!";
+                                mensajeText = abueloNombre + ": " + (desc != null ? desc : "Emergencia SOS");
+                            } else if ("CAIDA".equalsIgnoreCase(tipo)) {
+                                tituloFinal = "⚠️ ¡ALERTA DE CAÍDA!";
+                                toastText = "⚠️ ¡CAÍDA DETECTADA DE " + abueloNombre + "!";
+                                mensajeText = abueloNombre + ": " + (desc != null ? desc : "Caída detectada");
+                            } else if ("HOGAR".equalsIgnoreCase(tipo)) {
+                                tituloFinal = "🏠 ¡ALERTA EN EL HOGAR!";
+                                toastText = "🏠 ¡ALERTA EN EL HOGAR DE " + abueloNombre + "!";
+                                mensajeText = abueloNombre + ": " + (desc != null ? desc : "Evento del hogar");
+                            } else {
+                                tituloFinal = tituloDoc != null ? tituloDoc : "⚠️ Alerta";
+                                toastText = "⚠️ Alerta de " + abueloNombre;
+                                mensajeText = abueloNombre + ": " + (desc != null ? desc : "Evento detectado");
+                            }
+
+                            NotificationHelper.notificarAlertaCuidadorConId(this, docId, tipo, tituloFinal, mensajeText);
+                            Toast.makeText(this, toastText, Toast.LENGTH_LONG).show();
                         }
                     }
                 }
@@ -142,26 +204,45 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.btnNavSalir).setOnClickListener(v -> mostrarDialogoSalirOCerrarSesion(p));
     }
 
-    // --- Diálogo emergente para Cerrar Sesión vs Salir de la App ---
+    // --- Diálogo emergente estilizado para Cerrar Sesión vs Salir de la App ---
     private void mostrarDialogoSalirOCerrarSesion(SharedPreferences p) {
-        new androidx.appcompat.app.AlertDialog.Builder(this)
-                .setTitle("Opciones de Sesión")
-                .setMessage("¿Qué deseas hacer?")
-                .setPositiveButton("Cerrar Sesión", (dialog, which) -> {
-                    p.edit()
-                     .putBoolean("isLoggedIn", false)
-                     .remove("password")
-                     .apply();
-                    Intent intent = new Intent(this, LoginActivity.class);
-                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                    startActivity(intent);
-                    finish();
-                })
-                .setNeutralButton("Salir de la App", (dialog, which) -> {
-                    finishAffinity();
-                })
-                .setNegativeButton("Cancelar", null)
-                .show();
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_opciones_sesion, null);
+
+        androidx.appcompat.app.AlertDialog dialog = new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setView(dialogView)
+                .create();
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+
+        View btnCerrarSesion = dialogView.findViewById(R.id.btnDialogCerrarSesion);
+        View btnSalirApp = dialogView.findViewById(R.id.btnDialogSalirApp);
+        View btnCancelar = dialogView.findViewById(R.id.btnDialogCancelar);
+
+        if (btnCerrarSesion != null) {
+            btnCerrarSesion.setOnClickListener(v -> {
+                dialog.dismiss();
+                p.edit().putBoolean("isLoggedIn", false).remove("password").apply();
+                Intent intent = new Intent(this, LoginActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(intent);
+                finish();
+            });
+        }
+
+        if (btnSalirApp != null) {
+            btnSalirApp.setOnClickListener(v -> {
+                dialog.dismiss();
+                finishAffinity();
+            });
+        }
+
+        if (btnCancelar != null) {
+            btnCancelar.setOnClickListener(v -> dialog.dismiss());
+        }
+
+        dialog.show();
     }
 
     // --- Recarga de la actividad ---
