@@ -16,7 +16,7 @@ import java.util.Objects;
 
 /**
  * Adaptador de RecyclerView para administrar la visualización y acciones del plan diario de medicamentos.
- * Muestra el horario del medicamento en verde al ser tomado sin texto adicional.
+ * En la vista del Cuidador, al tomarse el remedio, muestra la hora cargada en color verde con fondo verde suave.
  */
 public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.MedViewHolder> {
 
@@ -67,17 +67,21 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
         Medication m = items.get(position);
 
         holder.tvNombre.setText(m.getNombre());
-        
-        // Muestra exclusivamente la hora cargada (ej. "10:49") sin ticks ni palabras agregadas
-        holder.tvBadge.setText(m.getHora());
 
         if (m.isTaken()) {
-            // Remedio tomado: Texto de la hora en color verde con fondo verde suave
             holder.tvBadge.setBackgroundColor(Color.parseColor("#E6F4EA"));
-            holder.tvBadge.setTextColor(Color.parseColor("#10B981"));
+            if (esAbuelo) {
+                // Adulto Mayor: Muestra "Tomado" en verde oscuro
+                holder.tvBadge.setText(holder.itemView.getContext().getString(R.string.status_tomado));
+                holder.tvBadge.setTextColor(Color.parseColor("#137333"));
+            } else {
+                // Cuidador: Muestra la hora programada (ej. "10:49") en color VERDE con fondo verde suave
+                holder.tvBadge.setText(m.getHora());
+                holder.tvBadge.setTextColor(Color.parseColor("#10B981"));
+            }
             holder.btnTomar.setVisibility(View.GONE);
         } else {
-            // Remedio pendiente: Texto de la hora en color naranja/ámbar
+            holder.tvBadge.setText(m.getHora());
             holder.tvBadge.setBackgroundColor(Color.parseColor("#FFF9E6"));
             holder.tvBadge.setTextColor(Color.parseColor("#D97706"));
 
