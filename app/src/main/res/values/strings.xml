@@ -18,6 +18,13 @@
     <string name="go_to_login">¿Ya tiene cuenta? Inicie sesión</string>
     <string name="btn_continuar">CONTINUAR →</string>
     <string name="sub_paso2_datos">Paso 2: Completa tus datos</string>
+    <string name="forgot_password_prompt">¿Olvidó su contraseña?</string>
+    <string name="title_session_options">🔒 Opciones de Sesión</string>
+    <string name="sub_session_options">¿Qué deseas hacer a continuación?</string>
+    <string name="title_recovery_password">🔑 Recuperar Contraseña</string>
+    <string name="sub_recovery_password">Ingrese su correo registrado para recibir el enlace de restablecimiento.</string>
+    <string name="btn_submit_recovery">Enviar enlace de recuperación</string>
+    <string name="btn_cancel_recovery">Cancelar</string>
     <string name="btn_edit_contact">✏️ Editar</string>
     <string name="btn_delete_contact">🗑️ Eliminar</string>
     <string name="contact_placeholder_name_1">Nombre Contacto 1</string>

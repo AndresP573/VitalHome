@@ -8,13 +8,13 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.navigation.Navigation;
 import com.example.vitalhome.R;
 import androidx.lifecycle.ViewModelProvider;
 import com.example.vitalhome.ui.viewmodels.PulseraViewModel;
 
 /**
  * Fragmento que muestra los detalles de los signos vitales obtenidos desde la pulsera inteligente.
+ * Consulta y actualiza los signos vitales en vivo desde Cloud Firestore al abrir o reanudar la pantalla.
  */
 public class PulseraFragment extends Fragment {
 
@@ -42,5 +42,13 @@ public class PulseraFragment extends Fragment {
         }
         
         return v;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (viewModel != null) {
+            viewModel.cargarSignosVitalesDesdeFirestore();
+        }
     }
 }

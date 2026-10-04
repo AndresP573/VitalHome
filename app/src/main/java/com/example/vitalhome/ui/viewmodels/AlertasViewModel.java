@@ -16,10 +16,11 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 /**
  * ViewModel encargado de la gestión de la lista de eventos de alerta en la aplicación.
- * Sincroniza en tiempo real los eventos de alerta desde Cloud Firestore.
+ * Sincroniza en tiempo real y borra de forma atómica los eventos de alerta desde Cloud Firestore.
  */
 public class AlertasViewModel extends AndroidViewModel {
 
@@ -54,9 +55,8 @@ public class AlertasViewModel extends AndroidViewModel {
                         String detalleFinal = (abuelo != null ? abuelo + ": " : "") + (desc != null ? desc : "");
                         listaAlertas.add(new AlertEvent(tipo != null ? tipo : "ALERTA", detalleFinal, "Casa", hora));
                     }
-                    if (!listaAlertas.isEmpty()) {
-                        events.postValue(listaAlertas);
-                    }
+                    repo.saveEvents(listaAlertas);
+                    events.postValue(listaAlertas);
                 });
         } catch (Exception ignored) {}
     }
@@ -66,16 +66,39 @@ public class AlertasViewModel extends AndroidViewModel {
         return events;
     }
 
-    // --- Bloque 4: Operaciones de actualización y limpieza de eventos ---
+    // --- Bloque 4: Operaciones de actualización y limpieza atómica de eventos ---
     public void refresh() {
         if (events.getValue() == null || events.getValue().isEmpty()) {
             events.setValue(repo.getEvents());
         }
     }
 
+    /**
+     * Limpia completamente el historial de eventos localmente y elimina todos
+     * los documentos de la colección 'alerts' en Cloud Firestore para evitar la reaparición de datos.
+     */
     public void clearAll() {
         repo.saveEvents(new ArrayList<>());
-        events.setValue(new ArrayList<>());
+        events.postValue(new ArrayList<>());
+
+        try {
+            FirebaseFirestore db = FirebaseFirestore.getInstance("default");
+            db.collection("alerts").get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    if (queryDocumentSnapshots != null) {
+                        for (DocumentSnapshot doc : queryDocumentSnapshots.getDocuments()) {
+                            Map<String, Object> data = doc.getData();
+                            if (data != null) {
+                                data.put("archivedAt", new Date());
+                                db.collection("archive_alerts")
+                                    .document(doc.getId())
+                                    .set(data, com.google.firebase.firestore.SetOptions.merge());
+                            }
+                            doc.getReference().delete();
+                        }
+                    }
+                });
+        } catch (Exception ignored) {}
     }
 
     @Override

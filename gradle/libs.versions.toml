@@ -13,10 +13,12 @@ gson = "2.11.0"
 kotlinxSerialization = "1.11.0"
 googleGmsGoogleServices = "4.5.0"
 firebaseFirestore = "26.6.0"
+firebaseAuth = "23.2.0"
 
 room = "2.6.1"
 
 [libraries]
+firebase-auth = { group = "com.google.firebase", name = "firebase-auth", version.ref = "firebaseAuth" }
 room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
 room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }

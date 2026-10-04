@@ -102,7 +102,7 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center"
-            android:layout_marginBottom="24dp">
+            android:layout_marginBottom="16dp">
 
             <RadioButton
                 android:id="@+id/rbLoginAdulto"
@@ -123,6 +123,18 @@
                 android:textStyle="bold"
                 android:minHeight="48dp"/>
         </RadioGroup>
+
+        <TextView
+            android:id="@+id/tvForgotPassword"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:gravity="center"
+            android:text="@string/forgot_password_prompt"
+            android:textColor="#1457D9"
+            android:layout_marginBottom="16dp"
+            android:textStyle="bold"
+            android:textSize="15sp"/>
 
         <Button
             android:id="@+id/btnLogin"

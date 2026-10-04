@@ -65,14 +65,13 @@ public class DashboardCuidadorFragment extends Fragment {
         FirebaseFirestore db = FirebaseFirestore.getInstance("default");
 
         db.collection("users")
-            .whereEqualTo("rol", "cliente")
-            .get()
-            .addOnSuccessListener(queryDocumentSnapshots -> {
-                if (!isAdded() || queryDocumentSnapshots == null) return;
-                for (DocumentSnapshot doc : queryDocumentSnapshots) {
-                    String abueloDocId = doc.getId();
-                    escucharAlertasAbuelo(db, abueloDocId);
-                    break;
+            .addSnapshotListener((snapshots, e) -> {
+                if (e != null || snapshots == null || !isAdded()) return;
+                for (DocumentSnapshot doc : snapshots.getDocuments()) {
+                    String docRol = doc.getString("rol");
+                    if ("cliente".equals(docRol)) {
+                        escucharAlertasAbuelo(db, doc.getId());
+                    }
                 }
             });
     }
@@ -127,10 +126,6 @@ public class DashboardCuidadorFragment extends Fragment {
 
         v.findViewById(R.id.cardMeds).setOnClickListener(x -> 
             Navigation.findNavController(x).navigate(R.id.nav_medicamentos)
-        );
-
-        v.findViewById(R.id.btnHogar).setOnClickListener(x -> 
-            Navigation.findNavController(x).navigate(R.id.nav_hogar)
         );
 
         v.findViewById(R.id.btnHistorialMedico).setOnClickListener(x -> 

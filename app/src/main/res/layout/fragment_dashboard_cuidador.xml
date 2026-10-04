@@ -137,28 +137,14 @@
         <Button
             android:id="@+id/btnHistorialMedico"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="58dp"
             android:layout_marginTop="24dp"
             android:backgroundTint="#1457D9"
-            android:padding="18dp"
             android:text="@string/btn_medical_history"
             android:textColor="#FFFFFF"
-            android:textSize="18sp"
+            android:textSize="17sp"
             android:textStyle="bold"
-            app:cornerRadius="18dp" />
-
-        <Button
-            android:id="@+id/btnHogar"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:backgroundTint="#2F7CF6"
-            android:padding="18dp"
-            android:text="@string/btn_home_activity"
-            android:textColor="#FFFFFF"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            app:cornerRadius="18dp" />
+            app:cornerRadius="16dp" />
 
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>

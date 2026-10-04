@@ -4,12 +4,12 @@ import android.content.Context;
 import androidx.room.Database;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
-import com.example.vitalhome.data.dao.AlertEventDao;
-import com.example.vitalhome.data.dao.CaregiverPatientRelationDao;
-import com.example.vitalhome.data.dao.MedicalRecordDao;
-import com.example.vitalhome.data.dao.MedicationDao;
-import com.example.vitalhome.data.dao.UserDao;
-import com.example.vitalhome.data.dao.VitalSignsDao;
+import com.example.vitalhome.data.local.dao.AlertEventDao;
+import com.example.vitalhome.data.local.dao.CaregiverPatientRelationDao;
+import com.example.vitalhome.data.local.dao.MedicalRecordDao;
+import com.example.vitalhome.data.local.dao.MedicationDao;
+import com.example.vitalhome.data.local.dao.UserDao;
+import com.example.vitalhome.data.local.dao.VitalSignsDao;
 
 @Database(
     entities = {
