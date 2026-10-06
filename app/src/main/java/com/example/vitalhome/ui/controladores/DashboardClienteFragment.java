@@ -160,6 +160,9 @@ public class DashboardClienteFragment extends Fragment implements MedicationAdap
         v.findViewById(R.id.btnTabInicio).setOnClickListener(view -> viewModel.setTab(1));
         v.findViewById(R.id.btnTabMedicamentos).setOnClickListener(view -> viewModel.setTab(2));
         v.findViewById(R.id.btnTabContactos).setOnClickListener(view -> viewModel.setTab(3));
+        v.findViewById(R.id.btnTabAsistente).setOnClickListener(view -> 
+            Navigation.findNavController(view).navigate(R.id.nav_asistente)
+        );
 
         // Flecha de navegación "volver atrás" en las cabeceras de Remedios y Contactos
         View btnBackRemedios = v.findViewById(R.id.btnBackArrowRemedios);

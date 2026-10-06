@@ -707,6 +707,32 @@
                     android:textColor="#62708A" />
             </LinearLayout>
 
+            <LinearLayout
+                android:id="@+id/btnTabAsistente"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackground">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🤖"
+                    android:textSize="24sp"
+                    android:importantForAccessibility="no" />
+                <TextView
+                    android:id="@+id/tvTabAsistenteLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/tab_asistente"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:textColor="#62708A" />
+            </LinearLayout>
+
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 

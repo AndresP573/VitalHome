@@ -191,8 +191,12 @@ public class MedicamentosViewModel extends AndroidViewModel {
             List<Medication> nuevaLista = new ArrayList<>();
             if (listaBase != null) {
                 for (Medication item : listaBase) {
-                    if (item != null && !Objects.equals(item.getId(), m.getId())) {
-                        nuevaLista.add(item);
+                    if (item != null) {
+                        if (Objects.equals(item.getId(), m.getId())) {
+                            nuevaLista.add(new Medication(item.getId(), item.getNombre(), item.getHora(), true));
+                        } else {
+                            nuevaLista.add(item);
+                        }
                     }
                 }
             }
@@ -203,15 +207,18 @@ public class MedicamentosViewModel extends AndroidViewModel {
             } catch (Exception ignored) {}
 
             try {
+                Map<String, Object> updateData = new HashMap<>();
+                updateData.put("taken", true);
+
                 FirebaseFirestore.getInstance("default")
                     .collection("medications")
                     .document(m.getId())
-                    .delete();
+                    .set(updateData, SetOptions.merge());
             } catch (Exception ignored) {}
 
             cargarPlan();
         } catch (Exception e) {
-            Log.e("MedicamentosVM", "Error eliminando medicamento tomado", e);
+            Log.e("MedicamentosVM", "Error marcando medicamento como tomado", e);
         }
     }
 
@@ -223,6 +230,17 @@ public class MedicamentosViewModel extends AndroidViewModel {
         try {
             repo.saveMeds(new ArrayList<>());
             plan.postValue(new ArrayList<>());
+
+            try {
+                FirebaseFirestore db = FirebaseFirestore.getInstance("default");
+                db.collection("medications").get().addOnSuccessListener(snapshots -> {
+                    if (snapshots != null) {
+                        for (DocumentSnapshot doc : snapshots.getDocuments()) {
+                            db.collection("medications").document(doc.getId()).delete();
+                        }
+                    }
+                });
+            } catch (Exception ignored) {}
 
             SharedPreferences p = getApplication().getSharedPreferences("VitalHomePrefs", Context.MODE_PRIVATE);
             p.edit().putLong("limpieza_timestamp", System.currentTimeMillis()).apply();

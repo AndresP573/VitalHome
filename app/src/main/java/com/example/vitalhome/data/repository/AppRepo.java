@@ -123,4 +123,16 @@ public class AppRepo {
             }
         } catch (Exception ignored) {}
     }
+
+    // --- Persistencia de Historial de Chat ---
+    public String getChatHistory() {
+        if (p == null) return "¡Hola! Soy VitalBot 🤖\n¿En qué te puedo ayudar hoy sobre tus medicamentos, recordatorios o el estado de tu hogar?";
+        return p.getString("chat_history_transcript", "¡Hola! Soy VitalBot 🤖\n¿En qué te puedo ayudar hoy sobre tus medicamentos, recordatorios o el estado de tu hogar?");
+    }
+
+    public void saveChatHistory(String transcript) {
+        if (p != null) {
+            p.edit().putString("chat_history_transcript", transcript).apply();
+        }
+    }
 }

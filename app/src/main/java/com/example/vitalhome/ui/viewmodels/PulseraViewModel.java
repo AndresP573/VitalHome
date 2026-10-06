@@ -49,51 +49,23 @@ public class PulseraViewModel extends AndroidViewModel {
 
     public void cargarSignosVitalesDesdeFirestore() {
         try {
-            FirebaseFirestore db = FirebaseFirestore.getInstance();
-
-            // 1. Consulta directa inmediata sobre 'vitals/latest'
+            FirebaseFirestore db = FirebaseFirestore.getInstance("default");
             db.collection("vitals").document("latest").get()
                 .addOnSuccessListener(doc -> {
                     if (doc != null && doc.exists()) {
                         actualizarVitalsDesdeDoc(doc);
                     }
                 });
-
-            // 2. Buscar en la colección 'users' para paciente cliente
-            db.collection("users").get().addOnSuccessListener(snapshots -> {
-                if (snapshots != null) {
-                    for (DocumentSnapshot uDoc : snapshots.getDocuments()) {
-                        String docRol = uDoc.getString("rol");
-                        if ("cliente".equals(docRol) || (!"cuidador".equals(docRol) && uDoc.exists())) {
-                            actualizarVitalsDesdeDoc(uDoc);
-                        }
-                    }
-                }
-            });
         } catch (Exception ignored) {}
     }
 
     private void escucharSignosVitalesEnVivo() {
         try {
             FirebaseFirestore db = FirebaseFirestore.getInstance("default");
-
-            // 1. Escuchar la colección global 'vitals/latest'
-            db.collection("vitals").document("latest")
+            vitalsListener = db.collection("vitals").document("latest")
                 .addSnapshotListener((doc, e) -> {
                     if (e != null || doc == null || !doc.exists()) return;
                     actualizarVitalsDesdeDoc(doc);
-                });
-
-            // 2. Escuchar la colección 'users' en tiempo real
-            vitalsListener = db.collection("users")
-                .addSnapshotListener((snapshots, e) -> {
-                    if (e != null || snapshots == null) return;
-                    for (DocumentSnapshot doc : snapshots.getDocuments()) {
-                        String docRol = doc.getString("rol");
-                        if ("cliente".equals(docRol) || (!"cuidador".equals(docRol) && doc.exists())) {
-                            actualizarVitalsDesdeDoc(doc);
-                        }
-                    }
                 });
         } catch (Exception ignored) {}
     }

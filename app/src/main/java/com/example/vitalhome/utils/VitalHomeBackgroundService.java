@@ -80,55 +80,69 @@ public class VitalHomeBackgroundService extends Service {
 
         if (!"cuidador".equals(rol)) return;
 
+        if (com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser() == null) {
+            com.google.firebase.auth.FirebaseAuth.getInstance().signInAnonymously();
+        }
+
         try {
             FirebaseFirestore db = FirebaseFirestore.getInstance("default");
             alertListener = db.collection("alerts")
                     .whereEqualTo("resuelto", false)
-                    .addSnapshotListener((snapshots, e) -> {
-                        if (e != null || snapshots == null) return;
+                    .addSnapshotListener(new com.google.firebase.firestore.EventListener<com.google.firebase.firestore.QuerySnapshot>() {
+                        private boolean initialLoadDone = false;
 
-                        for (DocumentChange dc : snapshots.getDocumentChanges()) {
-                            if (dc.getType() == DocumentChange.Type.ADDED) {
-                                String docId = dc.getDocument().getId();
-                                boolean isLocal = dc.getDocument().getMetadata().hasPendingWrites();
+                        @Override
+                        public void onEvent(@Nullable com.google.firebase.firestore.QuerySnapshot snapshots, @Nullable com.google.firebase.firestore.FirebaseFirestoreException e) {
+                            if (e != null || snapshots == null) return;
 
-                                // Marcar inmediatamente como resuelto en Firestore para descartar duplicados y registros antiguos
-                                db.collection("alerts").document(docId).update("resuelto", true);
+                            if (!initialLoadDone) {
+                                initialLoadDone = true;
+                                for (com.google.firebase.firestore.DocumentSnapshot doc : snapshots.getDocuments()) {
+                                    alertIdsNotificadas.add(doc.getId());
+                                }
+                                return;
+                            }
 
-                                String tipo = dc.getDocument().getString("tipo");
-                                String tituloDoc = dc.getDocument().getString("titulo");
-                                String desc = dc.getDocument().getString("descripcion");
-                                String abuelo = dc.getDocument().getString("pacienteNombre");
-                                String abueloNombre = abuelo != null ? abuelo : "Tu familiar";
-                                Date ts = dc.getDocument().getDate("timestamp");
+                            for (DocumentChange dc : snapshots.getDocumentChanges()) {
+                                if (dc.getType() == DocumentChange.Type.ADDED) {
+                                    String docId = dc.getDocument().getId();
+                                    boolean isLocal = dc.getDocument().getMetadata().hasPendingWrites();
 
-                                boolean esEmergenciaCritica = "SOS".equalsIgnoreCase(tipo) || "CAIDA".equalsIgnoreCase(tipo) || "FUEGO".equalsIgnoreCase(tipo) || "HOGAR".equalsIgnoreCase(tipo) || "MEDICINA".equalsIgnoreCase(tipo);
-                                boolean esReciente = ts != null && (System.currentTimeMillis() - ts.getTime() < 60000); // Creado en el último minuto
+                                    String tipo = dc.getDocument().getString("tipo");
+                                    String tituloDoc = dc.getDocument().getString("titulo");
+                                    String desc = dc.getDocument().getString("descripcion");
+                                    String abuelo = dc.getDocument().getString("pacienteNombre");
+                                    String abueloNombre = abuelo != null ? abuelo : "Tu familiar";
+                                    Date ts = dc.getDocument().getDate("timestamp");
 
-                                if (!isLocal && !alertIdsNotificadas.contains(docId) && esEmergenciaCritica && esReciente) {
-                                    alertIdsNotificadas.add(docId);
+                                    boolean esEmergenciaCritica = "SOS".equalsIgnoreCase(tipo) || "CAIDA".equalsIgnoreCase(tipo) || "FUEGO".equalsIgnoreCase(tipo) || "HOGAR".equalsIgnoreCase(tipo) || "MEDICINA".equalsIgnoreCase(tipo) || "SALUD".equalsIgnoreCase(tipo);
+                                    boolean esReciente = ts != null && (Math.abs(System.currentTimeMillis() - ts.getTime()) < 600000); // Creado en los últimos 10 minutos
 
-                                    String tituloFinal;
-                                    String mensajeText;
+                                    if (!isLocal && !alertIdsNotificadas.contains(docId) && esEmergenciaCritica && esReciente) {
+                                        alertIdsNotificadas.add(docId);
 
-                                    if ("MEDICINA".equalsIgnoreCase(tipo)) {
-                                        tituloFinal = "✅ Medicamento Tomado";
-                                        mensajeText = desc != null ? desc : "Medicamento tomado";
-                                    } else if ("SOS".equalsIgnoreCase(tipo)) {
-                                        tituloFinal = "🚨 ALERTA SOS";
-                                        mensajeText = abueloNombre + ": " + (desc != null ? desc : "Emergencia SOS");
-                                    } else if ("CAIDA".equalsIgnoreCase(tipo)) {
-                                        tituloFinal = "⚠️ ¡ALERTA DE CAÍDA!";
-                                        mensajeText = abueloNombre + ": " + (desc != null ? desc : "Caída detectada");
-                                    } else if ("HOGAR".equalsIgnoreCase(tipo)) {
-                                        tituloFinal = "🏠 ¡ALERTA EN EL HOGAR!";
-                                        mensajeText = abueloNombre + ": " + (desc != null ? desc : "Evento del hogar");
-                                    } else {
-                                        tituloFinal = tituloDoc != null ? tituloDoc : "⚠️ Alerta";
-                                        mensajeText = abueloNombre + ": " + (desc != null ? desc : "Evento detectado");
+                                        String tituloFinal;
+                                        String mensajeText;
+
+                                        if ("MEDICINA".equalsIgnoreCase(tipo)) {
+                                            tituloFinal = "✅ Medicamento Tomado";
+                                            mensajeText = desc != null ? desc : "Medicamento tomado";
+                                        } else if ("SOS".equalsIgnoreCase(tipo)) {
+                                            tituloFinal = "🚨 ALERTA SOS";
+                                            mensajeText = abueloNombre + ": " + (desc != null ? desc : "Emergencia SOS");
+                                        } else if ("CAIDA".equalsIgnoreCase(tipo)) {
+                                            tituloFinal = "⚠️ ¡ALERTA DE CAÍDA!";
+                                            mensajeText = abueloNombre + ": " + (desc != null ? desc : "Caída detectada");
+                                        } else if ("HOGAR".equalsIgnoreCase(tipo)) {
+                                            tituloFinal = "🏠 ¡ALERTA EN EL HOGAR!";
+                                            mensajeText = abueloNombre + ": " + (desc != null ? desc : "Evento del hogar");
+                                        } else {
+                                            tituloFinal = tituloDoc != null ? tituloDoc : "⚠️ Alerta";
+                                            mensajeText = abueloNombre + ": " + (desc != null ? desc : "Evento detectado");
+                                        }
+
+                                        NotificationHelper.notificarAlertaCuidadorConId(VitalHomeBackgroundService.this, docId, tipo, tituloFinal, mensajeText);
                                     }
-
-                                    NotificationHelper.notificarAlertaCuidadorConId(this, docId, tipo, tituloFinal, mensajeText);
                                 }
                             }
                         }

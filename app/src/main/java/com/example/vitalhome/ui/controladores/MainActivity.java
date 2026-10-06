@@ -21,9 +21,8 @@ import com.example.vitalhome.utils.VitalHomeBackgroundService;
 import com.google.firebase.firestore.DocumentChange;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
-//testeo de la IA
-import com.example.vitalhome.service.GeminiService;
 import android.util.Log;
+import androidx.annotation.Nullable;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
@@ -51,6 +50,10 @@ public class MainActivity extends AppCompatActivity {
         SharedPreferences p = getSharedPreferences("VitalHomePrefs", MODE_PRIVATE);
         String rol = p.getString("rol", "cuidador");
 
+        if (com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser() == null) {
+            com.google.firebase.auth.FirebaseAuth.getInstance().signInAnonymously();
+        }
+
         View nav = findViewById(R.id.nav_container);
 
         NavHostFragment host = (NavHostFragment) getSupportFragmentManager()
@@ -59,8 +62,16 @@ public class MainActivity extends AppCompatActivity {
         if (host != null) {
             NavController controller = host.getNavController();
 
-            // Configuración de barra de navegación para ambos roles
-            if (nav != null) nav.setVisibility(View.VISIBLE);
+            // Configuración dinámica de barra de navegación según rol y destino
+            controller.addOnDestinationChangedListener((navController, destination, arguments) -> {
+                if (nav != null) {
+                    if ("cliente".equals(p.getString("rol", "cuidador")) || destination.getId() == R.id.nav_asistente) {
+                        nav.setVisibility(View.GONE);
+                    } else {
+                        nav.setVisibility(View.VISIBLE);
+                    }
+                }
+            });
             configurarNav(controller, p);
 
             // Armado del grafo de navegación
@@ -100,21 +111,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
         }
-        // --- PRUEBA DE GEMINI IA ---
-        GeminiService geminiService = new GeminiService();
-        geminiService.sendMessage("Hola, responde en una frase corta confirmando que estas funcionando.", new GeminiService.GeminiCallback() {
-            @Override
-            public void onSuccess(String responseText) {
-                Log.d("GEMINI_TEST", "¡ÉXITO! Respuesta: " + responseText);
-                Toast.makeText(MainActivity.this, "IA: " + responseText, Toast.LENGTH_LONG).show();
-            }
 
-            @Override
-            public void onError(String error) {
-                Log.e("GEMINI_TEST", "ERROR: " + error);
-                Toast.makeText(MainActivity.this, "Error IA: " + error, Toast.LENGTH_LONG).show();
-            }
-        });
     }
 
     private void iniciarServicioSegundoPlano(String rol) {
@@ -138,63 +135,74 @@ public class MainActivity extends AppCompatActivity {
 
         globalAlertListener = db.collection("alerts")
             .whereEqualTo("resuelto", false)
-            .addSnapshotListener((snapshots, e) -> {
-                if (e != null || snapshots == null) return;
+            .addSnapshotListener(new com.google.firebase.firestore.EventListener<com.google.firebase.firestore.QuerySnapshot>() {
+                private boolean initialLoadDone = false;
 
-                SharedPreferences p = getSharedPreferences("VitalHomePrefs", MODE_PRIVATE);
-                Set<String> yaNotificadas = new HashSet<>(p.getStringSet("alertas_notificadas_ids", new HashSet<>()));
+                @Override
+                public void onEvent(@Nullable com.google.firebase.firestore.QuerySnapshot snapshots, @Nullable com.google.firebase.firestore.FirebaseFirestoreException e) {
+                    if (e != null || snapshots == null) return;
 
-                for (DocumentChange dc : snapshots.getDocumentChanges()) {
-                    if (dc.getType() == DocumentChange.Type.ADDED) {
-                        String docId = dc.getDocument().getId();
-                        boolean isLocal = dc.getDocument().getMetadata().hasPendingWrites();
+                    SharedPreferences p = getSharedPreferences("VitalHomePrefs", MODE_PRIVATE);
+                    Set<String> yaNotificadas = new HashSet<>(p.getStringSet("alertas_notificadas_ids", new HashSet<>()));
 
-                        // Marcar inmediatamente como resuelto en Firestore para descartar duplicados y registros antiguos
-                        db.collection("alerts").document(docId).update("resuelto", true);
+                    if (!initialLoadDone) {
+                        initialLoadDone = true;
+                        for (com.google.firebase.firestore.DocumentSnapshot doc : snapshots.getDocuments()) {
+                            yaNotificadas.add(doc.getId());
+                        }
+                        p.edit().putStringSet("alertas_notificadas_ids", yaNotificadas).apply();
+                        return;
+                    }
 
-                        String tipo = dc.getDocument().getString("tipo");
-                        String tituloDoc = dc.getDocument().getString("titulo");
-                        String desc = dc.getDocument().getString("descripcion");
-                        String abuelo = dc.getDocument().getString("pacienteNombre");
-                        String abueloNombre = java.util.Objects.requireNonNullElse(abuelo, "Tu familiar");
-                        Date ts = dc.getDocument().getDate("timestamp");
+                    for (DocumentChange dc : snapshots.getDocumentChanges()) {
+                        if (dc.getType() == DocumentChange.Type.ADDED) {
+                            String docId = dc.getDocument().getId();
+                            boolean isLocal = dc.getDocument().getMetadata().hasPendingWrites();
 
-                        // Solo mostrar Toast y sonido para emergencias recientes creadas en el último minuto
-                        boolean esCritica = "SOS".equalsIgnoreCase(tipo) || "CAIDA".equalsIgnoreCase(tipo) || "FUEGO".equalsIgnoreCase(tipo) || "HOGAR".equalsIgnoreCase(tipo) || "MEDICINA".equalsIgnoreCase(tipo);
-                        boolean esReciente = ts != null && (System.currentTimeMillis() - ts.getTime() < 60000);
+                            String tipo = dc.getDocument().getString("tipo");
+                            String tituloDoc = dc.getDocument().getString("titulo");
+                            String desc = dc.getDocument().getString("descripcion");
+                            String abuelo = dc.getDocument().getString("pacienteNombre");
+                            String abueloNombre = java.util.Objects.requireNonNullElse(abuelo, "Tu familiar");
+                            Date ts = dc.getDocument().getDate("timestamp");
 
-                        if (!isLocal && !yaNotificadas.contains(docId) && esCritica && esReciente) {
-                            yaNotificadas.add(docId);
-                            p.edit().putStringSet("alertas_notificadas_ids", yaNotificadas).apply();
+                            // Solo mostrar Toast y sonido para emergencias recientes creadas en los últimos 10 minutos
+                            boolean esCritica = "SOS".equalsIgnoreCase(tipo) || "CAIDA".equalsIgnoreCase(tipo) || "FUEGO".equalsIgnoreCase(tipo) || "HOGAR".equalsIgnoreCase(tipo) || "MEDICINA".equalsIgnoreCase(tipo) || "SALUD".equalsIgnoreCase(tipo);
+                            boolean esReciente = ts != null && (Math.abs(System.currentTimeMillis() - ts.getTime()) < 600000);
 
-                            String tituloFinal;
-                            String toastText;
-                            String mensajeText;
+                            if (!isLocal && !yaNotificadas.contains(docId) && esCritica && esReciente) {
+                                yaNotificadas.add(docId);
+                                p.edit().putStringSet("alertas_notificadas_ids", yaNotificadas).apply();
 
-                            if ("MEDICINA".equalsIgnoreCase(tipo)) {
-                                tituloFinal = "✅ Medicamento Tomado";
-                                toastText = "✅ Medicamento Tomado";
-                                mensajeText = desc != null ? desc : "Medicamento tomado";
-                            } else if ("SOS".equalsIgnoreCase(tipo)) {
-                                tituloFinal = "🚨 ALERTA SOS";
-                                toastText = "🚨 ¡ALERTA SOS DE " + abueloNombre + "!";
-                                mensajeText = abueloNombre + ": " + (desc != null ? desc : "Emergencia SOS");
-                            } else if ("CAIDA".equalsIgnoreCase(tipo)) {
-                                tituloFinal = "⚠️ ¡ALERTA DE CAÍDA!";
-                                toastText = "⚠️ ¡CAÍDA DETECTADA DE " + abueloNombre + "!";
-                                mensajeText = abueloNombre + ": " + (desc != null ? desc : "Caída detectada");
-                            } else if ("HOGAR".equalsIgnoreCase(tipo)) {
-                                tituloFinal = "🏠 ¡ALERTA EN EL HOGAR!";
-                                toastText = "🏠 ¡ALERTA EN EL HOGAR DE " + abueloNombre + "!";
-                                mensajeText = abueloNombre + ": " + (desc != null ? desc : "Evento del hogar");
-                            } else {
-                                tituloFinal = tituloDoc != null ? tituloDoc : "⚠️ Alerta";
-                                toastText = "⚠️ Alerta de " + abueloNombre;
-                                mensajeText = abueloNombre + ": " + (desc != null ? desc : "Evento detectado");
+                                String tituloFinal;
+                                String toastText;
+                                String mensajeText;
+
+                                if ("MEDICINA".equalsIgnoreCase(tipo)) {
+                                    tituloFinal = "✅ Medicamento Tomado";
+                                    toastText = "✅ Medicamento Tomado";
+                                    mensajeText = desc != null ? desc : "Medicamento tomado";
+                                } else if ("SOS".equalsIgnoreCase(tipo)) {
+                                    tituloFinal = "🚨 ALERTA SOS";
+                                    toastText = "🚨 ¡ALERTA SOS DE " + abueloNombre + "!";
+                                    mensajeText = abueloNombre + ": " + (desc != null ? desc : "Emergencia SOS");
+                                } else if ("CAIDA".equalsIgnoreCase(tipo)) {
+                                    tituloFinal = "⚠️ ¡ALERTA DE CAÍDA!";
+                                    toastText = "⚠️ ¡CAÍDA DETECTADA DE " + abueloNombre + "!";
+                                    mensajeText = abueloNombre + ": " + (desc != null ? desc : "Caída detectada");
+                                } else if ("HOGAR".equalsIgnoreCase(tipo)) {
+                                    tituloFinal = "🏠 ¡ALERTA EN EL HOGAR!";
+                                    toastText = "🏠 ¡ALERTA EN EL HOGAR DE " + abueloNombre + "!";
+                                    mensajeText = abueloNombre + ": " + (desc != null ? desc : "Evento del hogar");
+                                } else {
+                                    tituloFinal = tituloDoc != null ? tituloDoc : "⚠️ Alerta";
+                                    toastText = "⚠️ Alerta de " + abueloNombre;
+                                    mensajeText = abueloNombre + ": " + (desc != null ? desc : "Evento detectado");
+                                }
+
+                                NotificationHelper.notificarAlertaCuidadorConId(MainActivity.this, docId, tipo, tituloFinal, mensajeText);
+                                Toast.makeText(MainActivity.this, toastText, Toast.LENGTH_LONG).show();
                             }
-
-                            NotificationHelper.notificarAlertaCuidadorConId(this, docId, tipo, tituloFinal, mensajeText);
-                            Toast.makeText(this, toastText, Toast.LENGTH_LONG).show();
                         }
                     }
                 }

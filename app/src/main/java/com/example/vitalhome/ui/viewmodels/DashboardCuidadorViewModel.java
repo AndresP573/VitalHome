@@ -48,51 +48,53 @@ public class DashboardCuidadorViewModel extends AndroidViewModel {
     public void vincularYEscucharPacienteEspecifico() {
         try {
             FirebaseFirestore db = FirebaseFirestore.getInstance("default");
-
-            // Escuchar todos los documentos en 'users' para evitar requerir índices compuestos en Firestore
             db.collection("users")
+                .whereEqualTo("rol", "cliente")
                 .addSnapshotListener((snapshots, e) -> {
-                    if (e != null || snapshots == null) return;
+                    if (e != null || snapshots == null || snapshots.isEmpty()) return;
                     for (DocumentSnapshot doc : snapshots.getDocuments()) {
-                        String docRol = doc.getString("rol");
-                        // Si es cliente o no es cuidador, lo consideramos el adulto mayor vinculado
-                        if ("cliente".equalsIgnoreCase(docRol) || (!"cuidador".equalsIgnoreCase(docRol) && doc.exists())) {
-
-                            String abueloNombre = doc.getString("nombre");
-                            if (abueloNombre != null && !abueloNombre.isEmpty()) {
-                                nombreAdultoMayor.postValue(abueloNombre);
-                                prefs.edit().putString("nombreAdultoMayor", abueloNombre).apply();
-                            }
-
-                            Object p = null, o = null, pres = null;
-
-                            if (doc.contains("ultimosSignosVitales")) {
-                                Object obj = doc.get("ultimosSignosVitales");
-                                if (obj instanceof Map) {
-                                    Map<?, ?> map = (Map<?, ?>) obj;
-                                    p = map.get("pulso");
-                                    o = map.get("oxigeno");
-                                    pres = map.get("presion");
-                                }
-                            }
-
-                            if (p == null) p = doc.get("pulso");
-                            if (o == null) o = doc.get("oxigeno");
-                            if (pres == null) pres = doc.get("presion");
-
-                            if (p != null || o != null || pres != null) {
-                                String pStr = (p != null) ? (p.toString().contains("LPM") ? p.toString() : p + " LPM") : "-- LPM";
-                                String oStr = (o != null) ? (o.toString().contains("%") ? o.toString() : o + "%") : "--%";
-                                String presStr = (pres != null) ? String.valueOf(pres) : "--/--";
-
-                                String res = "Pulso: " + pStr + " | O2: " + oStr + " | Presión: " + presStr;
-                                vitalsSummary.postValue(res);
-                            }
+                        if (doc != null && doc.exists()) {
+                            procesarDocPaciente(doc);
                             break;
                         }
                     }
                 });
         } catch (Exception ignored) {}
+    }
+
+    private void procesarDocPaciente(DocumentSnapshot doc) {
+        if (doc == null || !doc.exists()) return;
+
+        String abueloNombre = doc.getString("nombre");
+        if (abueloNombre != null && !abueloNombre.isEmpty()) {
+            nombreAdultoMayor.postValue(abueloNombre);
+            prefs.edit().putString("nombreAdultoMayor", abueloNombre).apply();
+        }
+
+        Object p = null, o = null, pres = null;
+
+        if (doc.contains("ultimosSignosVitales")) {
+            Object obj = doc.get("ultimosSignosVitales");
+            if (obj instanceof Map) {
+                Map<?, ?> map = (Map<?, ?>) obj;
+                p = map.get("pulso");
+                o = map.get("oxigeno");
+                pres = map.get("presion");
+            }
+        }
+
+        if (p == null) p = doc.get("pulso");
+        if (o == null) o = doc.get("oxigeno");
+        if (pres == null) pres = doc.get("presion");
+
+        if (p != null || o != null || pres != null) {
+            String pStr = (p != null) ? (p.toString().contains("LPM") ? p.toString() : p + " LPM") : "-- LPM";
+            String oStr = (o != null) ? (o.toString().contains("%") ? o.toString() : o + "%") : "--%";
+            String presStr = (pres != null) ? String.valueOf(pres) : "--/--";
+
+            String res = "Pulso: " + pStr + " | O2: " + oStr + " | Presión: " + presStr;
+            vitalsSummary.postValue(res);
+        }
     }
 
     // --- Bloque 4: Métodos Getters para LiveData ---

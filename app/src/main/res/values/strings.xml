@@ -47,6 +47,8 @@
     <string name="msg_alertas_limpias">Historial de alertas limpiado.</string>
     <string name="msg_llamando_a">Llamando a: %1$s (%2$s)&#8230;</string>
     <string name="msg_llamando_cuidador">Llamando a su cuidador...</string>
+    <string name="active_monitoring_title">🛡️ Monitoreo Activo</string>
+    <string name="active_monitoring_desc">Las alertas SOS y eventos de salud se supervisan en segundo plano en tiempo real.</string>
 
     <!-- Saludos y etiquetas formateadas -->
     <string name="greeting_hello">Hola, %1$s</string>
@@ -88,6 +90,7 @@
     <string name="tab_inicio">INICIO</string>
     <string name="tab_remedios">REMEDIOS</string>
     <string name="tab_contactos">CONTACTOS</string>
+    <string name="tab_asistente">ASISTENTE</string>
 
     <!-- Cuenta regresiva SOS -->
     <string name="btn_back_description">Volver</string>
