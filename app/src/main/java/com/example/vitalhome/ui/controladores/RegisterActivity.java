@@ -85,7 +85,7 @@ public class RegisterActivity extends AppCompatActivity {
         setContentView(R.layout.activity_register);
 
         // Inicializar Firestore para verificación y registro
-        db = FirebaseFirestore.getInstance();
+        db = FirebaseFirestore.getInstance("default");
 
         // --- Bindeo de contenedores del Wizard por pasos ---
         LinearLayout layoutPaso1 = findViewById(R.id.layoutPaso1);
@@ -381,13 +381,33 @@ public class RegisterActivity extends AppCompatActivity {
         // 1. Guardar localmente en Room (SQLite)
         AppExecutors.getInstance().diskIO().execute(() -> AppDatabase.getInstance(getApplicationContext()).userDao().insert(userEntity));
 
-        // 2. Autenticar previamente en Firebase Auth para cumplir con las reglas de seguridad de Firestore
+        // 2. Autenticar previamente en Firebase Auth para cumplir con las reglas de seguridad de Firestore y sincronizar
         FirebaseAuth auth = FirebaseAuth.getInstance();
         auth.createUserWithEmailAndPassword(e, p)
-            .addOnCompleteListener(task -> new UserRepository().syncUserToFirestore(userEntity))
-            .addOnFailureListener(ex -> auth.signInWithEmailAndPassword(e, p)
-                .addOnCompleteListener(signInTask -> new UserRepository().syncUserToFirestore(userEntity))
-                .addOnFailureListener(err -> auth.signInAnonymously().addOnCompleteListener(anonTask -> new UserRepository().syncUserToFirestore(userEntity))));
+            .addOnSuccessListener(authResult -> {
+                android.util.Log.d("VitalHomeReg", "✓ Auth create success: " + (authResult.getUser() != null ? authResult.getUser().getEmail() : "null"));
+                new UserRepository().syncUserToFirestore(userEntity);
+            })
+            .addOnFailureListener(ex -> {
+                android.util.Log.w("VitalHomeReg", "⚠️ Auth create failed: " + ex.getMessage() + ". Trying sign-in...");
+                auth.signInWithEmailAndPassword(e, p)
+                    .addOnSuccessListener(signInResult -> {
+                        android.util.Log.d("VitalHomeReg", "✓ Auth sign-in success: " + (signInResult.getUser() != null ? signInResult.getUser().getEmail() : "null"));
+                        new UserRepository().syncUserToFirestore(userEntity);
+                    })
+                    .addOnFailureListener(signInEx -> {
+                        android.util.Log.w("VitalHomeReg", "⚠️ Auth sign-in failed: " + signInEx.getMessage() + ". Trying anonymous...");
+                        auth.signInAnonymously()
+                            .addOnSuccessListener(anonResult -> {
+                                android.util.Log.d("VitalHomeReg", "✓ Auth anonymous success");
+                                new UserRepository().syncUserToFirestore(userEntity);
+                            })
+                            .addOnFailureListener(anonEx -> {
+                                android.util.Log.e("VitalHomeReg", "❌ Auth anonymous failed", anonEx);
+                                new UserRepository().syncUserToFirestore(userEntity);
+                            });
+                    });
+            });
 
         SharedPreferences prefs = getSharedPreferences("VitalHomePrefs", MODE_PRIVATE);
         SharedPreferences.Editor edit = prefs.edit();
