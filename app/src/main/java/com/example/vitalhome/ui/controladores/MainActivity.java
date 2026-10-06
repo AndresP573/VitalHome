@@ -131,7 +131,7 @@ public class MainActivity extends AppCompatActivity {
     private void iniciarEscuchadorAlertasGlobales(String rol) {
         if (!"cuidador".equals(rol)) return;
 
-        FirebaseFirestore db = FirebaseFirestore.getInstance("default");
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
 
         globalAlertListener = db.collection("alerts")
             .whereEqualTo("resuelto", false)

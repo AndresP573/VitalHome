@@ -50,7 +50,7 @@ public class AlertasViewModel extends AndroidViewModel {
 
     private void iniciarEscuchaFirestore() {
         try {
-            FirebaseFirestore db = FirebaseFirestore.getInstance("default");
+            FirebaseFirestore db = FirebaseFirestore.getInstance();
             firestoreListener = db.collection("alerts")
                 .orderBy("timestamp", Query.Direction.DESCENDING)
                 .addSnapshotListener((snapshots, e) -> {

@@ -16,7 +16,7 @@ public class UserRepository {
 
     public UserRepository() {
         // Conectamos a la base de datos predeterminada de Firestore
-        this.db = FirebaseFirestore.getInstance("default");
+        this.db = FirebaseFirestore.getInstance();
     }
 
     /**

@@ -13,7 +13,7 @@ public class FirebaseRemoteDataSource {
     private final FirebaseFirestore db;
 
     public FirebaseRemoteDataSource() {
-        this.db = FirebaseFirestore.getInstance("default");
+        this.db = FirebaseFirestore.getInstance();
     }
 
     public FirebaseFirestore getDb() {

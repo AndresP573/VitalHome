@@ -85,7 +85,7 @@ public class VitalHomeBackgroundService extends Service {
         }
 
         try {
-            FirebaseFirestore db = FirebaseFirestore.getInstance("default");
+            FirebaseFirestore db = FirebaseFirestore.getInstance();
             alertListener = db.collection("alerts")
                     .whereEqualTo("resuelto", false)
                     .addSnapshotListener(new com.google.firebase.firestore.EventListener<com.google.firebase.firestore.QuerySnapshot>() {

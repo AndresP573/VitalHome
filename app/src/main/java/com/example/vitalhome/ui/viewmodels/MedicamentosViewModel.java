@@ -45,7 +45,7 @@ public class MedicamentosViewModel extends AndroidViewModel {
         try {
             List<Medication> localMeds = repo.getMeds();
             if (localMeds != null && !localMeds.isEmpty()) {
-                FirebaseFirestore db = FirebaseFirestore.getInstance("default");
+                FirebaseFirestore db = FirebaseFirestore.getInstance();
                 for (Medication m : localMeds) {
                     if (m != null) {
                         Map<String, Object> medData = new HashMap<>();
@@ -85,7 +85,7 @@ public class MedicamentosViewModel extends AndroidViewModel {
 
     private void iniciarEscuchaMedsFirestore() {
         try {
-            FirebaseFirestore db = FirebaseFirestore.getInstance("default");
+            FirebaseFirestore db = FirebaseFirestore.getInstance();
             medsListener = db.collection("medications")
                 .addSnapshotListener((snapshots, e) -> {
                     if (e != null || snapshots == null) return;
@@ -165,7 +165,7 @@ public class MedicamentosViewModel extends AndroidViewModel {
                 medData.put("taken", false);
                 medData.put("createdAt", System.currentTimeMillis());
 
-                FirebaseFirestore.getInstance("default")
+                FirebaseFirestore.getInstance()
                     .collection("medications")
                     .document(nuevoMed.getId())
                     .set(medData, SetOptions.merge());
@@ -210,7 +210,7 @@ public class MedicamentosViewModel extends AndroidViewModel {
                 Map<String, Object> updateData = new HashMap<>();
                 updateData.put("taken", true);
 
-                FirebaseFirestore.getInstance("default")
+                FirebaseFirestore.getInstance()
                     .collection("medications")
                     .document(m.getId())
                     .set(updateData, SetOptions.merge());
@@ -232,7 +232,7 @@ public class MedicamentosViewModel extends AndroidViewModel {
             plan.postValue(new ArrayList<>());
 
             try {
-                FirebaseFirestore db = FirebaseFirestore.getInstance("default");
+                FirebaseFirestore db = FirebaseFirestore.getInstance();
                 db.collection("medications").get().addOnSuccessListener(snapshots -> {
                     if (snapshots != null) {
                         for (DocumentSnapshot doc : snapshots.getDocuments()) {

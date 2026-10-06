@@ -134,7 +134,7 @@ public class AsistenteFragment extends Fragment {
             chatMsg.put("respuesta", respuesta);
             chatMsg.put("timestamp", new Date());
 
-            FirebaseFirestore.getInstance("default")
+            FirebaseFirestore.getInstance()
                 .collection("users")
                 .document(userEmail)
                 .collection("chat_history")

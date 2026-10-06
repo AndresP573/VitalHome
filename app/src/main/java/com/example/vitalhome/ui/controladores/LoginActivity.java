@@ -122,7 +122,7 @@ public class LoginActivity extends AppCompatActivity {
                         }
                     } else {
                         // 2. Si no está localmente, verificar en la nube (Firestore "default")
-                        FirebaseFirestore db = FirebaseFirestore.getInstance("default");
+                        FirebaseFirestore db = FirebaseFirestore.getInstance();
                         String docId = mail.replace(".", "_");
 
                         db.collection("users").document(docId).get()
@@ -228,7 +228,7 @@ public class LoginActivity extends AppCompatActivity {
 
     private void consultarPasswordEnBaseDeDatos(String mail) {
         String docId = mail.replace(".", "_");
-        FirebaseFirestore.getInstance("default")
+        FirebaseFirestore.getInstance()
             .collection("users")
             .document(docId)
             .get()

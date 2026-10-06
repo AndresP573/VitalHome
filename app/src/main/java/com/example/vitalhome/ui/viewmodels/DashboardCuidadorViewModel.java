@@ -47,7 +47,7 @@ public class DashboardCuidadorViewModel extends AndroidViewModel {
     // --- Vinculación y Escucha en Vivo de Signos Vitales y Perfil del Abuelo ---
     public void vincularYEscucharPacienteEspecifico() {
         try {
-            FirebaseFirestore db = FirebaseFirestore.getInstance("default");
+            FirebaseFirestore db = FirebaseFirestore.getInstance();
             db.collection("users")
                 .whereEqualTo("rol", "cliente")
                 .addSnapshotListener((snapshots, e) -> {

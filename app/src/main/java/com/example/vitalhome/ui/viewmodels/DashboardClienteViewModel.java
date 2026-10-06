@@ -68,7 +68,7 @@ public class DashboardClienteViewModel extends AndroidViewModel {
 
     public void iniciarEscuchaMedsFirestore() {
         try {
-            com.google.firebase.firestore.FirebaseFirestore.getInstance("default")
+            com.google.firebase.firestore.FirebaseFirestore.getInstance()
                 .collection("medications")
                 .addSnapshotListener((snapshots, e) -> {
                     if (e != null || snapshots == null) return;
@@ -166,7 +166,7 @@ public class DashboardClienteViewModel extends AndroidViewModel {
 
         // 3. Actualizar taken: true en Cloud Firestore (SIN borrar el documento) para que la pantalla del Cuidador pase a VERDE
         try {
-            com.google.firebase.firestore.FirebaseFirestore.getInstance("default")
+            com.google.firebase.firestore.FirebaseFirestore.getInstance()
                 .collection("medications")
                 .document(m.getId())
                 .set(java.util.Collections.singletonMap("taken", true), com.google.firebase.firestore.SetOptions.merge());
@@ -260,7 +260,7 @@ public class DashboardClienteViewModel extends AndroidViewModel {
                 vitalsData.put("pacienteNombre", abueloNombre);
                 vitalsData.put("updatedAt", new Date());
 
-                com.google.firebase.firestore.FirebaseFirestore db = com.google.firebase.firestore.FirebaseFirestore.getInstance("default");
+                com.google.firebase.firestore.FirebaseFirestore db = com.google.firebase.firestore.FirebaseFirestore.getInstance();
                 db.collection("users")
                     .document(abueloEmail)
                     .set(java.util.Collections.singletonMap("ultimosSignosVitales", vitalsData), com.google.firebase.firestore.SetOptions.merge());

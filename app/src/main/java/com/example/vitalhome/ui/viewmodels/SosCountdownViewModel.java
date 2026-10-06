@@ -105,7 +105,7 @@ public class SosCountdownViewModel extends AndroidViewModel {
         sosData.put("timestamp", new Date());
         sosData.put("resuelto", false);
 
-        com.google.firebase.firestore.FirebaseFirestore.getInstance("default")
+        com.google.firebase.firestore.FirebaseFirestore.getInstance()
             .collection("alerts")
             .add(sosData);
 

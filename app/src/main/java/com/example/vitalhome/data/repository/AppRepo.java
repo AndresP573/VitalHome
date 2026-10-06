@@ -116,7 +116,7 @@ public class AppRepo {
                 String tipoCleano = ev.getTipo() != null ? ev.getTipo().toLowerCase().trim() : "evento";
                 String customDocId = "alerta_" + tipoCleano + "_" + System.currentTimeMillis();
 
-                FirebaseFirestore.getInstance("default")
+                FirebaseFirestore.getInstance()
                     .collection("alerts")
                     .document(customDocId)
                     .set(alertData);

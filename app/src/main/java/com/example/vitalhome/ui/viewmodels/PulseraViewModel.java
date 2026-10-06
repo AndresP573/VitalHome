@@ -49,7 +49,7 @@ public class PulseraViewModel extends AndroidViewModel {
 
     public void cargarSignosVitalesDesdeFirestore() {
         try {
-            FirebaseFirestore db = FirebaseFirestore.getInstance("default");
+            FirebaseFirestore db = FirebaseFirestore.getInstance();
             db.collection("vitals").document("latest").get()
                 .addOnSuccessListener(doc -> {
                     if (doc != null && doc.exists()) {
@@ -61,7 +61,7 @@ public class PulseraViewModel extends AndroidViewModel {
 
     private void escucharSignosVitalesEnVivo() {
         try {
-            FirebaseFirestore db = FirebaseFirestore.getInstance("default");
+            FirebaseFirestore db = FirebaseFirestore.getInstance();
             vitalsListener = db.collection("vitals").document("latest")
                 .addSnapshotListener((doc, e) -> {
                     if (e != null || doc == null || !doc.exists()) return;
