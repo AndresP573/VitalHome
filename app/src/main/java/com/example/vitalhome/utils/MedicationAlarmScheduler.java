@@ -17,36 +17,36 @@ import java.util.List;
  */
 public class MedicationAlarmScheduler {
 
+    private static final String TAG = "MedicationAlarmScheduler";
+
     /**
      * Programación de la alarma para un medicamento específico.
      */
     public static void programar(Context ctx, Medication m) {
-        // --- Bloque 1: Validaciones iniciales ---
         if (m == null) {
-            Log.d("AlarmDebug", "programar abortado: Medication es null");
+            Log.d(TAG, "programar abortado: Medication es null");
             return;
         }
-        Log.d("AlarmDebug", "Entrando a programar: " + m.getNombre() + " (" + m.getHora() + ")");
-        
+        Log.d(TAG, "Entrando a programar: " + m.getNombre() + " (" + m.getHora() + ")");
+
         if (m.isTaken()) {
-            Log.d("AlarmDebug", "programar abortado: El medicamento ya fue tomado");
+            Log.d(TAG, "programar abortado: El medicamento ya fue tomado");
             return;
         }
 
         try {
-            // --- Bloque 2: Parseo de hora y configuración de fecha en Calendar ---
             String horaStr = m.getHora();
             if (horaStr == null) {
-                Log.d("AlarmDebug", "programar abortado: la hora es null");
+                Log.d(TAG, "programar abortado: la hora es null");
                 return;
             }
 
             String[] parts = horaStr.split(":");
             if (parts.length != 2) {
-                Log.d("AlarmDebug", "programar abortado: formato de hora inválido");
+                Log.d(TAG, "programar abortado: formato de hora inválido");
                 return;
             }
-            
+
             int hora = Integer.parseInt(parts[0].trim());
             int minuto = Integer.parseInt(parts[1].trim());
 
@@ -56,12 +56,10 @@ public class MedicationAlarmScheduler {
             cal.set(Calendar.SECOND, 0);
             cal.set(Calendar.MILLISECOND, 0);
 
-            // Si la hora ya pasó el día de hoy, se programa para mañana
             if (cal.getTimeInMillis() <= System.currentTimeMillis()) {
                 cal.add(Calendar.DAY_OF_YEAR, 1);
             }
 
-            // --- Bloque 3: Creación del Intent y PendingIntent enviando los datos directamente ---
             Intent intent = new Intent(ctx, MedicationAlarmReceiver.class);
             intent.putExtra("med_id", m.getId());
             intent.putExtra("med_nombre", m.getNombre());
@@ -69,25 +67,24 @@ public class MedicationAlarmScheduler {
 
             int requestCode = m.getId().hashCode();
             PendingIntent pi = PendingIntent.getBroadcast(
-                    ctx, 
-                    requestCode, 
-                    intent, 
+                    ctx,
+                    requestCode,
+                    intent,
                     PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT
             );
 
-            // --- Bloque 4: Registro de la alarma en AlarmManager del sistema con Máxima Prioridad ---
             AlarmManager am = (AlarmManager) ctx.getSystemService(Context.ALARM_SERVICE);
             if (am != null) {
                 Intent showIntent = new Intent(ctx, com.example.vitalhome.ui.controladores.MainActivity.class);
                 PendingIntent showPi = PendingIntent.getActivity(
-                        ctx, 
-                        requestCode, 
-                        showIntent, 
+                        ctx,
+                        requestCode,
+                        showIntent,
                         PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT
                 );
 
                 AlarmManager.AlarmClockInfo clockInfo = new AlarmManager.AlarmClockInfo(cal.getTimeInMillis(), showPi);
-                Log.d("AlarmDebug", "Programando AlarmClock exacta e infalible para: " + cal.getTime());
+                Log.d(TAG, "Programando AlarmClock exacta e infalible para: " + cal.getTime());
 
                 try {
                     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S || am.canScheduleExactAlarms()) {
@@ -96,11 +93,12 @@ public class MedicationAlarmScheduler {
                         am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(), pi);
                     }
                 } catch (SecurityException se) {
+                    Log.e(TAG, "Excepción de seguridad al programar alarma exacta, usando setAndAllowWhileIdle", se);
                     am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(), pi);
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error al programar alarma de medicamento", e);
         }
     }
 
@@ -109,21 +107,19 @@ public class MedicationAlarmScheduler {
      */
     public static void cancelar(Context ctx, String medId) {
         if (medId == null) return;
-        Log.d("AlarmDebug", "Cancelando alarma para medId: " + medId);
-        
+        Log.d(TAG, "Cancelando alarma para medId: " + medId);
+
         try {
-            // --- Bloque 1: Obtención del PendingIntent registrado previamente ---
             Intent intent = new Intent(ctx, MedicationAlarmReceiver.class);
             int requestCode = medId.hashCode();
 
             PendingIntent pi = PendingIntent.getBroadcast(
-                    ctx, 
-                    requestCode, 
-                    intent, 
+                    ctx,
+                    requestCode,
+                    intent,
                     PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_NO_CREATE
             );
 
-            // --- Bloque 2: Cancelación de la alarma en AlarmManager ---
             if (pi != null) {
                 AlarmManager am = (AlarmManager) ctx.getSystemService(Context.ALARM_SERVICE);
                 if (am != null) {
@@ -132,7 +128,7 @@ public class MedicationAlarmScheduler {
                 pi.cancel();
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error al cancelar alarma de medicamento", e);
         }
     }
 
@@ -152,7 +148,7 @@ public class MedicationAlarmScheduler {
                     }
                 }
             } catch (Exception e) {
-                Log.e("AlarmDebug", "Error reprogramando alarmas en hilo secundario", e);
+                Log.e(TAG, "Error reprogramando alarmas en hilo secundario", e);
             }
         });
     }

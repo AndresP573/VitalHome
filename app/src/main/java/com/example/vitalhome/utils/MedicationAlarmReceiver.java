@@ -38,7 +38,9 @@ public class MedicationAlarmReceiver extends BroadcastReceiver {
         if (wakeLock != null) {
             try {
                 wakeLock.acquire(10000); // 10 segundos de WakeLock
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                Log.e("MedicationAlarmReceiver", "Error adquiriendo WakeLock", e);
+            }
         }
 
         // Reprogramación automática tras reinicio del dispositivo o actualización

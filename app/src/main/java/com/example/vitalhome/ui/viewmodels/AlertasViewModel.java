@@ -10,101 +10,144 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import com.example.vitalhome.data.modelo.AlertEvent;
 import com.example.vitalhome.data.repository.AppRepo;
+import com.example.vitalhome.utils.AppExecutors;
+import com.example.vitalhome.utils.DateUtils;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.Query;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 
 /**
  * ViewModel encargado de la gestión de la lista de eventos de alerta en la aplicación.
- * Filtra las alertas usando un timestamp de limpieza para evitar que las alertas antiguas reaparezcan.
+ * Implementa máquina de estados (EstadoAlertas) y ejecuta lecturas/escrituras en hilos de fondo diskIO.
  */
 public class AlertasViewModel extends AndroidViewModel {
 
-    // --- Bloque 1: Atributos y dependencias ---
+    private static final String TAG = "AlertasViewModel";
+
+    public enum EstadoAlertas {
+        CARGANDO,
+        EXITO,
+        VACIO,
+        ERROR
+    }
+
     private final AppRepo repo;
     private final MutableLiveData<List<AlertEvent>> events = new MutableLiveData<>();
+    private final MutableLiveData<EstadoAlertas> estado = new MutableLiveData<>(EstadoAlertas.CARGANDO);
     private ListenerRegistration firestoreListener;
 
-    // --- Bloque 2: Constructor e inicialización ---
     public AlertasViewModel(@NonNull Application application) {
+        this(application, new AppRepo(application));
+    }
+
+    public AlertasViewModel(@NonNull Application application, @NonNull AppRepo repo) {
         super(application);
-        repo = new AppRepo(application);
+        this.repo = repo;
         cargarEventosLocales();
         iniciarEscuchaFirestore();
     }
 
+    public LiveData<EstadoAlertas> getEstado() {
+        return estado;
+    }
+
+    public LiveData<List<AlertEvent>> getEvents() {
+        return events;
+    }
+
     private void cargarEventosLocales() {
-        try {
-            List<AlertEvent> listaBase = repo.getEvents();
-            events.setValue(listaBase != null ? listaBase : new ArrayList<>());
-        } catch (Exception e) {
-            Log.e("AlertasVM", "Error cargando eventos locales", e);
-        }
+        estado.setValue(EstadoAlertas.CARGANDO);
+        AppExecutors.getInstance().diskIO().execute(() -> {
+            try {
+                List<AlertEvent> listaBase = repo.getEvents();
+                List<AlertEvent> res = listaBase != null ? listaBase : new ArrayList<>();
+                events.postValue(res);
+                if (res.isEmpty()) {
+                    estado.postValue(EstadoAlertas.VACIO);
+                } else {
+                    estado.postValue(EstadoAlertas.EXITO);
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Error cargando eventos locales", e);
+                estado.postValue(EstadoAlertas.ERROR);
+            }
+        });
     }
 
     private void iniciarEscuchaFirestore() {
         try {
             FirebaseFirestore db = FirebaseFirestore.getInstance();
             firestoreListener = db.collection("alerts")
-                .orderBy("timestamp", Query.Direction.DESCENDING)
-                .addSnapshotListener((snapshots, e) -> {
-                    if (e != null || snapshots == null) return;
-
-                    SharedPreferences p = getApplication().getSharedPreferences("VitalHomePrefs", Context.MODE_PRIVATE);
-                    long limpiezaTs = p.getLong("alertas_limpieza_timestamp", 0L);
-
-                    List<AlertEvent> listaAlertas = new ArrayList<>();
-                    for (DocumentSnapshot doc : snapshots.getDocuments()) {
-                        Date ts = doc.getDate("timestamp");
-                        // Si el evento ocurrió antes de la última limpieza, se omite de la vista activa
-                        if (ts != null && ts.getTime() <= limpiezaTs) {
-                            continue;
+                    .orderBy("timestamp", Query.Direction.DESCENDING)
+                    .addSnapshotListener((snapshots, e) -> {
+                        if (e != null) {
+                            Log.e(TAG, "Error escuchando alertas de Firestore", e);
+                            estado.postValue(EstadoAlertas.ERROR);
+                            return;
                         }
+                        if (snapshots == null) return;
 
-                        String tipo = doc.getString("tipo");
-                        String desc = doc.getString("descripcion");
-                        String abuelo = doc.getString("pacienteNombre");
-                        String hora = ts != null ? new SimpleDateFormat("HH:mm", Locale.getDefault()).format(ts) : "00:00";
+                        AppExecutors.getInstance().diskIO().execute(() -> {
+                            try {
+                                SharedPreferences p = getApplication().getSharedPreferences("VitalHomePrefs", Context.MODE_PRIVATE);
+                                long limpiezaTs = p.getLong("alertas_limpieza_timestamp", 0L);
 
-                        String detalleFinal = (abuelo != null ? abuelo + ": " : "") + (desc != null ? desc : "");
-                        listaAlertas.add(new AlertEvent(tipo != null ? tipo : "ALERTA", detalleFinal, "Casa", hora));
-                    }
-                    repo.saveEvents(listaAlertas);
-                    events.postValue(listaAlertas);
-                });
-        } catch (Exception ignored) {}
-    }
+                                List<AlertEvent> listaAlertas = new ArrayList<>();
+                                for (DocumentSnapshot doc : snapshots.getDocuments()) {
+                                    Date ts = doc.getDate("timestamp");
+                                    if (ts != null && ts.getTime() <= limpiezaTs) {
+                                        continue;
+                                    }
 
-    // --- Bloque 3: Acceso a LiveData ---
-    public LiveData<List<AlertEvent>> getEvents() {
-        return events;
-    }
+                                    String tipo = doc.getString("tipo");
+                                    String desc = doc.getString("descripcion");
+                                    String abuelo = doc.getString("pacienteNombre");
+                                    String hora = ts != null ? DateUtils.formatTime(ts) : "00:00";
 
-    // --- Bloque 4: Operaciones de actualización y limpieza de eventos ---
-    public void refresh() {
-        if (events.getValue() == null || events.getValue().isEmpty()) {
-            events.setValue(repo.getEvents());
+                                    String detalleFinal = (abuelo != null ? abuelo + ": " : "") + (desc != null ? desc : "");
+                                    listaAlertas.add(new AlertEvent(tipo != null ? tipo : "ALERTA", detalleFinal, "Casa", hora));
+                                }
+                                repo.saveEvents(listaAlertas);
+                                events.postValue(listaAlertas);
+                                if (listaAlertas.isEmpty()) {
+                                    estado.postValue(EstadoAlertas.VACIO);
+                                } else {
+                                    estado.postValue(EstadoAlertas.EXITO);
+                                }
+                            } catch (Exception ex) {
+                                Log.e(TAG, "Error procesando alertas de Firestore", ex);
+                                estado.postValue(EstadoAlertas.ERROR);
+                            }
+                        });
+                    });
+        } catch (Exception e) {
+            Log.e(TAG, "Error al configurar Firestore snapshot listener en AlertasViewModel", e);
+            estado.postValue(EstadoAlertas.ERROR);
         }
     }
 
-    /**
-     * Limpia completamente el historial de eventos localmente y actualiza el timestamp de limpieza
-     * para que las alertas anteriores queden archivadas y no reaparezcan al entrar nuevas.
-     */
-    public void clearAll() {
-        repo.saveEvents(new ArrayList<>());
-        events.postValue(new ArrayList<>());
+    public void refresh() {
+        cargarEventosLocales();
+    }
 
-        try {
-            SharedPreferences p = getApplication().getSharedPreferences("VitalHomePrefs", Context.MODE_PRIVATE);
-            p.edit().putLong("alertas_limpieza_timestamp", System.currentTimeMillis()).apply();
-        } catch (Exception ignored) {}
+    public void clearAll() {
+        estado.setValue(EstadoAlertas.CARGANDO);
+        AppExecutors.getInstance().diskIO().execute(() -> {
+            try {
+                repo.saveEvents(new ArrayList<>());
+                events.postValue(new ArrayList<>());
+                SharedPreferences p = getApplication().getSharedPreferences("VitalHomePrefs", Context.MODE_PRIVATE);
+                p.edit().putLong("alertas_limpieza_timestamp", System.currentTimeMillis()).apply();
+                estado.postValue(EstadoAlertas.VACIO);
+            } catch (Exception e) {
+                Log.e(TAG, "Error limpiando eventos", e);
+                estado.postValue(EstadoAlertas.ERROR);
+            }
+        });
     }
 
     @Override

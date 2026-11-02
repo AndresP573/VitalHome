@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.media.AudioAttributes;
 import android.media.RingtoneManager;
 import android.os.Build;
+import android.util.Log;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import com.example.vitalhome.R;
@@ -86,7 +87,9 @@ public class NotificationHelper {
         try {
             int notifId = (docId != null && !docId.isEmpty()) ? Math.abs(docId.hashCode()) : (int) (System.currentTimeMillis() % Integer.MAX_VALUE);
             NotificationManagerCompat.from(ctx).notify(notifId, n.build());
-        } catch (SecurityException ignored) {}
+        } catch (SecurityException e) {
+            Log.e("NotificationHelper", "Permiso de notificaciones denegado o no otorgado", e);
+        }
     }
 
     public static void notificarAlertaCuidador(Context ctx, String tipo, String tituloPersonalizado, String mensaje) {
@@ -150,7 +153,9 @@ public class NotificationHelper {
                 .setAutoCancel(true);
         try {
             NotificationManagerCompat.from(ctx).notify(notifId, n.build());
-        } catch (SecurityException ignored) {}
+        } catch (SecurityException e) {
+            Log.e("NotificationHelper", "Permiso de notificaciones denegado o no otorgado", e);
+        }
     }
 
     public static void medicamentoTomado(Context ctx, String nombreMed, String hora) {

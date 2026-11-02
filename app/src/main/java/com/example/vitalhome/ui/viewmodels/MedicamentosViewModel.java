@@ -10,6 +10,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import com.example.vitalhome.data.modelo.Medication;
 import com.example.vitalhome.data.repository.AppRepo;
+import com.example.vitalhome.utils.AppExecutors;
 import com.example.vitalhome.utils.MedicationAlarmScheduler;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -24,110 +25,163 @@ import java.util.UUID;
 
 /**
  * ViewModel encargado del mantenimiento y registro de medicamentos dentro del plan diario.
- * Filtra los medicamentos según el timestamp de limpieza para evitar que reaparezcan al cargar nuevos.
+ * Implementa máquina de estados (EstadoMedicamentos) y ejecuta operaciones E/S en diskIO.
  */
 public class MedicamentosViewModel extends AndroidViewModel {
 
-    // --- Atributos de repositorio y LiveData ---
+    private static final String TAG = "MedicamentosViewModel";
+
+    public enum EstadoMedicamentos {
+        CARGANDO,
+        EXITO,
+        VACIO,
+        ERROR
+    }
+
     private final AppRepo repo;
     private final MutableLiveData<List<Medication>> plan = new MutableLiveData<>(new ArrayList<>());
+    private final MutableLiveData<EstadoMedicamentos> estado = new MutableLiveData<>(EstadoMedicamentos.CARGANDO);
     private ListenerRegistration medsListener;
 
     public MedicamentosViewModel(@NonNull Application application) {
+        this(application, new AppRepo(application));
+    }
+
+    public MedicamentosViewModel(@NonNull Application application, @NonNull AppRepo repo) {
         super(application);
-        repo = new AppRepo(application);
+        this.repo = repo;
         subirMedsLocalesAFirestoreSiExisten();
         cargarPlan();
         iniciarEscuchaMedsFirestore();
     }
 
-    private void subirMedsLocalesAFirestoreSiExisten() {
-        try {
-            List<Medication> localMeds = repo.getMeds();
-            if (localMeds != null && !localMeds.isEmpty()) {
-                FirebaseFirestore db = FirebaseFirestore.getInstance();
-                for (Medication m : localMeds) {
-                    if (m != null) {
-                        Map<String, Object> medData = new HashMap<>();
-                        medData.put("id", m.getId());
-                        medData.put("nombre", m.getNombre());
-                        medData.put("hora", m.getHora());
-                        medData.put("taken", m.isTaken());
-                        medData.put("createdAt", System.currentTimeMillis());
+    public LiveData<EstadoMedicamentos> getEstado() {
+        return estado;
+    }
 
-                        db.collection("medications")
-                            .document(m.getId())
-                            .set(medData, SetOptions.merge());
+    public LiveData<List<Medication>> getPlan() {
+        return plan;
+    }
+
+    private void subirMedsLocalesAFirestoreSiExisten() {
+        AppExecutors.getInstance().diskIO().execute(() -> {
+            try {
+                List<Medication> localMeds = repo.getMeds();
+                if (localMeds != null && !localMeds.isEmpty()) {
+                    FirebaseFirestore db = FirebaseFirestore.getInstance();
+                    for (Medication m : localMeds) {
+                        if (m != null) {
+                            Map<String, Object> medData = new HashMap<>();
+                            medData.put("id", m.getId());
+                            medData.put("nombre", m.getNombre());
+                            medData.put("hora", m.getHora());
+                            medData.put("taken", m.isTaken());
+                            medData.put("createdAt", System.currentTimeMillis());
+
+                            db.collection("medications")
+                                    .document(m.getId())
+                                    .set(medData, SetOptions.merge());
+                        }
                     }
                 }
+            } catch (Exception e) {
+                Log.e(TAG, "Error subiendo medicamentos locales a Firestore", e);
             }
-        } catch (Exception ignored) {}
+        });
     }
 
     private void cargarPlan() {
-        try {
-            List<Medication> listaBase = repo.getMeds();
-            List<Medication> listaFiltrada = new ArrayList<>();
-            if (listaBase != null) {
-                for (Medication m : listaBase) {
-                    if (m != null) {
-                        listaFiltrada.add(m);
+        estado.setValue(EstadoMedicamentos.CARGANDO);
+        AppExecutors.getInstance().diskIO().execute(() -> {
+            try {
+                List<Medication> listaBase = repo.getMeds();
+                List<Medication> listaFiltrada = new ArrayList<>();
+                if (listaBase != null) {
+                    for (Medication m : listaBase) {
+                        if (m != null) {
+                            listaFiltrada.add(m);
+                        }
                     }
                 }
-            }
 
-            ordenar(listaFiltrada);
-            plan.setValue(listaFiltrada);
-        } catch (Exception e) {
-            Log.e("MedicamentosVM", "Error cargando plan local", e);
-        }
+                ordenar(listaFiltrada);
+                plan.postValue(listaFiltrada);
+                if (listaFiltrada.isEmpty()) {
+                    estado.postValue(EstadoMedicamentos.VACIO);
+                } else {
+                    estado.postValue(EstadoMedicamentos.EXITO);
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Error cargando plan local de medicamentos", e);
+                estado.postValue(EstadoMedicamentos.ERROR);
+            }
+        });
     }
 
     private void iniciarEscuchaMedsFirestore() {
         try {
             FirebaseFirestore db = FirebaseFirestore.getInstance();
             medsListener = db.collection("medications")
-                .addSnapshotListener((snapshots, e) -> {
-                    if (e != null || snapshots == null) return;
-                    
-                    SharedPreferences p = getApplication().getSharedPreferences("VitalHomePrefs", Context.MODE_PRIVATE);
-                    long limpiezaTs = p.getLong("limpieza_timestamp", 0L);
-                    List<Medication> localMeds = repo.getMeds();
+                    .addSnapshotListener((snapshots, e) -> {
+                        if (e != null) {
+                            Log.e(TAG, "Error en listener de Firestore medicamentos", e);
+                            estado.postValue(EstadoMedicamentos.ERROR);
+                            return;
+                        }
+                        if (snapshots == null) return;
 
-                    Map<String, Boolean> localTakenMap = new HashMap<>();
-                    if (localMeds != null) {
-                        for (Medication lm : localMeds) {
-                            if (lm != null && lm.isTaken()) {
-                                localTakenMap.put(lm.getId(), true);
+                        AppExecutors.getInstance().diskIO().execute(() -> {
+                            try {
+                                SharedPreferences p = getApplication().getSharedPreferences("VitalHomePrefs", Context.MODE_PRIVATE);
+                                long limpiezaTs = p.getLong("limpieza_timestamp", 0L);
+                                List<Medication> localMeds = repo.getMeds();
+
+                                Map<String, Boolean> localTakenMap = new HashMap<>();
+                                if (localMeds != null) {
+                                    for (Medication lm : localMeds) {
+                                        if (lm != null && lm.isTaken()) {
+                                            localTakenMap.put(lm.getId(), true);
+                                        }
+                                    }
+                                }
+
+                                List<Medication> listaMeds = new ArrayList<>();
+                                for (DocumentSnapshot doc : snapshots.getDocuments()) {
+                                    String medDocId = doc.getString("id");
+                                    if (medDocId == null) medDocId = doc.getId();
+                                    String nombre = doc.getString("nombre");
+                                    String hora = doc.getString("hora");
+                                    Boolean takenNube = doc.getBoolean("taken");
+                                    Long createdAt = doc.getLong("createdAt");
+
+                                    if (createdAt != null && createdAt <= limpiezaTs) {
+                                        continue;
+                                    }
+
+                                    boolean isTaken = Objects.equals(takenNube, Boolean.TRUE) || Objects.equals(localTakenMap.get(medDocId), Boolean.TRUE);
+
+                                    if (nombre != null && hora != null) {
+                                        listaMeds.add(new Medication(medDocId, nombre, hora, isTaken));
+                                    }
+                                }
+                                ordenar(listaMeds);
+                                repo.saveMeds(listaMeds);
+                                plan.postValue(listaMeds);
+                                if (listaMeds.isEmpty()) {
+                                    estado.postValue(EstadoMedicamentos.VACIO);
+                                } else {
+                                    estado.postValue(EstadoMedicamentos.EXITO);
+                                }
+                            } catch (Exception ex) {
+                                Log.e(TAG, "Error procesando snapshot de Firestore", ex);
+                                estado.postValue(EstadoMedicamentos.ERROR);
                             }
-                        }
-                    }
-
-                    List<Medication> listaMeds = new ArrayList<>();
-                    for (DocumentSnapshot doc : snapshots.getDocuments()) {
-                        String medDocId = doc.getString("id");
-                        if (medDocId == null) medDocId = doc.getId();
-                        String nombre = doc.getString("nombre");
-                        String hora = doc.getString("hora");
-                        Boolean takenNube = doc.getBoolean("taken");
-                        Long createdAt = doc.getLong("createdAt");
-
-                        // Si fue creado antes de la última limpieza, se omite de la vista activa
-                        if (createdAt != null && createdAt <= limpiezaTs) {
-                            continue;
-                        }
-
-                        boolean isTaken = Objects.equals(takenNube, Boolean.TRUE) || Objects.equals(localTakenMap.get(medDocId), Boolean.TRUE);
-
-                        if (nombre != null && hora != null) {
-                            listaMeds.add(new Medication(medDocId, nombre, hora, isTaken));
-                        }
-                    }
-                    ordenar(listaMeds);
-                    repo.saveMeds(listaMeds);
-                    plan.postValue(listaMeds);
-                });
-        } catch (Exception ignored) {}
+                        });
+                    });
+        } catch (Exception e) {
+            Log.e(TAG, "Error al iniciar escucha de Firestore en medicamentos", e);
+            estado.postValue(EstadoMedicamentos.ERROR);
+        }
     }
 
     private void ordenar(List<Medication> lista) {
@@ -142,114 +196,130 @@ public class MedicamentosViewModel extends AndroidViewModel {
                     String h2 = m2.getHora() != null ? m2.getHora() : "00:00";
                     return h1.compareTo(h2);
                 });
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                Log.e(TAG, "Error ordenando medicamentos", e);
+            }
         }
     }
 
     public void agregar(String nombre, String hora) {
-        try {
-            String id = UUID.randomUUID().toString();
-            Medication nuevoMed = new Medication(id, nombre, hora, false);
-
-            List<Medication> listaBase = repo.getMeds();
-            List<Medication> lista = new ArrayList<>(Objects.requireNonNullElseGet(listaBase, ArrayList::new));
-            lista.add(0, nuevoMed);
-            repo.saveMeds(lista);
-
-            // Guardar y sincronizar en Firestore con timestamp actual
+        estado.setValue(EstadoMedicamentos.CARGANDO);
+        AppExecutors.getInstance().diskIO().execute(() -> {
             try {
-                Map<String, Object> medData = new HashMap<>();
-                medData.put("id", nuevoMed.getId());
-                medData.put("nombre", nuevoMed.getNombre());
-                medData.put("hora", nuevoMed.getHora());
-                medData.put("taken", false);
-                medData.put("createdAt", System.currentTimeMillis());
+                String id = UUID.randomUUID().toString();
+                Medication nuevoMed = new Medication(id, nombre, hora, false);
 
-                FirebaseFirestore.getInstance()
-                    .collection("medications")
-                    .document(nuevoMed.getId())
-                    .set(medData, SetOptions.merge());
-            } catch (Exception ignored) {}
+                List<Medication> listaBase = repo.getMeds();
+                List<Medication> lista = new ArrayList<>(Objects.requireNonNullElseGet(listaBase, ArrayList::new));
+                lista.add(0, nuevoMed);
+                repo.saveMeds(lista);
 
-            try {
-                SharedPreferences p = getApplication().getSharedPreferences("VitalHomePrefs", Context.MODE_PRIVATE);
-                if ("cliente".equals(p.getString("rol", "cuidador"))) {
-                    MedicationAlarmScheduler.programar(getApplication(), nuevoMed);
+                try {
+                    Map<String, Object> medData = new HashMap<>();
+                    medData.put("id", nuevoMed.getId());
+                    medData.put("nombre", nuevoMed.getNombre());
+                    medData.put("hora", nuevoMed.getHora());
+                    medData.put("taken", false);
+                    medData.put("createdAt", System.currentTimeMillis());
+
+                    FirebaseFirestore.getInstance()
+                            .collection("medications")
+                            .document(nuevoMed.getId())
+                            .set(medData, SetOptions.merge());
+                } catch (Exception ex) {
+                    Log.e(TAG, "Error guardando medicamento en Firestore", ex);
                 }
-            } catch (Exception ignored) {}
 
-            cargarPlan();
-        } catch (Exception e) {
-            Log.e("MedicamentosVM", "Error agregando medicamento", e);
-        }
+                try {
+                    SharedPreferences p = getApplication().getSharedPreferences("VitalHomePrefs", Context.MODE_PRIVATE);
+                    if ("cliente".equals(p.getString("rol", "cuidador"))) {
+                        MedicationAlarmScheduler.programar(getApplication(), nuevoMed);
+                    }
+                } catch (Exception ex) {
+                    Log.e(TAG, "Error al programar alarma de medicamento", ex);
+                }
+
+                cargarPlan();
+            } catch (Exception e) {
+                Log.e(TAG, "Error agregando medicamento", e);
+                estado.postValue(EstadoMedicamentos.ERROR);
+            }
+        });
     }
 
     public void tomar(Medication m) {
         if (m == null) return;
-        try {
-            List<Medication> listaBase = repo.getMeds();
-            List<Medication> nuevaLista = new ArrayList<>();
-            if (listaBase != null) {
-                for (Medication item : listaBase) {
-                    if (item != null) {
-                        if (Objects.equals(item.getId(), m.getId())) {
-                            nuevaLista.add(new Medication(item.getId(), item.getNombre(), item.getHora(), true));
-                        } else {
-                            nuevaLista.add(item);
+        AppExecutors.getInstance().diskIO().execute(() -> {
+            try {
+                List<Medication> listaBase = repo.getMeds();
+                List<Medication> nuevaLista = new ArrayList<>();
+                if (listaBase != null) {
+                    for (Medication item : listaBase) {
+                        if (item != null) {
+                            if (Objects.equals(item.getId(), m.getId())) {
+                                nuevaLista.add(new Medication(item.getId(), item.getNombre(), item.getHora(), true));
+                            } else {
+                                nuevaLista.add(item);
+                            }
                         }
                     }
                 }
+                repo.saveMeds(nuevaLista);
+
+                try {
+                    MedicationAlarmScheduler.cancelar(getApplication(), m.getId());
+                } catch (Exception ex) {
+                    Log.e(TAG, "Error cancelando alarma al tomar medicamento", ex);
+                }
+
+                try {
+                    Map<String, Object> updateData = new HashMap<>();
+                    updateData.put("taken", true);
+
+                    FirebaseFirestore.getInstance()
+                            .collection("medications")
+                            .document(m.getId())
+                            .set(updateData, SetOptions.merge());
+                } catch (Exception ex) {
+                    Log.e(TAG, "Error actualizando estado taken en Firestore", ex);
+                }
+
+                cargarPlan();
+            } catch (Exception e) {
+                Log.e(TAG, "Error marcando medicamento como tomado", e);
             }
-            repo.saveMeds(nuevaLista);
-            
-            try {
-                MedicationAlarmScheduler.cancelar(getApplication(), m.getId());
-            } catch (Exception ignored) {}
-
-            try {
-                Map<String, Object> updateData = new HashMap<>();
-                updateData.put("taken", true);
-
-                FirebaseFirestore.getInstance()
-                    .collection("medications")
-                    .document(m.getId())
-                    .set(updateData, SetOptions.merge());
-            } catch (Exception ignored) {}
-
-            cargarPlan();
-        } catch (Exception e) {
-            Log.e("MedicamentosVM", "Error marcando medicamento como tomado", e);
-        }
+        });
     }
 
-    /**
-     * Limpia la lista de medicamentos localmente y actualiza el timestamp de limpieza
-     * para que los remedios anteriores queden archivados y no reaparezcan al cargar nuevos.
-     */
     public void limpiarPlanYArchivarEnNube() {
-        try {
-            repo.saveMeds(new ArrayList<>());
-            plan.postValue(new ArrayList<>());
-
+        estado.setValue(EstadoMedicamentos.CARGANDO);
+        AppExecutors.getInstance().diskIO().execute(() -> {
             try {
-                FirebaseFirestore db = FirebaseFirestore.getInstance();
-                db.collection("medications").get().addOnSuccessListener(snapshots -> {
-                    if (snapshots != null) {
-                        for (DocumentSnapshot doc : snapshots.getDocuments()) {
-                            db.collection("medications").document(doc.getId()).delete();
+                repo.saveMeds(new ArrayList<>());
+                plan.postValue(new ArrayList<>());
+
+                try {
+                    FirebaseFirestore db = FirebaseFirestore.getInstance();
+                    db.collection("medications").get().addOnSuccessListener(snapshots -> {
+                        if (snapshots != null) {
+                            for (DocumentSnapshot doc : snapshots.getDocuments()) {
+                                db.collection("medications").document(doc.getId()).delete();
+                            }
                         }
-                    }
-                });
-            } catch (Exception ignored) {}
+                    });
+                } catch (Exception ex) {
+                    Log.e(TAG, "Error limpiando documentos de medications en Firestore", ex);
+                }
 
-            SharedPreferences p = getApplication().getSharedPreferences("VitalHomePrefs", Context.MODE_PRIVATE);
-            p.edit().putLong("limpieza_timestamp", System.currentTimeMillis()).apply();
-        } catch (Exception e) {
-            Log.e("MedicamentosVM", "Error limpiando plan localmente", e);
-        }
+                SharedPreferences p = getApplication().getSharedPreferences("VitalHomePrefs", Context.MODE_PRIVATE);
+                p.edit().putLong("limpieza_timestamp", System.currentTimeMillis()).apply();
+                estado.postValue(EstadoMedicamentos.VACIO);
+            } catch (Exception e) {
+                Log.e(TAG, "Error limpiando plan de medicamentos", e);
+                estado.postValue(EstadoMedicamentos.ERROR);
+            }
+        });
     }
-
-    public LiveData<List<Medication>> getPlan() { return plan; }
 
     @Override
     protected void onCleared() {

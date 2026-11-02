@@ -198,7 +198,7 @@ public class DashboardClienteFragment extends Fragment implements MedicationAdap
 
         viewModel.getLastVitalsUpdate().observe(getViewLifecycleOwner(), update -> {
             if (update != null) {
-                lanzarPopup(update.p, update.o, update.pres);
+                lanzarPopup(update.getPulso(), update.getOxigeno(), update.getPresion());
                 viewModel.vitalsMostrado();
             }
         });

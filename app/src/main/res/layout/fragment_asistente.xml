@@ -82,6 +82,14 @@
                 android:inputType="textLongMessage" />
         </com.google.android.material.card.MaterialCardView>
 
+        <ProgressBar
+            android:id="@+id/pbAsistente"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_gravity="center_vertical"
+            android:visibility="gone"
+            android:layout_marginEnd="8dp"/>
+
         <Button
             android:id="@+id/btnEnviarIA"
             android:layout_width="wrap_content"

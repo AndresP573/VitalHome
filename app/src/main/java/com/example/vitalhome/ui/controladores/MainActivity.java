@@ -123,7 +123,9 @@ public class MainActivity extends AppCompatActivity {
                 } else {
                     startService(serviceIntent);
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                android.util.Log.e("MainActivity", "Error iniciando VitalHomeBackgroundService", e);
+            }
         }
     }
 

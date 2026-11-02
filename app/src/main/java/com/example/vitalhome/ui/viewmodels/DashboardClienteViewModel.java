@@ -3,6 +3,7 @@ package com.example.vitalhome.ui.viewmodels;
 import android.app.Application;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
@@ -10,24 +11,31 @@ import androidx.lifecycle.MutableLiveData;
 import com.example.vitalhome.data.modelo.AlertEvent;
 import com.example.vitalhome.data.modelo.Medication;
 import com.example.vitalhome.data.repository.AppRepo;
+import com.example.vitalhome.utils.AppExecutors;
+import com.example.vitalhome.utils.DateUtils;
 import com.example.vitalhome.utils.MedicationAlarmScheduler;
 import com.example.vitalhome.utils.NotificationHelper;
+import com.example.vitalhome.utils.VitalSignsThresholds;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.SetOptions;
 import org.json.JSONObject;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 
 /**
  * ViewModel para el Dashboard del usuario (Cliente / Adulto Mayor).
- * Administra los signos vitales con tasa de refresco instantánea, medicamentos del día,
- * contactos de emergencia y mediciones de salud agregadas en un único evento clínico por medición.
+ * Administra los signos vitales, medicamentos del día, contactos de emergencia y mediciones de salud.
  */
 public class DashboardClienteViewModel extends AndroidViewModel {
 
-    // --- Atributos y LiveData ---
+    private static final String TAG = "DashboardClienteVM";
+
     private final AppRepo repo;
     private final SharedPreferences prefs;
 
@@ -45,56 +53,89 @@ public class DashboardClienteViewModel extends AndroidViewModel {
 
     /**
      * Clase estática para encapsular los datos de actualización de signos vitales.
+     * Encapsulada con propiedades privadas e inmutables, constructor explícito y getters públicos.
      */
     public static class VitalsUpdate {
-        public final int p, o;
-        public final String pres;
-        public VitalsUpdate(int p, int o, String pres) { this.p = p; this.o = o; this.pres = pres; }
+        private final int pulso;
+        private final int oxigeno;
+        private final String presion;
+
+        public VitalsUpdate(int pulso, int oxigeno, String presion) {
+            this.pulso = pulso;
+            this.oxigeno = oxigeno;
+            this.presion = presion;
+        }
+
+        public int getPulso() {
+            return pulso;
+        }
+
+        public int getOxigeno() {
+            return oxigeno;
+        }
+
+        public String getPresion() {
+            return presion;
+        }
     }
+
     private final MutableLiveData<VitalsUpdate> lastVitalsUpdate = new MutableLiveData<>();
 
-    /**
-     * Constructor e Inicialización del ViewModel.
-     *
-     * @param application Contexto de la aplicación.
-     */
     public DashboardClienteViewModel(@NonNull Application application) {
+        this(application, new AppRepo(application));
+    }
+
+    public DashboardClienteViewModel(@NonNull Application application, @NonNull AppRepo repo) {
         super(application);
-        repo = new AppRepo(application);
-        prefs = application.getSharedPreferences("VitalHomePrefs", Context.MODE_PRIVATE);
+        this.repo = repo;
+        this.prefs = application.getSharedPreferences("VitalHomePrefs", Context.MODE_PRIVATE);
         refreshData();
         iniciarEscuchaMedsFirestore();
     }
 
     public void iniciarEscuchaMedsFirestore() {
         try {
-            com.google.firebase.firestore.FirebaseFirestore.getInstance()
-                .collection("medications")
-                .addSnapshotListener((snapshots, e) -> {
-                    if (e != null || snapshots == null) return;
-                    List<Medication> listaMeds = new ArrayList<>();
-                    for (com.google.firebase.firestore.DocumentSnapshot doc : snapshots.getDocuments()) {
-                        String id = doc.getString("id");
-                        if (id == null) id = doc.getId();
-                        String nombre = doc.getString("nombre");
-                        String hora = doc.getString("hora");
-                        Boolean taken = doc.getBoolean("taken");
-
-                        if (nombre != null && hora != null && !Boolean.TRUE.equals(taken)) {
-                            Medication m = new Medication(id, nombre, hora, false);
-                            listaMeds.add(m);
-                            try {
-                                MedicationAlarmScheduler.programar(getApplication(), m);
-                            } catch (Exception ignored) {}
+            FirebaseFirestore.getInstance()
+                    .collection("medications")
+                    .addSnapshotListener((snapshots, e) -> {
+                        if (e != null) {
+                            Log.e(TAG, "Error escuchando medicamentos en Firestore", e);
+                            return;
                         }
-                    }
-                    repo.saveMeds(listaMeds);
-                    medicamentos.postValue(listaMeds);
-                });
-        } catch (Exception ignored) {}
+                        if (snapshots == null) return;
+
+                        AppExecutors.getInstance().diskIO().execute(() -> {
+                            try {
+                                List<Medication> listaMeds = new ArrayList<>();
+                                for (DocumentSnapshot doc : snapshots.getDocuments()) {
+                                    String id = doc.getString("id");
+                                    if (id == null) id = doc.getId();
+                                    String nombre = doc.getString("nombre");
+                                    String hora = doc.getString("hora");
+                                    Boolean taken = doc.getBoolean("taken");
+
+                                    if (nombre != null && hora != null && !Boolean.TRUE.equals(taken)) {
+                                        Medication m = new Medication(id, nombre, hora, false);
+                                        listaMeds.add(m);
+                                        try {
+                                            MedicationAlarmScheduler.programar(getApplication(), m);
+                                        } catch (Exception ex) {
+                                            Log.e(TAG, "Error al programar alarma para medicamento descargado", ex);
+                                        }
+                                    }
+                                }
+                                repo.saveMeds(listaMeds);
+                                medicamentos.postValue(listaMeds);
+                            } catch (Exception ex) {
+                                Log.e(TAG, "Error procesando snapshot de medicamentos en DashboardCliente", ex);
+                            }
+                        });
+                    });
+        } catch (Exception e) {
+            Log.e(TAG, "Error iniciando escucha de Firestore en DashboardClienteViewModel", e);
+        }
     }
 
-    // --- Métodos para refrescar datos desde preferencias y repositorio ---
     public void refreshData() {
         nombreUsuario.setValue(prefs.getString("nombreAdultoMayor", "Usuario"));
         refrescarSignos();
@@ -103,172 +144,204 @@ public class DashboardClienteViewModel extends AndroidViewModel {
     }
 
     private void refrescarSignos() {
-        String json = prefs.getString("ultimos_vitals", "{}");
-        try {
-            JSONObject data = new JSONObject(json);
-            if (data.has("pulso")) pulso.setValue(data.getInt("pulso") + " LPM");
-            if (data.has("oxig")) oxigeno.setValue(data.getInt("oxig") + "%");
-        } catch (Exception ignored) {}
+        AppExecutors.getInstance().diskIO().execute(() -> {
+            try {
+                String json = prefs.getString("ultimos_vitals", "{}");
+                JSONObject data = new JSONObject(json);
+                if (data.has("pulso")) pulso.postValue(data.getInt("pulso") + " LPM");
+                if (data.has("oxig")) oxigeno.postValue(data.getInt("oxig") + "%");
+            } catch (Exception e) {
+                Log.e(TAG, "Error al parsear ultimos_vitals desde SharedPreferences", e);
+            }
+        });
     }
 
     private void refrescarMeds() {
-        List<Medication> items = repo.getMeds();
-        List<Medication> sinTomar = new ArrayList<>();
-        if (items != null) {
-            for (Medication m : items) {
-                if (m != null && !m.isTaken()) {
-                    sinTomar.add(m);
+        AppExecutors.getInstance().diskIO().execute(() -> {
+            try {
+                List<Medication> items = repo.getMeds();
+                List<Medication> sinTomar = new ArrayList<>();
+                if (items != null) {
+                    for (Medication m : items) {
+                        if (m != null && !m.isTaken()) {
+                            sinTomar.add(m);
+                        }
+                    }
                 }
+                medicamentos.postValue(sinTomar);
+            } catch (Exception e) {
+                Log.e(TAG, "Error refrescando medicamentos en DashboardClienteViewModel", e);
             }
-        }
-        medicamentos.setValue(sinTomar);
+        });
     }
 
     private void cargarContactos() {
-        contactName1.setValue(prefs.getString("client_contact_name_1", ""));
-        contactPhone1.setValue(prefs.getString("client_contact_phone_1", ""));
-        contactName2.setValue(prefs.getString("client_contact_name_2", ""));
-        contactPhone2.setValue(prefs.getString("client_contact_phone_2", ""));
+        AppExecutors.getInstance().diskIO().execute(() -> {
+            try {
+                contactName1.postValue(prefs.getString("client_contact_name_1", ""));
+                contactPhone1.postValue(prefs.getString("client_contact_phone_1", ""));
+                contactName2.postValue(prefs.getString("client_contact_name_2", ""));
+                contactPhone2.postValue(prefs.getString("client_contact_phone_2", ""));
+            } catch (Exception e) {
+                Log.e(TAG, "Error cargando contactos de emergencia", e);
+            }
+        });
     }
 
-    // --- Gestión de Contactos de Emergencia ---
     public void guardarContactos(String n1, String p1, String n2, String p2) {
-        prefs.edit()
-                .putString("client_contact_name_1", n1)
-                .putString("client_contact_phone_1", p1)
-                .putString("client_contact_name_2", n2)
-                .putString("client_contact_phone_2", p2)
-                .apply();
-        cargarContactos();
+        AppExecutors.getInstance().diskIO().execute(() -> {
+            try {
+                prefs.edit()
+                        .putString("client_contact_name_1", n1)
+                        .putString("client_contact_phone_1", p1)
+                        .putString("client_contact_name_2", n2)
+                        .putString("client_contact_phone_2", p2)
+                        .apply();
+                cargarContactos();
+            } catch (Exception e) {
+                Log.e(TAG, "Error guardando contactos de emergencia", e);
+            }
+        });
     }
 
-    // --- Gestión de Medicamentos ---
     public void tomar(Medication m) {
         if (m == null) return;
 
-        // 1. Registrar el evento de toma en el Registro de Eventos
-        String horaStr = getTime();
-        repo.addEvent(new AlertEvent("MEDICINA", "Tomó " + m.getNombre(), "Casa", horaStr));
+        AppExecutors.getInstance().diskIO().execute(() -> {
+            try {
+                String horaStr = DateUtils.getCurrentTimeFormatted();
+                repo.addEvent(new AlertEvent("MEDICINA", "Tomó " + m.getNombre(), "Casa", horaStr));
 
-        // 2. Ocultar el medicamento de la lista diaria local del abuelo
-        List<Medication> items = repo.getMeds();
-        List<Medication> nuevaLista = new ArrayList<>();
-        if (items != null) {
-            for (Medication item : items) {
-                if (item != null && !Objects.equals(item.getId(), m.getId()) && !item.isTaken()) {
-                    nuevaLista.add(item);
+                List<Medication> items = repo.getMeds();
+                List<Medication> nuevaLista = new ArrayList<>();
+                if (items != null) {
+                    for (Medication item : items) {
+                        if (item != null && !Objects.equals(item.getId(), m.getId()) && !item.isTaken()) {
+                            nuevaLista.add(item);
+                        }
+                    }
                 }
-            }
-        }
-        repo.saveMeds(nuevaLista);
-        medicamentos.setValue(nuevaLista);
-        MedicationAlarmScheduler.cancelar(getApplication(), m.getId());
+                repo.saveMeds(nuevaLista);
+                medicamentos.postValue(nuevaLista);
+                MedicationAlarmScheduler.cancelar(getApplication(), m.getId());
 
-        // 3. Actualizar taken: true en Cloud Firestore (SIN borrar el documento) para que la pantalla del Cuidador pase a VERDE
-        try {
-            com.google.firebase.firestore.FirebaseFirestore.getInstance()
-                .collection("medications")
-                .document(m.getId())
-                .set(java.util.Collections.singletonMap("taken", true), com.google.firebase.firestore.SetOptions.merge());
-        } catch (Exception ignored) {}
+                try {
+                    FirebaseFirestore.getInstance()
+                            .collection("medications")
+                            .document(m.getId())
+                            .set(Collections.singletonMap("taken", true), SetOptions.merge());
+                } catch (Exception ex) {
+                    Log.e(TAG, "Error actualizando estado del medicamento en Firestore", ex);
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Error al procesar toma de medicamento", e);
+            }
+        });
     }
 
     public void limpiarRemedios() {
-        List<Medication> items = repo.getMeds();
-        if (items != null) {
-            for (Medication m : items) {
-                if (m != null) {
-                    MedicationAlarmScheduler.cancelar(getApplication(), m.getId());
+        AppExecutors.getInstance().diskIO().execute(() -> {
+            try {
+                List<Medication> items = repo.getMeds();
+                if (items != null) {
+                    for (Medication m : items) {
+                        if (m != null) {
+                            MedicationAlarmScheduler.cancelar(getApplication(), m.getId());
+                        }
+                    }
                 }
+                repo.saveMeds(new ArrayList<>());
+                prefs.edit().putBoolean("plan_limpiado_localmente", true).apply();
+                medicamentos.postValue(new ArrayList<>());
+            } catch (Exception e) {
+                Log.e(TAG, "Error limpiando remedios en DashboardClienteViewModel", e);
             }
-        }
-        repo.saveMeds(new ArrayList<>());
-        prefs.edit().putBoolean("plan_limpiado_localmente", true).apply();
-        medicamentos.setValue(new ArrayList<>());
+        });
     }
 
-    // --- Medición y Simulación de Signos Vitales Agregados en 1 Sola Alerta ---
     public void medirAhora() {
-        com.example.vitalhome.utils.AppExecutors.getInstance().diskIO().execute(() -> {
-            int p;
-            if (Math.random() < 0.25) {
-                p = (int) (Math.random() * 30 + 101); // 101-130 (Elevado)
-            } else {
-                p = (int) (Math.random() * 31 + 60);  // 60-90 (Normal)
-            }
-
-            int o;
-            if (Math.random() < 0.15) {
-                o = (int) (Math.random() * 4 + 88);   // 88-91 (Bajo)
-            } else {
-                o = (int) (Math.random() * 5 + 95);   // 95-99 (Normal)
-            }
-
-            int sis, dia;
-            if (Math.random() < 0.25) {
-                sis = (int) (Math.random() * 26 + 140); // 140-165 (Elevada)
-                dia = (int) (Math.random() * 16 + 90);  // 90-105 (Elevada)
-            } else {
-                sis = (int) (Math.random() * 20 + 110); // 110-129 (Normal)
-                dia = (int) (Math.random() * 11 + 70);  // 70-80 (Normal)
-            }
-            String presString = sis + "/" + dia;
-
-            // Actualización INSTANTÁNEA de LiveData en pantalla (0ms de latencia)
-            pulso.postValue(p + " LPM");
-            oxigeno.postValue(o + "%");
-            lastVitalsUpdate.postValue(new VitalsUpdate(p, o, presString));
-
-            prefs.edit().putString("ultimos_vitals", "{\"pulso\":" + p + ",\"oxig\":" + o + ",\"pres\":\"" + presString + "\"}").apply();
-
-            String horaStr = getTime();
-            List<String> anomalias = new ArrayList<>();
-
-            if (com.example.vitalhome.utils.VitalSignsThresholds.isPulsoAnomalo(p)) {
-                String msg = p > com.example.vitalhome.utils.VitalSignsThresholds.PULSO_MAX_NORMAL ? ("Pulso elevado: " + p + " LPM") : ("Pulso bajo: " + p + " LPM");
-                anomalias.add(msg);
-            }
-
-            if (com.example.vitalhome.utils.VitalSignsThresholds.isPresionAnomala(sis, dia)) {
-                anomalias.add("Presión elevada: " + presString + " mmHg");
-            }
-
-            if (com.example.vitalhome.utils.VitalSignsThresholds.isOxigenoAnomalo(o)) {
-                anomalias.add("Oxígeno bajo: " + o + "%");
-            }
-
-            if (!anomalias.isEmpty()) {
-                // ANÓMALO: Generar UNA sola alerta agregada detallando todos los valores elevados/bajos
-                String resumenAnomalias = String.join(" | ", anomalias);
-                NotificationHelper.notificarAlertaCuidador(getApplication(), "SALUD", "⚠️ Alerta de Salud", resumenAnomalias);
-                repo.addEvent(new AlertEvent("SALUD", resumenAnomalias, "Casa", horaStr));
-            } else {
-                // NORMAL: Registrar un único evento de control rutinario completo
-                NotificationHelper.pulso(getApplication(), p);
-                repo.addEvent(new AlertEvent("SALUD", "Control: " + p + " LPM | O2: " + o + "% | Presión: " + presString, "Casa", horaStr));
-            }
-
-            // Sincronización en tiempo real con Cloud Firestore
+        AppExecutors.getInstance().diskIO().execute(() -> {
             try {
-                String abueloEmail = prefs.getString("email", "marta@vitalhome.com").replace(".", "_");
-                String abueloNombre = prefs.getString("nombreAdultoMayor", "Adulto Mayor");
+                int p;
+                if (Math.random() < 0.25) {
+                    p = (int) (Math.random() * 30 + 101);
+                } else {
+                    p = (int) (Math.random() * 31 + 60);
+                }
 
-                java.util.Map<String, Object> vitalsData = new java.util.HashMap<>();
-                vitalsData.put("pulso", p + " LPM");
-                vitalsData.put("oxigeno", o + "%");
-                vitalsData.put("presion", presString);
-                vitalsData.put("pacienteNombre", abueloNombre);
-                vitalsData.put("updatedAt", new Date());
+                int o;
+                if (Math.random() < 0.15) {
+                    o = (int) (Math.random() * 4 + 88);
+                } else {
+                    o = (int) (Math.random() * 5 + 95);
+                }
 
-                com.google.firebase.firestore.FirebaseFirestore db = com.google.firebase.firestore.FirebaseFirestore.getInstance();
-                db.collection("users")
-                    .document(abueloEmail)
-                    .set(java.util.Collections.singletonMap("ultimosSignosVitales", vitalsData), com.google.firebase.firestore.SetOptions.merge());
+                int sis, dia;
+                if (Math.random() < 0.25) {
+                    sis = (int) (Math.random() * 26 + 140);
+                    dia = (int) (Math.random() * 16 + 90);
+                } else {
+                    sis = (int) (Math.random() * 20 + 110);
+                    dia = (int) (Math.random() * 11 + 70);
+                }
+                String presString = sis + "/" + dia;
 
-                db.collection("vitals")
-                    .document("latest")
-                    .set(vitalsData);
-            } catch (Exception ignored) {}
+                pulso.postValue(p + " LPM");
+                oxigeno.postValue(o + "%");
+                lastVitalsUpdate.postValue(new VitalsUpdate(p, o, presString));
+
+                prefs.edit().putString("ultimos_vitals", "{\"pulso\":" + p + ",\"oxig\":" + o + ",\"pres\":\"" + presString + "\"}").apply();
+
+                String horaStr = DateUtils.getCurrentTimeFormatted();
+                List<String> anomalias = new ArrayList<>();
+
+                if (VitalSignsThresholds.isPulsoAnomalo(p)) {
+                    String msg = p > VitalSignsThresholds.PULSO_MAX_NORMAL ? ("Pulso elevado: " + p + " LPM") : ("Pulso bajo: " + p + " LPM");
+                    anomalias.add(msg);
+                }
+
+                if (VitalSignsThresholds.isPresionAnomala(sis, dia)) {
+                    anomalias.add("Presión elevada: " + presString + " mmHg");
+                }
+
+                if (VitalSignsThresholds.isOxigenoAnomalo(o)) {
+                    anomalias.add("Oxígeno bajo: " + o + "%");
+                }
+
+                if (!anomalias.isEmpty()) {
+                    String resumenAnomalias = String.join(" | ", anomalias);
+                    NotificationHelper.notificarAlertaCuidador(getApplication(), "SALUD", "⚠️ Alerta de Salud", resumenAnomalias);
+                    repo.addEvent(new AlertEvent("SALUD", resumenAnomalias, "Casa", horaStr));
+                } else {
+                    NotificationHelper.pulso(getApplication(), p);
+                    repo.addEvent(new AlertEvent("SALUD", "Control: " + p + " LPM | O2: " + o + "% | Presión: " + presString, "Casa", horaStr));
+                }
+
+                try {
+                    String abueloEmail = prefs.getString("email", "marta@vitalhome.com").replace(".", "_");
+                    String abueloNombre = prefs.getString("nombreAdultoMayor", "Adulto Mayor");
+
+                    Map<String, Object> vitalsData = new HashMap<>();
+                    vitalsData.put("pulso", p + " LPM");
+                    vitalsData.put("oxigeno", o + "%");
+                    vitalsData.put("presion", presString);
+                    vitalsData.put("pacienteNombre", abueloNombre);
+                    vitalsData.put("updatedAt", new Date());
+
+                    FirebaseFirestore db = FirebaseFirestore.getInstance();
+                    db.collection("users")
+                            .document(abueloEmail)
+                            .set(Collections.singletonMap("ultimosSignosVitales", vitalsData), SetOptions.merge());
+
+                    db.collection("vitals")
+                            .document("latest")
+                            .set(vitalsData);
+                } catch (Exception ex) {
+                    Log.e(TAG, "Error sincronizando signos vitales con Firestore", ex);
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Error al ejecutar medirAhora", e);
+            }
         });
     }
 
@@ -277,12 +350,13 @@ public class DashboardClienteViewModel extends AndroidViewModel {
     }
 
     public void logout() {
-        prefs.edit().putBoolean("isLoggedIn", false).apply();
-    }
-
-    // --- Métodos Auxiliares y Getters ---
-    private String getTime() {
-        return new SimpleDateFormat("HH:mm", Locale.getDefault()).format(new Date());
+        AppExecutors.getInstance().diskIO().execute(() -> {
+            try {
+                prefs.edit().putBoolean("isLoggedIn", false).apply();
+            } catch (Exception e) {
+                Log.e(TAG, "Error en logout al modificar SharedPreferences", e);
+            }
+        });
     }
 
     public LiveData<String> getNombreUsuario() { return nombreUsuario; }

@@ -3,11 +3,13 @@ package com.example.vitalhome.ui.controladores;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -25,11 +27,18 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Fragmento que administra la interacción con el Asistente IA (VitalBot).
+ * Maneja estados visuales con ProgressBar, deshabilitación de controles durante la carga y registro explícito de excepciones.
+ */
 public class AsistenteFragment extends Fragment {
+
+    private static final String TAG = "AsistenteFragment";
 
     private EditText etPregunta;
     private TextView tvRespuestaIA;
     private Button btnEnviarIA;
+    private ProgressBar pbAsistente;
     private ScrollView scrollViewAsistente;
     private GeminiService geminiService;
     private AppRepo appRepo;
@@ -43,19 +52,18 @@ public class AsistenteFragment extends Fragment {
         etPregunta = root.findViewById(R.id.etPregunta);
         tvRespuestaIA = root.findViewById(R.id.tvRespuestaIA);
         btnEnviarIA = root.findViewById(R.id.btnEnviarIA);
+        pbAsistente = root.findViewById(R.id.pbAsistente);
         scrollViewAsistente = root.findViewById(R.id.scrollViewAsistente);
 
         appRepo = new AppRepo(requireContext());
         prefs = requireContext().getSharedPreferences("VitalHomePrefs", Context.MODE_PRIVATE);
         geminiService = new GeminiService();
 
-        // Cargar historial previo de chat guardado localmente
         tvRespuestaIA.setText(appRepo.getChatHistory());
         scrollToBottom();
 
         btnEnviarIA.setOnClickListener(v -> enviarConsulta());
 
-        // Manejo dinámico de insets del teclado (IME) para elevar la barra de texto sobre el teclado
         ViewCompat.setOnApplyWindowInsetsListener(root, (v, windowInsets) -> {
             Insets imeInsets = windowInsets.getInsets(WindowInsetsCompat.Type.ime());
             Insets systemInsets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -76,6 +84,8 @@ public class AsistenteFragment extends Fragment {
             return;
         }
 
+        setControlesCargando(true);
+
         String currentTranscript = tvRespuestaIA.getText().toString();
         String nuevoTranscript = currentTranscript + "\n\n👤 Tú:\n" + pregunta + "\n\n🤖 VitalBot:\nPensando...";
         tvRespuestaIA.setText(nuevoTranscript);
@@ -87,6 +97,7 @@ public class AsistenteFragment extends Fragment {
             @Override
             public void onSuccess(String responseText) {
                 if (getContext() != null) {
+                    setControlesCargando(false);
                     String baseText = tvRespuestaIA.getText().toString();
                     String updatedText;
                     if (baseText.endsWith("Pensando...")) {
@@ -104,6 +115,8 @@ public class AsistenteFragment extends Fragment {
             @Override
             public void onError(String error) {
                 if (getContext() != null) {
+                    setControlesCargando(false);
+                    Log.e(TAG, "Error recibiendo respuesta del servicio Gemini: " + error);
                     String fallback = "En este momento no puedo ayudarte con tu consulta, vuelve más tarde";
                     String baseText = tvRespuestaIA.getText().toString();
                     String updatedText;
@@ -118,6 +131,12 @@ public class AsistenteFragment extends Fragment {
                 }
             }
         });
+    }
+
+    private void setControlesCargando(boolean cargando) {
+        if (btnEnviarIA != null) btnEnviarIA.setEnabled(!cargando);
+        if (etPregunta != null) etPregunta.setEnabled(!cargando);
+        if (pbAsistente != null) pbAsistente.setVisibility(cargando ? View.VISIBLE : View.GONE);
     }
 
     private void scrollToBottom() {
@@ -135,10 +154,13 @@ public class AsistenteFragment extends Fragment {
             chatMsg.put("timestamp", new Date());
 
             FirebaseFirestore.getInstance()
-                .collection("users")
-                .document(userEmail)
-                .collection("chat_history")
-                .add(chatMsg);
-        } catch (Exception ignored) {}
+                    .collection("users")
+                    .document(userEmail)
+                    .collection("chat_history")
+                    .add(chatMsg)
+                    .addOnFailureListener(e -> Log.e(TAG, "Error al sincronizar chat en Firestore", e));
+        } catch (Exception e) {
+            Log.e(TAG, "Excepción en sincronización de chat en nube", e);
+        }
     }
 }

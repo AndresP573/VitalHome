@@ -9,6 +9,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -17,8 +18,9 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.vitalhome.R;
-import com.example.vitalhome.ui.adapter.MedicationAdapter;
 import com.example.vitalhome.data.modelo.Medication;
+import com.example.vitalhome.ui.adapter.MedicationAdapter;
+import com.example.vitalhome.ui.viewmodels.AppViewModelFactory;
 import com.example.vitalhome.ui.viewmodels.MedicamentosViewModel;
 import java.util.Calendar;
 import java.util.List;
@@ -26,26 +28,28 @@ import java.util.Locale;
 
 /**
  * Fragmento para la gestión y alta de medicamentos dentro del plan diario.
- * Permite agregar nuevos medicamentos mediante TimePickerDialog y registrarlos como tomados.
+ * Observa la máquina de estados de MedicamentosViewModel e integra ProgressBar de carga.
  */
 public class MedicamentosFragment extends Fragment implements MedicationAdapter.AccionesMed {
 
-    // --- Bloque 1: Atributos y referencias de UI ---
     private MedicamentosViewModel viewModel;
     private MedicationAdapter adapter;
     private EditText txtNombre, txtHora;
+    private ProgressBar pbMedicamentos;
+    private Button btnAdd;
     private TimePickerDialog timePickerDialog;
 
-    // --- Bloque 2: Inflado e inicialización de componentes ---
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.fragment_medicamentos, container, false);
-        viewModel = new ViewModelProvider(this).get(MedicamentosViewModel.class);
+        AppViewModelFactory factory = new AppViewModelFactory(requireActivity().getApplication());
+        viewModel = new ViewModelProvider(this, factory).get(MedicamentosViewModel.class);
 
         txtNombre = v.findViewById(R.id.etMedNombre);
         txtHora = v.findViewById(R.id.etMedHora);
-        Button btnAdd = v.findViewById(R.id.btnGuardarMed);
+        btnAdd = v.findViewById(R.id.btnGuardarMed);
+        pbMedicamentos = v.findViewById(R.id.pbMedicamentos);
 
         txtHora.setOnClickListener(x -> pickTime());
         btnAdd.setOnClickListener(x -> addMed());
@@ -64,28 +68,45 @@ public class MedicamentosFragment extends Fragment implements MedicationAdapter.
         }
 
         initList(v);
-
         return v;
     }
 
-    // --- Bloque 3: Observación de cambios en la lista ---
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
         viewModel.getPlan().observe(getViewLifecycleOwner(), lista -> {
             if (adapter != null && lista != null) {
                 adapter.updateList(lista);
             }
         });
+
+        viewModel.getEstado().observe(getViewLifecycleOwner(), estado -> {
+            if (estado == null) return;
+            switch (estado) {
+                case CARGANDO:
+                    if (pbMedicamentos != null) pbMedicamentos.setVisibility(View.VISIBLE);
+                    if (btnAdd != null) btnAdd.setEnabled(false);
+                    break;
+                case EXITO:
+                case VACIO:
+                    if (pbMedicamentos != null) pbMedicamentos.setVisibility(View.GONE);
+                    if (btnAdd != null) btnAdd.setEnabled(true);
+                    break;
+                case ERROR:
+                    if (pbMedicamentos != null) pbMedicamentos.setVisibility(View.GONE);
+                    if (btnAdd != null) btnAdd.setEnabled(true);
+                    Toast.makeText(requireContext(), "Error al cargar medicamentos", Toast.LENGTH_SHORT).show();
+                    break;
+            }
+        });
     }
 
-    // --- Bloque 4: Inicialización del RecyclerView ---
     private void initList(View v) {
         RecyclerView rv = v.findViewById(R.id.rvMedicamentos);
         rv.setLayoutManager(new LinearLayoutManager(requireContext()));
 
         List<Medication> plan = viewModel.getPlan().getValue();
-
         SharedPreferences p = requireContext().getSharedPreferences("VitalHomePrefs", Context.MODE_PRIVATE);
         boolean isAbuelo = "cliente".equals(p.getString("rol", "cuidador"));
 
@@ -93,7 +114,6 @@ public class MedicamentosFragment extends Fragment implements MedicationAdapter.
         rv.setAdapter(adapter);
     }
 
-    // --- Bloque 5: Selección de hora mediante TimePickerDialog ---
     private void pickTime() {
         if (timePickerDialog != null && timePickerDialog.isShowing()) {
             timePickerDialog.dismiss();
@@ -107,10 +127,9 @@ public class MedicamentosFragment extends Fragment implements MedicationAdapter.
         timePickerDialog.show();
     }
 
-    // --- Bloque 6: Adición de nuevos medicamentos ---
     private void addMed() {
-        String n = txtNombre.getText().toString().trim();
-        String h = txtHora.getText().toString().trim();
+        String n = txtNombre != null ? txtNombre.getText().toString().trim() : "";
+        String h = txtHora != null ? txtHora.getText().toString().trim() : "";
 
         if (n.isEmpty() || h.isEmpty()) {
             Toast.makeText(requireContext(), getString(R.string.msg_faltan_datos), Toast.LENGTH_SHORT).show();
@@ -119,19 +138,17 @@ public class MedicamentosFragment extends Fragment implements MedicationAdapter.
 
         viewModel.agregar(n, h);
 
-        txtNombre.setText("");
-        txtHora.setText("");
+        if (txtNombre != null) txtNombre.setText("");
+        if (txtHora != null) txtHora.setText("");
         Toast.makeText(requireContext(), getString(R.string.msg_guardado), Toast.LENGTH_SHORT).show();
     }
 
-    // --- Bloque 7: Acción de marcar medicamento como tomado ---
     @Override
     public void tomar(Medication m) {
         viewModel.tomar(m);
         Toast.makeText(requireContext(), getString(R.string.msg_registrado), Toast.LENGTH_SHORT).show();
     }
 
-    // --- Bloque 8: Limpieza de recursos en onDestroyView ---
     @Override
     public void onDestroyView() {
         super.onDestroyView();
@@ -139,7 +156,6 @@ public class MedicamentosFragment extends Fragment implements MedicationAdapter.
             timePickerDialog.dismiss();
         }
         timePickerDialog = null;
-
         txtNombre = null;
         txtHora = null;
         adapter = null;
