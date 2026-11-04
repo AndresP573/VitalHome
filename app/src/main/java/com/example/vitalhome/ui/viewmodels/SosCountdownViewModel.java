@@ -88,7 +88,7 @@ public class SosCountdownViewModel extends AndroidViewModel {
      */
     public void confirmSOS() {
         cancelTimer();
-        String hora = new SimpleDateFormat("HH:mm", Locale.getDefault()).format(new Date());
+        String hora = com.example.vitalhome.utils.DateUtils.getCurrentTimeFormatted();
         repo.addEvent(new AlertEvent("SOS", "Emergencia confirmada", "Casa", hora));
 
         // Sincronización Global en Tiempo Real a través de la Colección 'alerts' en Firestore
@@ -117,7 +117,7 @@ public class SosCountdownViewModel extends AndroidViewModel {
      */
     public void estoyBien() {
         cancelTimer();
-        String hora = new SimpleDateFormat("HH:mm", Locale.getDefault()).format(new Date());
+        String hora = com.example.vitalhome.utils.DateUtils.getCurrentTimeFormatted();
         repo.addEvent(new AlertEvent("SOS", "Estoy bien: alerta cancelada", "Casa", hora));
         NotificationHelper.sosEstoyBien(getApplication(), "Familiar");
     }

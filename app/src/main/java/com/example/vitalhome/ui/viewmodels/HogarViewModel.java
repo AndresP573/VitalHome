@@ -41,7 +41,7 @@ public class HogarViewModel extends AndroidViewModel {
         boolean nuevoEstado = !Objects.equals(Boolean.TRUE, puertaAbierta.getValue());
         puertaAbierta.setValue(nuevoEstado);
 
-        String hora = new SimpleDateFormat("HH:mm", Locale.getDefault()).format(new Date());
+        String hora = com.example.vitalhome.utils.DateUtils.getCurrentTimeFormatted();
         if (nuevoEstado) {
             NotificationHelper.puertaAbierta(getApplication());
             repo.addEvent(new AlertEvent("HOGAR", "Puerta principal abierta", "Casa", hora));
@@ -58,7 +58,7 @@ public class HogarViewModel extends AndroidViewModel {
         boolean nuevoEstado = !Objects.equals(Boolean.TRUE, fuegoDetectado.getValue());
         fuegoDetectado.setValue(nuevoEstado);
 
-        String hora = new SimpleDateFormat("HH:mm", Locale.getDefault()).format(new Date());
+        String hora = com.example.vitalhome.utils.DateUtils.getCurrentTimeFormatted();
         if (nuevoEstado) {
             NotificationHelper.fuego(getApplication());
             repo.addEvent(new AlertEvent("HOGAR", "🔥 ¡Alerta de fuego!", "Casa", hora));

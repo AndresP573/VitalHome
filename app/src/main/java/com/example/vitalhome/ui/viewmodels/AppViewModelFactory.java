@@ -8,7 +8,7 @@ import com.example.vitalhome.data.repository.AppRepo;
 
 /**
  * Fábrica personalizada de ViewModels que permite inyectar el repositorio centralizado AppRepo
- * y el contexto de Application a los ViewModels de la aplicación.
+ * y el contexto de Application a todos los ViewModels de la aplicación.
  */
 public class AppViewModelFactory implements ViewModelProvider.Factory {
 
@@ -43,6 +43,14 @@ public class AppViewModelFactory implements ViewModelProvider.Factory {
             return (T) new DashboardCuidadorViewModel(application, repo);
         } else if (modelClass.isAssignableFrom(PulseraViewModel.class)) {
             return (T) new PulseraViewModel(application, repo);
+        } else if (modelClass.isAssignableFrom(HogarViewModel.class)) {
+            return (T) new HogarViewModel(application);
+        } else if (modelClass.isAssignableFrom(HistorialMedicoViewModel.class)) {
+            return (T) new HistorialMedicoViewModel(application);
+        } else if (modelClass.isAssignableFrom(ProfileMedicoViewModel.class)) {
+            return (T) new ProfileMedicoViewModel(application);
+        } else if (modelClass.isAssignableFrom(SosCountdownViewModel.class)) {
+            return (T) new SosCountdownViewModel(application);
         }
         throw new IllegalArgumentException("Clase ViewModel desconocida: " + modelClass.getName());
     }
